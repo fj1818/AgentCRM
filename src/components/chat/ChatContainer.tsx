@@ -1,12 +1,14 @@
 /**
  * Contenedor principal del chat
- * Orquesta todos los componentes del chat
+ * Orquesta todos los componentes del chat con diseño premium
  */
 
 import { ChatHeader } from './ChatHeader'
 import { MessageList } from './MessageList'
 import { ChatInput } from './ChatInput'
 import { useChat } from '@/hooks'
+import { useUIStore } from '@/stores'
+import { cn } from '@/utils'
 
 export function ChatContainer() {
   const {
@@ -17,10 +19,22 @@ export function ChatContainer() {
     sendMessage,
     clearMessages,
     startNewConversation,
+    ultimoGrafico,
+    ultimaTabla,
   } = useChat()
+  
+  const { theme } = useUIStore()
+  const isHey = theme === 'hey'
 
   return (
-    <div className="flex flex-col h-full bg-surface-900">
+    <div 
+      className={cn(
+        "flex flex-col h-full",
+        isHey 
+          ? "bg-gradient-to-b from-[#1a1f2e] via-[#1f2537] to-[#232a3c]" 
+          : "bg-gradient-to-b from-orange-50/50 via-white to-orange-50/30"
+      )}
+    >
       {/* Header del chat */}
       <ChatHeader
         onNewConversation={startNewConversation}
@@ -33,12 +47,28 @@ export function ChatContainer() {
         messages={messages}
         isLoading={isLoading}
         messagesEndRef={messagesEndRef}
+        ultimoGrafico={ultimoGrafico}
+        ultimaTabla={ultimaTabla}
       />
 
       {/* Error si existe */}
       {error && (
-        <div className="px-4 py-2 bg-red-500/10 border-t border-red-500/20">
-          <p className="text-sm text-red-400">{error}</p>
+        <div 
+          className={cn(
+            "px-4 py-3 border-t",
+            isHey 
+              ? "bg-red-500/10 border-red-500/20" 
+              : "bg-red-50 border-red-100"
+          )}
+        >
+          <p 
+            className={cn(
+              "text-sm",
+              isHey ? "text-red-300" : "text-red-600"
+            )}
+          >
+            {error}
+          </p>
         </div>
       )}
 
@@ -47,4 +77,3 @@ export function ChatContainer() {
     </div>
   )
 }
-

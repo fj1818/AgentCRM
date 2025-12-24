@@ -1,51 +1,164 @@
 /**
  * Estilos globales de la aplicación
+ * Temas: Banregio (Light) y Hey (Dark)
  */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Reset y estilos base */
+/* ============================================
+   VARIABLES DE TEMA
+   ============================================ */
+
+/* Tema Banregio (Light - Corporativo) */
+:root,
+[data-theme="banregio"] {
+  --color-bg-primary: #fefdfb;
+  --color-bg-secondary: #fbf9f5;
+  --color-bg-tertiary: #f5f2eb;
+  --color-bg-elevated: #ede9e0;
+
+  --color-text-primary: #2d2a26;
+  --color-text-secondary: #4a4640;
+  --color-text-tertiary: #7a7468;
+  --color-text-muted: #9e978a;
+
+  --color-border: #d9d4c8;
+  --color-border-light: #ede9e0;
+
+  --color-accent-primary: #ff8800;
+  --color-accent-primary-hover: #ea7200;
+  --color-accent-secondary: #3b82f6;
+
+  --color-surface-50: #fefdfb;
+  --color-surface-100: #fbf9f5;
+  --color-surface-200: #f5f2eb;
+  --color-surface-300: #ede9e0;
+  --color-surface-400: #d9d4c8;
+  --color-surface-500: #c4beb2;
+  --color-surface-600: #9e978a;
+  --color-surface-700: #7a7468;
+  --color-surface-800: #4a4640;
+  --color-surface-900: #2d2a26;
+}
+
+/* Tema Hey (Dark - Moderno con colores mates y claros) */
+[data-theme="hey"],
+.dark {
+  --color-bg-primary: #1a1f2e;
+  --color-bg-secondary: #232936;
+  --color-bg-tertiary: #2d3444;
+  --color-bg-elevated: #3a4356;
+
+  --color-text-primary: #ffffff;
+  --color-text-secondary: #f0f2f5;
+  --color-text-tertiary: #b8c0cc;
+  --color-text-muted: #8892a4;
+
+  --color-border: #3a4356;
+  --color-border-light: #4a5568;
+
+  --color-accent-primary: #4cc9f0;
+  --color-accent-primary-hover: #3db8df;
+  --color-accent-secondary: #a78bfa;
+
+  --color-surface-50: #ffffff;
+  --color-surface-100: #f7f8fa;
+  --color-surface-200: #e8ebf0;
+  --color-surface-300: #d1d6e0;
+  --color-surface-400: #b8c0cc;
+  --color-surface-500: #8892a4;
+  --color-surface-600: #5a6478;
+  --color-surface-700: #3a4356;
+  --color-surface-800: #2d3444;
+  --color-surface-900: #232936;
+  --color-surface-950: #1a1f2e;
+}
+
+/* ============================================
+   ESTILOS BASE
+   ============================================ */
+
 @layer base {
   * {
-    @apply border-surface-700;
+    border-color: var(--color-border);
   }
 
   html {
-    @apply bg-surface-950 text-white antialiased;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 
   body {
-    @apply min-h-screen;
+    min-height: 100vh;
+    background-color: var(--color-bg-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   /* Scrollbar personalizado */
   ::-webkit-scrollbar {
-    @apply w-2;
+    width: 8px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-transparent;
+    background: transparent;
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-surface-700 rounded-full;
+    background-color: var(--color-border-light);
+    border-radius: 9999px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-surface-600;
+    background-color: var(--color-text-muted);
   }
 
   /* Selección de texto */
   ::selection {
-    @apply bg-primary-500/30;
+    background-color: color-mix(
+      in srgb,
+      var(--color-accent-primary) 30%,
+      transparent
+    );
   }
 }
 
-/* Componentes reutilizables */
+/* ============================================
+   COMPONENTES REUTILIZABLES
+   ============================================ */
+
 @layer components {
+  /* Componente de superficie con tema */
+  .surface-primary {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+  }
+
+  .surface-secondary {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+  }
+
+  .surface-elevated {
+    background-color: var(--color-bg-elevated);
+    color: var(--color-text-primary);
+  }
+
+  /* Botón primario con tema */
+  .btn-primary {
+    background-color: var(--color-accent-primary);
+    color: white;
+    transition: background-color 0.2s ease;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-accent-primary-hover);
+  }
+
   /* Contenedor con scroll suave */
   .smooth-scroll {
     scroll-behavior: smooth;
@@ -70,16 +183,100 @@
 
   /* Efecto de brillo para elementos interactivos */
   .glow-on-hover {
-    @apply transition-shadow duration-300;
+    transition: box-shadow 0.3s ease;
   }
 
   .glow-on-hover:hover {
-    box-shadow: 0 0 20px theme('colors.primary.500 / 0.3');
+    box-shadow: 0 0 20px
+      color-mix(in srgb, var(--color-accent-primary) 30%, transparent);
+  }
+
+  /* Card con tema */
+  .theme-card {
+    background-color: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+  }
+
+  .theme-card:hover {
+    border-color: var(--color-accent-primary);
+    box-shadow: 0 4px 12px
+      color-mix(in srgb, var(--color-accent-primary) 15%, transparent);
+  }
+
+  /* Input con tema */
+  .theme-input {
+    background-color: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+    transition: all 0.2s ease;
+  }
+
+  .theme-input:focus {
+    border-color: var(--color-accent-primary);
+    outline: none;
+    box-shadow: 0 0 0 3px
+      color-mix(in srgb, var(--color-accent-primary) 20%, transparent);
+  }
+
+  .theme-input::placeholder {
+    color: var(--color-text-muted);
   }
 }
 
-/* Utilidades personalizadas */
+/* ============================================
+   UTILIDADES PERSONALIZADAS
+   ============================================ */
+
 @layer utilities {
+  /* Colores de texto con tema */
+  .text-theme-primary {
+    color: var(--color-text-primary);
+  }
+
+  .text-theme-secondary {
+    color: var(--color-text-secondary);
+  }
+
+  .text-theme-tertiary {
+    color: var(--color-text-tertiary);
+  }
+
+  .text-theme-muted {
+    color: var(--color-text-muted);
+  }
+
+  .text-theme-accent {
+    color: var(--color-accent-primary);
+  }
+
+  /* Fondos con tema */
+  .bg-theme-primary {
+    background-color: var(--color-bg-primary);
+  }
+
+  .bg-theme-secondary {
+    background-color: var(--color-bg-secondary);
+  }
+
+  .bg-theme-tertiary {
+    background-color: var(--color-bg-tertiary);
+  }
+
+  .bg-theme-elevated {
+    background-color: var(--color-bg-elevated);
+  }
+
+  /* Bordes con tema */
+  .border-theme {
+    border-color: var(--color-border);
+  }
+
+  .border-theme-light {
+    border-color: var(--color-border-light);
+  }
+
   /* Ocultar scrollbar pero mantener funcionalidad */
   .scrollbar-hidden {
     -ms-overflow-style: none;
@@ -107,7 +304,13 @@
 
   /* Gradiente de texto */
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-primary-600;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    background-image: linear-gradient(
+      to right,
+      var(--color-accent-primary),
+      var(--color-accent-secondary)
+    );
   }
 }
-

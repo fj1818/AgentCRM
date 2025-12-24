@@ -14,6 +14,8 @@ export function useChat() {
     sendMessage,
     clearMessages,
     startNewConversation,
+    ultimoGrafico,
+    ultimaTabla,
   } = useChatStore()
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -55,6 +57,9 @@ export function useChat() {
     startNewConversation,
     retryLastMessage,
     hasMessages: messages.length > 0,
+    ultimoGrafico,
+    ultimaTabla,
   }
 }
+
 

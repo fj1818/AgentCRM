@@ -6,7 +6,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-type Theme = 'light' | 'dark' | 'system'
+type Theme = 'banregio' | 'hey'
 type SidebarState = 'expanded' | 'collapsed' | 'hidden'
 
 interface UIState {
@@ -19,6 +19,7 @@ interface UIState {
   
   // Acciones
   setTheme: (theme: Theme) => void
+  toggleTheme: () => void
   toggleSidebar: () => void
   setSidebarState: (state: SidebarState) => void
   setMobileMenuOpen: (open: boolean) => void
@@ -26,6 +27,7 @@ interface UIState {
   closeModal: () => void
   addNotification: (notification: Omit<Notification, 'id'>) => void
   removeNotification: (id: string) => void
+  initTheme: () => void
 }
 
 interface Notification {
@@ -36,25 +38,46 @@ interface Notification {
   duration?: number
 }
 
+const applyTheme = (theme: Theme) => {
+  const root = document.documentElement
+  if (theme === 'hey') {
+    root.classList.add('dark')
+    root.classList.remove('light')
+    root.setAttribute('data-theme', 'hey')
+  } else {
+    root.classList.add('light')
+    root.classList.remove('dark')
+    root.setAttribute('data-theme', 'banregio')
+  }
+}
+
 export const useUIStore = create<UIState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       // Estado inicial
-      theme: 'dark',
+      theme: 'banregio',
       sidebarState: 'expanded',
       isMobileMenuOpen: false,
       activeModal: null,
       notifications: [],
 
+      // Inicializar tema al cargar
+      initTheme: () => {
+        const theme = get().theme
+        applyTheme(theme)
+      },
+
       // Cambiar tema
       setTheme: (theme) => {
         set({ theme })
-        // Aplicar clase al documento
-        if (theme === 'dark') {
-          document.documentElement.classList.add('dark')
-        } else {
-          document.documentElement.classList.remove('dark')
-        }
+        applyTheme(theme)
+      },
+
+      // Toggle entre Banregio y Hey
+      toggleTheme: () => {
+        const newTheme = get().theme === 'banregio' ? 'hey' : 'banregio'
+        set({ theme: newTheme })
+        applyTheme(newTheme)
       },
 
       // Toggle sidebar
@@ -115,7 +138,14 @@ export const useUIStore = create<UIState>()(
         theme: state.theme,
         sidebarState: state.sidebarState,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Aplicar tema cuando se rehidrate el estado
+        if (state) {
+          applyTheme(state.theme)
+        }
+      },
     }
   )
 )
+
 
