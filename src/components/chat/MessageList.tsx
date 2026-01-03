@@ -1,17 +1,15 @@
-/**
- * Lista de mensajes del chat con soporte para gráficos y tablas
- * Diseño premium con tablas modernas
- */
-
-import { type RefObject } from 'react'
+import { type RefObject, useState } from 'react'
 import type { ChatMessage as ChatMessageType } from '@/types'
 import { ChatMessage } from './ChatMessage'
 import { TypingIndicator } from './TypingIndicator'
 import { WelcomeMessage } from './WelcomeMessage'
 import { DynamicChart } from '@/components/charts'
+import { OfferDetailModal } from './OfferDetailModal'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
+import { Eye } from 'lucide-react'
 
+// ... (Interfaces GraficoData, TablaData, ResultadoHistorico remain same)
 interface GraficoData {
   tipo: 'pie' | 'bar' | 'line' | 'column' | 'polar'
   titulo: string
@@ -54,6 +52,9 @@ function traducirColumna(columna: string): string {
     'fechaAlta': 'Fecha de Alta',
     'fechaBaja': 'Fecha de Baja',
     'ide': 'ID',
+    'idOferta': 'ID Oferta',
+    'idProspecto': 'ID Prospecto',
+    'numeroPromotor': 'Promotor',
     'numeroLinea': 'Número de Línea',
     'lineaTotal': 'Línea Total',
     'lineaDisponible': 'Línea Disponible',
@@ -64,6 +65,11 @@ function traducirColumna(columna: string): string {
     'numero': 'Número',
     'cp': 'Código Postal',
     'colonia': 'Colonia',
+    'familiaProducto': 'Familia',
+    'productoInteres': 'Producto',
+    'montoInteres': 'Monto',
+    'montoOferta': 'Monto',
+    'etapa': 'Etapa'
   }
   
   if (traducciones[columna]) {
@@ -116,6 +122,7 @@ function formatearValor(valor: unknown, columna: string): string {
 function ResultTable({ tabla }: { tabla: TablaData }) {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
+  const [selectedRow, setSelectedRow] = useState<Record<string, unknown> | null>(null)
   
   if (!tabla.filas.length) return null
 
@@ -123,96 +130,138 @@ function ResultTable({ tabla }: { tabla: TablaData }) {
     ? tabla.columnas 
     : [...new Set(tabla.filas.flatMap(fila => Object.keys(fila)))]
   
-  const columnasOcultas = ['items', 'clientes', 'tdc', 'telefonos', 'correos', 'direcciones']
+  // Columnas ocultas generales
+  const columnasOcultas = ['items', 'clientes', 'tdc', 'telefonos', 'correos', 'direcciones', 'descripcionOferta']
+  
+  // Detectar idOferta de forma insensible a mayúsculas/minúsculas
+  const colIdOferta = todasLasColumnas.find(col => 
+    col.toLowerCase() === 'idoferta' || col.toLowerCase() === 'id_oferta'
+  )
+  const esTablaOfertas = !!colIdOferta
+
   const columnasFiltradas = todasLasColumnas.filter(col => 
-    !columnasOcultas.includes(col) && !col.includes('_ide')
+    !columnasOcultas.includes(col) && 
+    !col.includes('_ide') &&
+    col !== colIdOferta // Ocultar idOferta de la vista principal
   )
 
   return (
-    <div className="max-w-4xl mx-auto overflow-x-auto animate-fade-in my-4">
-      <div 
-        className={cn(
-          "rounded-2xl shadow-xl overflow-hidden border",
-          isHey 
-            ? "bg-white/5 border-white/10 backdrop-blur-xl" 
-            : "bg-white border-orange-100"
-        )}
-      >
-        {tabla.titulo && (
-          <div 
-            className={cn(
-              "px-5 py-4 font-semibold",
-              isHey 
-                ? "bg-gradient-to-r from-cyan-500/20 to-blue-500/10 text-white border-b border-white/10" 
-                : "bg-gradient-to-r from-orange-100 to-orange-50 text-orange-800 border-b border-orange-100"
-            )}
-          >
-            {tabla.titulo}
-          </div>
-        )}
-        <table className="w-full text-sm">
-          <thead>
-            <tr 
-              className={cn(
-                isHey 
-                  ? "bg-white/5" 
-                  : "bg-orange-50"
-              )}
-            >
-              {columnasFiltradas.map((col, i) => (
-                <th 
-                  key={i} 
-                  className={cn(
-                    "px-5 py-4 text-left font-semibold text-xs uppercase tracking-wider",
-                    isHey ? "text-cyan-300" : "text-orange-600"
-                  )}
-                >
-                  {traducirColumna(col)}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className={cn(
-            "divide-y",
-            isHey ? "divide-white/10" : "divide-orange-100"
-          )}>
-            {tabla.filas.map((fila, rowIdx) => (
-              <tr 
-                key={rowIdx}
-                className={cn(
-                  "transition-colors",
-                  isHey 
-                    ? "hover:bg-white/5" 
-                    : "hover:bg-orange-50/50"
-                )}
-              >
-                {columnasFiltradas.map((col, colIdx) => (
-                  <td 
-                    key={colIdx}
-                    className={cn(
-                      "px-5 py-4",
-                      isHey ? "text-white/80" : "text-gray-700"
-                    )}
-                  >
-                    {formatearValor(fila[col], col)}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+    <>
+      <div className="max-w-4xl mx-auto overflow-x-auto animate-fade-in my-4">
         <div 
           className={cn(
-            "px-5 py-3 text-xs font-medium",
+            "rounded-2xl shadow-xl overflow-hidden border",
             isHey 
-              ? "bg-white/5 text-white/50 border-t border-white/10" 
-              : "bg-orange-50/50 text-gray-500 border-t border-orange-100"
+              ? "bg-white/5 border-white/10 backdrop-blur-xl" 
+              : "bg-white border-orange-100"
           )}
         >
-          {tabla.filas.length} resultado{tabla.filas.length !== 1 ? 's' : ''}
+          {tabla.titulo && (
+            <div 
+              className={cn(
+                "px-5 py-4 font-semibold",
+                isHey 
+                  ? "bg-gradient-to-r from-cyan-500/20 to-blue-500/10 text-white border-b border-white/10" 
+                  : "bg-gradient-to-r from-orange-100 to-orange-50 text-orange-800 border-b border-orange-100"
+              )}
+            >
+              {tabla.titulo}
+            </div>
+          )}
+          <table className="w-full text-sm">
+            <thead>
+              <tr 
+                className={cn(
+                  isHey 
+                    ? "bg-white/5" 
+                    : "bg-orange-50"
+                )}
+              >
+                {columnasFiltradas.map((col, i) => (
+                  <th 
+                    key={i} 
+                    className={cn(
+                      "px-5 py-4 text-left font-semibold text-xs uppercase tracking-wider",
+                      isHey ? "text-cyan-300" : "text-orange-600"
+                    )}
+                  >
+                    {traducirColumna(col)}
+                  </th>
+                ))}
+                {esTablaOfertas && (
+                  <th className={cn(
+                    "px-5 py-4 text-center font-semibold text-xs uppercase tracking-wider",
+                    isHey ? "text-cyan-300" : "text-orange-600"
+                  )}>
+                    Detalle
+                  </th>
+                )}
+              </tr>
+            </thead>
+            <tbody className={cn(
+              "divide-y",
+              isHey ? "divide-white/10" : "divide-orange-100"
+            )}>
+              {tabla.filas.map((fila, rowIdx) => (
+                <tr 
+                  key={rowIdx}
+                  className={cn(
+                    "transition-colors",
+                    isHey 
+                      ? "hover:bg-white/5" 
+                      : "hover:bg-orange-50/50"
+                  )}
+                >
+                  {columnasFiltradas.map((col, colIdx) => (
+                    <td 
+                      key={colIdx}
+                      className={cn(
+                        "px-5 py-4",
+                        isHey ? "text-white/80" : "text-gray-700"
+                      )}
+                    >
+                      {formatearValor(fila[col], col)}
+                    </td>
+                  ))}
+                  {esTablaOfertas && (
+                    <td className="px-5 py-4 text-center">
+                      <button
+                        onClick={() => setSelectedRow(fila)}
+                        className={cn(
+                          "p-2 rounded-lg transition-all shadow-md active:scale-95",
+                          isHey 
+                            ? "bg-gradient-to-r from-blue-600 to-cyan-600 text-white hover:from-blue-500 hover:to-cyan-500" 
+                            : "bg-gradient-to-r from-orange-400 to-amber-400 text-white hover:from-orange-300 hover:to-amber-300"
+                        )}
+                        title="Ver detalle completo"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <div 
+            className={cn(
+              "px-5 py-3 text-xs font-medium",
+              isHey 
+                ? "bg-white/5 text-white/50 border-t border-white/10" 
+                : "bg-orange-50/50 text-gray-500 border-t border-orange-100"
+            )}
+          >
+            {tabla.filas.length} resultado{tabla.filas.length !== 1 ? 's' : ''}
+          </div>
         </div>
       </div>
-    </div>
+
+      <OfferDetailModal
+        isOpen={!!selectedRow}
+        onClose={() => setSelectedRow(null)}
+        data={selectedRow}
+      />
+    </>
   )
 }
 

@@ -183,6 +183,95 @@ function crearEsquema(): void {
     )
   `)
   
+  // Tabla Prospectos
+  db.run(`
+    CREATE TABLE IF NOT EXISTS prospectos (
+      idProspecto TEXT PRIMARY KEY,
+      rfc TEXT,
+      tipoPersona TEXT,
+      fechaAlta TEXT,
+      fechaConversion TEXT,
+      ide TEXT,
+      FOREIGN KEY (ide) REFERENCES clientes(ide)
+    )
+  `)
+  
+  // Tabla Teléfonos Prospecto
+  db.run(`
+    CREATE TABLE IF NOT EXISTS telefonosprospecto (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      idProspecto TEXT,
+      telefono TEXT,
+      FOREIGN KEY (idProspecto) REFERENCES prospectos(idProspecto)
+    )
+  `)
+  
+  // Tabla Correos Prospecto
+  db.run(`
+    CREATE TABLE IF NOT EXISTS correosprospecto (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      idProspecto TEXT,
+      correo TEXT,
+      FOREIGN KEY (idProspecto) REFERENCES prospectos(idProspecto)
+    )
+  `)
+  
+  // Tabla Direcciones Prospecto
+  db.run(`
+    CREATE TABLE IF NOT EXISTS direccionesprospecto (
+      idProspecto TEXT PRIMARY KEY,
+      calle TEXT,
+      numero TEXT,
+      cp TEXT,
+      colonia TEXT,
+      municipio TEXT,
+      estado TEXT,
+      FOREIGN KEY (idProspecto) REFERENCES prospectos(idProspecto)
+    )
+  `)
+  
+  // Tabla Ofertas Prospectos
+  db.run(`
+    CREATE TABLE IF NOT EXISTS ofertasprospectos (
+      idOferta TEXT PRIMARY KEY,
+      idProspecto TEXT,
+      numeroPromotor TEXT,
+      familiaProducto TEXT,
+      productoInteres TEXT,
+      descripcionOferta TEXT,
+      fechaAlta TEXT,
+      fechaBaja TEXT,
+      etapa TEXT,
+      campaña TEXT,
+      montoInteres REAL,
+      idOportunidad TEXT,
+      FOREIGN KEY (idProspecto) REFERENCES prospectos(idProspecto),
+      FOREIGN KEY (numeroPromotor) REFERENCES promotores(numeroPromotor)
+    )
+  `)
+  
+  // Tabla Ofertas Clientes
+  db.run(`
+    CREATE TABLE IF NOT EXISTS ofertasclientes (
+      idOferta TEXT PRIMARY KEY,
+      ide TEXT,
+      numeroPromotor TEXT,
+      familiaProducto TEXT,
+      productoInteres TEXT,
+      descripcionOferta TEXT,
+      fechaAlta TEXT,
+      fechaBaja TEXT,
+      etapa TEXT,
+      campaña TEXT,
+      montoOferta REAL,
+      idOportunidad TEXT,
+      montoTimbrado REAL,
+      fechaTimbrado TEXT,
+      FOREIGN KEY (ide) REFERENCES clientes(ide),
+      FOREIGN KEY (numeroPromotor) REFERENCES promotores(numeroPromotor)
+    )
+  `)
+  
   console.log('Esquema de tablas creado')
 }
 
@@ -301,6 +390,75 @@ async function cargarDatos(): Promise<void> {
   })
   stmtProm.free()
   console.log(`  - ${promotores.length} promotores cargados`)
+  
+  // Insertar Prospectos
+  const { prospectos } = await import('@/data')
+  
+  const stmtProsp = db.prepare(`
+    INSERT INTO prospectos (idProspecto, rfc, tipoPersona, fechaAlta, fechaConversion, ide)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `)
+  prospectos.forEach((p: { idProspecto: string; rfc: string; tipoPersona: string; fechaAlta: string; fechaConversion?: string; ide?: number }) => {
+    stmtProsp.run([p.idProspecto, p.rfc, p.tipoPersona, p.fechaAlta, p.fechaConversion || null, p.ide || null])
+  })
+  stmtProsp.free()
+  console.log(`  - ${prospectos.length} prospectos cargados`)
+  
+  // Insertar Contactabilidad de Prospectos
+  const { telefonosprospecto, correosprospecto, direccionesprospecto } = await import('@/data')
+  
+  // Teléfonos Prospecto
+  const stmtTelProsp = db.prepare(`INSERT INTO telefonosprospecto (idProspecto, telefono) VALUES (?, ?)`)
+  telefonosprospecto.forEach((t: { idProspecto: string; telefono: string }) => {
+    stmtTelProsp.run([t.idProspecto, t.telefono])
+  })
+  stmtTelProsp.free()
+  console.log(`  - ${telefonosprospecto.length} teléfonos de prospectos cargados`)
+  
+  // Correos Prospecto
+  const stmtCorProsp = db.prepare(`INSERT INTO correosprospecto (idProspecto, correo) VALUES (?, ?)`)
+  correosprospecto.forEach((c: { idProspecto: string; correo: string }) => {
+    stmtCorProsp.run([c.idProspecto, c.correo])
+  })
+  stmtCorProsp.free()
+  console.log(`  - ${correosprospecto.length} correos de prospectos cargados`)
+  
+  // Direcciones Prospecto
+  const stmtDirProsp = db.prepare(`
+    INSERT INTO direccionesprospecto (idProspecto, calle, numero, cp, colonia, municipio, estado)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `)
+  direccionesprospecto.forEach((d: { idProspecto: string; calle: string; numero: string; cp: string; colonia: string; municipio: string; estado: string }) => {
+    stmtDirProsp.run([d.idProspecto, d.calle, d.numero, d.cp, d.colonia, d.municipio, d.estado])
+  })
+  stmtDirProsp.free()
+  console.log(`  - ${direccionesprospecto.length} direcciones de prospectos cargadas`)
+  
+  // Insertar Ofertas Prospectos
+  const { ofertasprospectos } = await import('@/data')
+  
+  const stmtOfert = db.prepare(`
+    INSERT INTO ofertasprospectos (idOferta, idProspecto, numeroPromotor, familiaProducto, productoInteres, descripcionOferta, fechaAlta, fechaBaja, etapa, campaña, montoInteres, idOportunidad)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  ofertasprospectos.forEach((o: { idOferta: string; idProspecto: string; numeroPromotor: string; familiaProducto: string; productoInteres: string; descripcionOferta: string; fechaAlta: string; fechaBaja?: string; etapa: string; campaña: string; montoInteres: number; idOportunidad?: string }) => {
+    stmtOfert.run([o.idOferta, o.idProspecto, o.numeroPromotor, o.familiaProducto, o.productoInteres, o.descripcionOferta, o.fechaAlta, o.fechaBaja || null, o.etapa, o.campaña, o.montoInteres, o.idOportunidad || null])
+  })
+  stmtOfert.free()
+  console.log(`  - ${ofertasprospectos.length} ofertas de prospectos cargadas`)
+  
+  // Insertar Ofertas Clientes
+  const { ofertasclientes } = await import('@/data')
+  
+  const stmtOfertCli = db.prepare(`
+    INSERT INTO ofertasclientes (idOferta, ide, numeroPromotor, familiaProducto, productoInteres, descripcionOferta, fechaAlta, fechaBaja, etapa, campaña, montoOferta, idOportunidad, montoTimbrado, fechaTimbrado)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  ofertasclientes.forEach((o: { idOferta: string; ide: number; numeroPromotor: string; familiaProducto: string; productoInteres: string; descripcionOferta: string; fechaAlta: string; fechaBaja?: string; etapa: string; campaña: string; montoOferta: number; idOportunidad?: string; montoTimbrado?: number; fechaTimbrado?: string }) => {
+    stmtOfertCli.run([o.idOferta, o.ide, o.numeroPromotor, o.familiaProducto, o.productoInteres, o.descripcionOferta, o.fechaAlta, o.fechaBaja || null, o.etapa, o.campaña, o.montoOferta, o.idOportunidad || null, o.montoTimbrado || null, o.fechaTimbrado || null])
+  })
+  stmtOfertCli.free()
+  console.log(`  - ${ofertasclientes.length} ofertas de clientes cargadas`)
   
   console.log('Datos cargados exitosamente')
 }
