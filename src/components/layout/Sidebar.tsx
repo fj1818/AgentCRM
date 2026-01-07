@@ -7,13 +7,21 @@ import {
   MessageSquare,
   ChevronLeft,
   ChevronRight,
+  Users,
+  UserPlus,
+  CheckSquare,
+  Calculator,
 } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 
-// Solo Chat visible - las tablas de datos permanecen ocultas
+// Opciones de navegación principal
 const navItems = [
   { icon: MessageSquare, label: 'Chat', path: 'chat' },
+  { icon: Users, label: 'Clientes', path: 'clientes' },
+  { icon: UserPlus, label: 'Prospectos', path: 'prospectos' },
+  { icon: CheckSquare, label: 'Tareas', path: 'tareas' },
+  { icon: Calculator, label: 'Cotizador', path: 'cotizador' },
 ]
 
 interface SidebarProps {
