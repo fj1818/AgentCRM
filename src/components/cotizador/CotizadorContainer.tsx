@@ -225,13 +225,13 @@ export function CotizadorContainer() {
           : '12, 18 o 24 meses'
       
       return {
-        respuesta: `Para cotizar tu **${config.nombre}**, necesito:\n\n📊 **Monto**: A partir de $${config.montoMinimo.toLocaleString('es-MX')}\n📅 **Plazo**: ${plazosTexto}\n💰 **Enganche** (opcional)\n\nPor ejemplo: *"2 millones a 20 años"* o *"500 mil a 36 meses con 100 mil de enganche"*`,
+        respuesta: `Para cotizar tu ${config.nombre}, necesito:\n\n📊 Monto: A partir de $${config.montoMinimo.toLocaleString('es-MX')}\n📅 Plazo: ${plazosTexto}\n💰 Enganche (opcional)\n\nPor ejemplo: "2 millones a 20 años" o "500 mil a 36 meses con 100 mil de enganche"`,
       }
     }
     
     // Si no detectamos nada
     return {
-      respuesta: '¿Qué tipo de crédito te interesa cotizar?\n\n🏠 **Hipotecario** - Para compra de casa\n🚗 **Auto** - Para tu vehículo\n💳 **Personal** - Para lo que necesites',
+      respuesta: '¿Qué tipo de crédito te interesa cotizar?\n\n🏠 Hipotecario - Para compra de casa\n🚗 Auto - Para tu vehículo\n💳 Personal - Para lo que necesites',
     }
   }
   
