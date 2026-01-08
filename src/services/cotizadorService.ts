@@ -114,7 +114,8 @@ export function calcularCotizacion(solicitud: SolicitudCotizacion): ResultadoCot
     tasaAnual = tasas[plazoAnios] || 12
   } else {
     const tasas = config.tasas as Record<number, number>
-    tasaAnual = tasas[plazo] || Object.values(tasas)[Object.values(tasas).length - 1]
+    const valoresTasas = Object.values(tasas)
+    tasaAnual = tasas[plazo] || valoresTasas[valoresTasas.length - 1] || 12
   }
   
   // Calcular monto a financiar

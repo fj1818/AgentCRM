@@ -19,7 +19,7 @@ import {
   type ChartData,
   type ChartOptions,
 } from 'chart.js'
-import { Bar, Pie, Line, Doughnut, PolarArea } from 'react-chartjs-2'
+import { Bar, Line, Doughnut, PolarArea } from 'react-chartjs-2'
 
 // Registrar componentes de Chart.js
 ChartJS.register(
@@ -93,7 +93,8 @@ export function DynamicChart({ tipo, titulo, datos, height = 350 }: DynamicChart
     return valor.toLocaleString('es-MX')
   }
 
-  const baseOptions: ChartOptions<'bar' | 'pie' | 'line' | 'doughnut'> = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const baseOptions: ChartOptions<any> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -126,7 +127,8 @@ export function DynamicChart({ tipo, titulo, datos, height = 350 }: DynamicChart
           size: 14,
         },
         callbacks: {
-          label: function(context) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          label: function(context: any) {
             // context.raw contiene el valor real independiente de la orientación
             // Para barras horizontales parsed.x tiene el valor, para verticales parsed.y
             // Usar raw que siempre es el valor numérico
@@ -136,7 +138,8 @@ export function DynamicChart({ tipo, titulo, datos, height = 350 }: DynamicChart
             const label = labels[context.dataIndex] || context.dataset.label || ''
             return `${label}: ${valorFormateado}`
           },
-          title: function(context) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          title: function(context: any[]) {
             // Mostrar el nombre de la categoría (estado, producto, etc.)
             const idx = context[0]?.dataIndex
             return idx !== undefined ? (labels[idx] || '') : ''
@@ -230,14 +233,17 @@ export function DynamicChart({ tipo, titulo, datos, height = 350 }: DynamicChart
           font: { size: 12 },
           generateLabels: function(chart) {
             const data = chart.data
-            if (data.labels?.length && data.datasets.length) {
+            const dataset = data.datasets[0]
+            if (data.labels?.length && dataset) {
               return (data.labels as string[]).map((label, i) => {
-                const value = (data.datasets[0].data[i] as number) || 0
+                const value = (dataset.data[i] as number) || 0
                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0'
+                const bgColors = dataset.backgroundColor as string[] | undefined
+                const borderColors = dataset.borderColor as string[] | undefined
                 return {
                   text: `${label}: ${percentage}%`,
-                  fillStyle: (data.datasets[0].backgroundColor as string[])?.[i] || COLORES[i],
-                  strokeStyle: (data.datasets[0].borderColor as string[])?.[i] || COLORES_BORDE[i],
+                  fillStyle: bgColors?.[i] || COLORES[i] || '#ccc',
+                  strokeStyle: borderColors?.[i] || COLORES_BORDE[i] || '#999',
                   lineWidth: 2,
                   hidden: false,
                   index: i,
@@ -302,14 +308,17 @@ export function DynamicChart({ tipo, titulo, datos, height = 350 }: DynamicChart
           font: { size: 12 },
           generateLabels: function(chart) {
             const data = chart.data
-            if (data.labels?.length && data.datasets.length) {
+            const dataset = data.datasets[0]
+            if (data.labels?.length && dataset) {
               return (data.labels as string[]).map((label, i) => {
-                const value = (data.datasets[0].data[i] as number) || 0
+                const value = (dataset.data[i] as number) || 0
                 const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0'
+                const bgColors = dataset.backgroundColor as string[] | undefined
+                const borderColors = dataset.borderColor as string[] | undefined
                 return {
                   text: `${label}: ${percentage}%`,
-                  fillStyle: (data.datasets[0].backgroundColor as string[])?.[i] || COLORES[i],
-                  strokeStyle: (data.datasets[0].borderColor as string[])?.[i] || COLORES_BORDE[i],
+                  fillStyle: bgColors?.[i] || COLORES[i] || '#ccc',
+                  strokeStyle: borderColors?.[i] || COLORES_BORDE[i] || '#999',
                   lineWidth: 2,
                   hidden: false,
                   index: i,

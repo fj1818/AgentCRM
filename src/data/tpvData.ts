@@ -7,7 +7,7 @@
  * - TPV Premium: Para grandes comercios
  */
 
-import type { Cliente } from '@/types'
+
 import { clientesData } from './clientesData'
 
 /** Tipo de producto TPV */

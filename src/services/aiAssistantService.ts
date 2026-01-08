@@ -13,7 +13,6 @@ import { ejecutarSQL, inicializarBaseDatos, type SQLResult } from './sqlDatabase
 
 // Webhooks de n8n
 const WEBHOOK_SQL_AGENT = 'https://abrahamnavarrete.app.n8n.cloud/webhook/regio-ia-assistant'
-const WEBHOOK_PRESENTER = 'https://abrahamnavarrete.app.n8n.cloud/webhook/presenter'
 
 /** Respuesta del Agente SQL */
 interface SQLAgentResponse {
@@ -159,45 +158,6 @@ async function enviarAAgente(pregunta: string): Promise<SQLAgentResponse | SQLAg
 }
 
 /**
- * Envía resultado al Agente Presenter para formatear
- */
-async function enviarAPresenter(
-  resultado: SQLResult,
-  metadatos: SQLAgentResponse
-): Promise<string | null> {
-  try {
-    const response = await fetch(WEBHOOK_PRESENTER, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        resultado: JSON.stringify(resultado.datos.slice(0, 30)),
-        titulo: metadatos.titulo,
-        presentacion: metadatos.presentacion,
-        total: resultado.total,
-        columnas: resultado.columnas,
-      }),
-    })
-    
-    if (!response.ok) return null
-    
-    const data = await response.json()
-    const texto = data.output || data.text || data.mensaje
-    
-    if (!texto) return null
-    
-    // Intentar parsear JSON del presenter
-    try {
-      const parsed = JSON.parse(texto.replace(/```json|```/g, '').trim())
-      return parsed.mensaje || texto
-    } catch {
-      return texto
-    }
-  } catch {
-    return null
-  }
-}
-
-/**
  * Formatea el resultado SQL para presentación
  */
 function formatearResultado(
@@ -323,7 +283,8 @@ export async function procesarPregunta(pregunta: string): Promise<AIResponse> {
   }
   
   // Si ninguna respuesta tiene SQL, error
-  if (!responses.length || !responses[0].sql) {
+  const firstResponse = responses[0]
+  if (!responses.length || !firstResponse?.sql) {
     return {
       respuesta: 'No pude generar una consulta para tu pregunta. Intenta reformularla.',
       tipo: 'texto',

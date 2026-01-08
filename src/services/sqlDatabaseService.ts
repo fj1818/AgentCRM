@@ -292,7 +292,7 @@ async function cargarDatos(): Promise<void> {
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `)
   
-  clientes.forEach((c: { ide: number; rfc: string; nombreRazonSocial: string; fechaAlta: string; fechaBaja: string | undefined; tipoPersona: string; numeroPromotor: string }) => {
+  clientes.forEach((c) => {
     stmtClientes.run([c.ide, c.rfc, c.nombreRazonSocial, c.fechaAlta, c.fechaBaja || null, c.tipoPersona, c.numeroPromotor])
   })
   stmtClientes.free()

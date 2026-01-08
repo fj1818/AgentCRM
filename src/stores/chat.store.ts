@@ -10,7 +10,7 @@ import { chatService } from '@/services'
 import { procesarPregunta, type AIResponse } from '@/services/aiAssistantService'
 
 interface GraficoData {
-  tipo: 'pie' | 'bar' | 'line' | 'column'
+  tipo: 'pie' | 'bar' | 'line' | 'column' | 'polar'
   titulo: string
   datos: { x: string; value: number }[]
 }

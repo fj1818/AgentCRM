@@ -24,24 +24,6 @@ interface Evento {
   color: string
 }
 
-// Clientes simulados
-const CLIENTES = {
-  morales: [
-    'Grupo Industrial del Norte S.A. de C.V.',
-    'Constructora Metropolitana S. de R.L.',
-    'Distribuidora Comercial Azteca S.A.',
-    'Inmobiliaria Costa Dorada S.A. de C.V.',
-    'Transportes y Logística del Bajío S.A.',
-  ],
-  fisicas: [
-    'Roberto Hernández García',
-    'María del Carmen López Ruiz',
-    'José Antonio Martínez Flores',
-    'Patricia Sánchez Moreno',
-    'Carlos Eduardo Ramírez Díaz',
-  ]
-}
-
 // Eventos de ejemplo - Solo lunes a viernes
 // Enero 2026: Día 1=Jueves, 5=Lunes, 6=Martes, 7=Miércoles, 8=Jueves, 9=Viernes
 const EVENTOS_EJEMPLO: Evento[] = [

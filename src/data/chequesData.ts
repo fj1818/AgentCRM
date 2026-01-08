@@ -7,7 +7,7 @@
  * - NominaBasica: Cuenta básica
  */
 
-import type { Cliente } from '@/types'
+
 import { clientesData } from './clientesData'
 
 /** Tipo de producto de nómina */

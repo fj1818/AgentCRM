@@ -3,8 +3,7 @@
  * Diseño premium con glassmorphism
  */
 
-import { MessageSquarePlus, Trash2, Sparkles, Bot } from 'lucide-react'
-import { IconButton } from '@/components/common'
+import { MessageSquarePlus, Trash2, Bot } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 
