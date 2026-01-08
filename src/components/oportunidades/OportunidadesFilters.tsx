@@ -10,7 +10,8 @@ import type { TipoPersona } from '@/types'
 export interface FiltrosOportunidades {
   busqueda: string
   tipoPersona: TipoPersona | 'todos'
-  soloActivos: boolean
+  familiaProducto?: string
+  producto?: string
   promotor?: string
 }
 
@@ -20,6 +21,37 @@ const TIPOS_PERSONA = [
   { value: 'Persona Fisica con Actividad Empresarial', label: 'Persona Física con Act. Empresarial' },
   { value: 'Persona Fisica', label: 'Persona Física' },
 ]
+
+// Opciones de filtros
+const FAMILIAS_PRODUCTO = [
+  { value: '', label: 'Todas las familias' },
+  { value: 'TDC', label: 'TDC' },
+  { value: 'TPV', label: 'TPV' },
+  { value: 'Cheques', label: 'Cheques' },
+]
+
+const PRODUCTOS_POR_FAMILIA: Record<string, { value: string; label: string }[]> = {
+  '': [{ value: '', label: 'Todos los productos' }],
+  'TDC': [
+    { value: '', label: 'Todos los productos TDC' },
+    { value: 'TDC Básica', label: 'TDC Básica' },
+    { value: 'TDC Oro', label: 'TDC Oro' },
+    { value: 'TDC Platinum', label: 'TDC Platinum' },
+    { value: 'TDC Empresarial', label: 'TDC Empresarial' },
+  ],
+  'TPV': [
+    { value: '', label: 'Todos los productos TPV' },
+    { value: 'TPV Fija', label: 'TPV Fija' },
+    { value: 'TPV Móvil', label: 'TPV Móvil' },
+    { value: 'TPV E-commerce', label: 'TPV E-commerce' },
+  ],
+  'Cheques': [
+    { value: '', label: 'Todos los productos Cheques' },
+    { value: 'Cuenta Cheques Básica', label: 'Cuenta Cheques Básica' },
+    { value: 'Cuenta Cheques Empresarial', label: 'Cuenta Cheques Empresarial' },
+    { value: 'Cuenta Cheques PyME', label: 'Cuenta Cheques PyME' },
+  ],
+}
 
 interface FilterSelectProps {
   label: string
@@ -42,7 +74,7 @@ function FilterSelect({ label, value, options, onChange }: FilterSelectProps) {
           isHey 
             ? "bg-white/5 border-white/10 text-white" 
             : "bg-white border-orange-200 text-gray-700",
-          value && value !== 'todos' ? (isHey ? "border-cyan-500/50" : "border-orange-400") : ""
+          value && value !== 'todos' && value !== '' ? (isHey ? "border-cyan-500/50" : "border-orange-400") : ""
         )}
       >
         {options.map(opt => (
@@ -78,17 +110,21 @@ export function OportunidadesFilters({ filtros, onFiltroChange }: OportunidadesF
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
   
+  const productosDisponibles = PRODUCTOS_POR_FAMILIA[filtros.familiaProducto || ''] || PRODUCTOS_POR_FAMILIA[''] || []
+  
   // Contar filtros activos (excluyendo búsqueda y valores por defecto)
   const filtrosActivos = [
     filtros.tipoPersona !== 'todos',
-    filtros.soloActivos === true,
+    filtros.familiaProducto !== '',
+    filtros.producto !== '',
     filtros.promotor
   ].filter(Boolean).length
   
   const limpiarFiltros = () => {
     onFiltroChange({
       tipoPersona: 'todos',
-      soloActivos: false,
+      familiaProducto: '',
+      producto: '',
       promotor: ''
     })
   }
@@ -127,7 +163,7 @@ export function OportunidadesFilters({ filtros, onFiltroChange }: OportunidadesF
       </div>
       
       {/* Filter grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <FilterSelect
           label="Tipo Persona"
           value={filtros.tipoPersona}
@@ -135,31 +171,19 @@ export function OportunidadesFilters({ filtros, onFiltroChange }: OportunidadesF
           onChange={(v) => onFiltroChange({ tipoPersona: v as TipoPersona | 'todos' })}
         />
         
-        {/* Toggle para solo activos */}
-        <div className={cn(
-          "flex items-center px-3 py-2 rounded-lg border",
-          isHey ? "border-white/10 bg-white/5" : "border-orange-200 bg-white"
-        )}>
-          <input
-            type="checkbox"
-            id="soloActivos"
-            checked={filtros.soloActivos}
-            onChange={(e) => onFiltroChange({ soloActivos: e.target.checked })}
-            className={cn(
-              "w-4 h-4 rounded border-gray-300",
-              isHey ? "bg-white/10 border-white/20 accent-cyan-500" : "accent-orange-500"
-            )}
-          />
-          <label 
-            htmlFor="soloActivos" 
-            className={cn(
-              "ml-2 text-sm cursor-pointer select-none",
-              isHey ? "text-gray-300" : "text-gray-700"
-            )}
-          >
-            Solo clientes activos (con fecha de alta)
-          </label>
-        </div>
+        <FilterSelect
+          label="Familia"
+          value={filtros.familiaProducto || ''}
+          options={FAMILIAS_PRODUCTO}
+          onChange={(v) => onFiltroChange({ familiaProducto: v, producto: '' })}
+        />
+        
+        <FilterSelect
+          label="Producto"
+          value={filtros.producto || ''}
+          options={productosDisponibles}
+          onChange={(v) => onFiltroChange({ producto: v })}
+        />
       </div>
     </div>
   )

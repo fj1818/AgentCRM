@@ -30,6 +30,8 @@ export interface OfertaCliente {
   ide: number
   /** Número de promotor asignado (FK a tabla promotores) */
   numeroPromotor: string
+  /** Nombre del promotor asignado (Desnormalizado para visualización) */
+  promotorNombre: string
   /** Familia de producto: TDC, TPV, Cheques */
   familiaProducto: FamiliaProductoCliente
   /** Nombre específico del producto según la familia */

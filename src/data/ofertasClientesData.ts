@@ -4,6 +4,8 @@
  * Columnas:
  * - IdOferta: 18 caracteres ("OC" + 16 alfanuméricos)
  * - IDE: FK a tabla clientes
+ * - NumeroPromotor: FK a tabla promotores
+ * - PromotorNombre: Nombre del promotor
  * - FamiliaProducto: TDC, TPV, Cheques
  * - ProductoInteres: Nombre específico del producto
  * - FechaAlta: dd/mm/yyyy
@@ -23,6 +25,7 @@ import type {
   CampañaOrigenCliente 
 } from '@/types/ofertaCliente.types'
 import { clientesData } from './clientesData'
+import { promotoresData } from './promotoresData'
 
 const familias: FamiliaProductoCliente[] = ['TDC', 'TPV', 'Cheques']
 
@@ -118,9 +121,7 @@ function generarScriptVenta(familia: FamiliaProductoCliente, producto: string, m
   const tasa = familia === 'TDC' ? 'Tasa de interés ordinaria anual fija del 45%' : 
                familia === 'TPV' ? 'Tasa de descuento de 2.5% + IVA' : 'Rendimiento anual del 5%'
 
-  return `Script de Venta Sugerido:
-
-El cliente está interesado en el producto ${producto} con un monto pre-aprobado de $${monto.toLocaleString('es-MX')}.
+  return `El cliente está interesado en el producto ${producto} con un monto pre-aprobado de $${monto.toLocaleString('es-MX')}.
 
 Tasa / Condiciones:
 ${tasa}
@@ -153,6 +154,10 @@ export function generarOfertasClientesSimuladas(cantidad: number = 600): OfertaC
     // Obtener numeroPromotor del cliente
     const cliente = clientesData.find(c => c.ide === ide)
     const numeroPromotor = cliente ? cliente.numeroPromotor : '017577' // fallback default
+    
+    // Obtener nombre del promotor
+    const promotor = promotoresData.find(p => p.numeroPromotor === numeroPromotor)
+    const promotorNombre = promotor ? promotor.nombre : 'Promotor Desconocido'
     
     // Familia y producto
     const familia = familias[Math.floor(Math.random() * familias.length)]!
@@ -207,6 +212,7 @@ export function generarOfertasClientesSimuladas(cantidad: number = 600): OfertaC
       idOferta,
       ide,
       numeroPromotor,
+      promotorNombre,
       familiaProducto: familia,
       productoInteres,
       descripcionOferta,

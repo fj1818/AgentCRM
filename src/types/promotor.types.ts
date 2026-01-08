@@ -18,6 +18,8 @@ export type SucursalEquipo = SucursalBanregio | EquipoHey
 export interface Promotor {
   /** Número de 6 dígitos con padding de ceros (ej: "017577") */
   numeroPromotor: string
+  /** Nombre completo del promotor */
+  nombre: string
   /** Fecha en formato dd/mm/yyyy */
   fechaAlta: string
   /** Fecha en formato dd/mm/yyyy - opcional */

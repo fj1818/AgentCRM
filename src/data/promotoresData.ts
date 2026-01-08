@@ -60,6 +60,21 @@ function generarFecha(añoInicio: number = 2015, añoFin: number = 2024): string
   return `${dia.toString().padStart(2, '0')}/${mes.toString().padStart(2, '0')}/${año}`
 }
 
+const NOMBRES_PROMOTORES = [
+  'Roberto Hernández',
+  'María del Carmen López',
+  'Alejandro González',
+  'Ana Sofía Martínez',
+  'Carlos Alberto Ruiz',
+  'Lucía Fernández',
+  'Jorge Luis Ramírez',
+  'Patricia Torres',
+  'Eduardo Morales',
+  'Gabriela Castillo',
+  'Fernando Vargas',
+  'Mónica Jiménez'
+]
+
 function padNumeroPromotor(num: number): string {
   return num.toString().padStart(6, '0')
 }
@@ -71,6 +86,7 @@ export function generarPromotoresSimulados(cantidad: number = 50): Promotor[] {
   // Siempre incluir el promotor principal 017577
   const promotorPrincipal: Promotor = {
     numeroPromotor: '017577',
+    nombre: 'Roberto Hernández', // Nombre fijo para el principal
     fechaAlta: '15/03/2018',
     activo: true,
     banco: 'Banregio',
@@ -87,6 +103,9 @@ export function generarPromotoresSimulados(cantidad: number = 50): Promotor[] {
     if (numerosUsados.has(numero)) continue
     numerosUsados.add(numero)
     
+    // Asignar nombre consistente basado en el número
+    const nombre = NOMBRES_PROMOTORES[numero % NOMBRES_PROMOTORES.length]!
+
     const banco: BancoPromotor = Math.random() > 0.4 ? 'Banregio' : 'Hey'
     const tieneFechaBaja = Math.random() < 0.10
     const fechaBaja = tieneFechaBaja ? generarFecha(2023, 2024) : undefined
@@ -101,6 +120,7 @@ export function generarPromotoresSimulados(cantidad: number = 50): Promotor[] {
     
     promotores.push({
       numeroPromotor: padNumeroPromotor(numero),
+      nombre,
       fechaAlta: generarFecha(2015, 2023),
       fechaBaja,
       activo: !tieneFechaBaja,
