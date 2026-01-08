@@ -13,6 +13,7 @@ export interface FiltrosOportunidades {
   familiaProducto?: string
   producto?: string
   promotor?: string
+  soloActivos?: boolean
 }
 
 const TIPOS_PERSONA = [
