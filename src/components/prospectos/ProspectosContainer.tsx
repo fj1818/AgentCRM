@@ -6,8 +6,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { 
-  MessageSquare, Send, Users, Search,
-  Filter, ChevronDown
+  MessageSquare, Send, Users, Search
 } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'

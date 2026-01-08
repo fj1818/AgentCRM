@@ -5,7 +5,8 @@
 import { useState } from 'react'
 import { AppLayout } from '@/components/layout'
 import { ChatContainer } from '@/components/chat'
-import { ClientesTable } from '@/components/clientes'
+// import { ClientesTable } from '@/components/clientes' 
+import { OportunidadesContainer } from '@/components/oportunidades'
 import { CotizadorContainer } from '@/components/cotizador'
 import { TareasContainer } from '@/components/tareas'
 import { ProspectosContainer } from '@/components/prospectos'
@@ -16,7 +17,7 @@ function App() {
   return (
     <AppLayout currentView={currentView} onNavigate={setCurrentView}>
       {currentView === 'chat' && <ChatContainer />}
-      {currentView === 'oportunidades' && <ClientesTable />}
+      {currentView === 'oportunidades' && <OportunidadesContainer />}
       {currentView === 'prospectos' && <ProspectosContainer />}
       {currentView === 'cotizador' && <CotizadorContainer />}
       {currentView === 'tareas' && <TareasContainer />}

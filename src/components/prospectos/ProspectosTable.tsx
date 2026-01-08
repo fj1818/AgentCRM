@@ -224,7 +224,7 @@ export function ProspectosTable({ filtros }: ProspectosTableProps) {
             "divide-y",
             isHey ? "divide-white/5" : "divide-orange-100"
           )}>
-            {datosPaginados.map((item, idx) => {
+            {datosPaginados.map((item) => {
               const etapaColor = ETAPA_COLORS[item.etapa] || ETAPA_COLORS['No contactado']!
               
               return (

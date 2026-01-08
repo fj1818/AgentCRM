@@ -132,7 +132,7 @@ export function ProspectosFilters({ filtros, onFiltroChange }: ProspectosFilters
   const isHey = theme === 'hey'
   
   // Obtener productos según familia seleccionada
-  const productosDisponibles = PRODUCTOS_POR_FAMILIA[filtros.familiaProducto] || PRODUCTOS_POR_FAMILIA['']
+  const productosDisponibles = PRODUCTOS_POR_FAMILIA[filtros.familiaProducto] || PRODUCTOS_POR_FAMILIA[''] || []
   
   // Contar filtros activos
   const filtrosActivos = [
