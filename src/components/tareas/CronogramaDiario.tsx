@@ -3,9 +3,9 @@
  * Muestra actividades en bloques de tiempo de 9:00 a 18:00
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Clock, Phone, FileText, Users, Coffee, Check, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useUIStore } from '@/stores'
+import { useUIStore, useEventosStore } from '@/stores'
 import { cn } from '@/utils'
 
 interface Actividad {
@@ -181,13 +181,33 @@ export function CronogramaDiario() {
   const [fechaActual, setFechaActual] = useState(new Date(2026, 0, 7))
   const [actividades, setActividades] = useState<Actividad[]>([])
   
-  // Cargar actividades cuando cambia la fecha
+  // Obtener eventos del store compartido
+  const eventosStore = useEventosStore((state) => state.eventos)
+  
+  // Convertir eventos del store al formato de actividades
+  const actividadesDelStore = useMemo(() => {
+    const fechaKey = getFechaKey(fechaActual)
+    return eventosStore
+      .filter(e => e.fecha === fechaKey) // Filtrar por fecha actual
+      .map(e => ({
+        id: e.id,
+        titulo: e.nombre,
+        horaInicio: e.hora || '09:00',
+        duracion: e.duracion || 60,
+        tipo: e.tipo === 'reunion' ? 'reunion' as const : 'otro' as const,
+        cliente: e.cliente,
+        completada: e.completado || false,
+        color: e.tipo === 'reunion' ? 'bg-purple-600' : 'bg-teal-500'
+      }))
+  }, [eventosStore, fechaActual])
+  
+  // Cargar actividades cuando cambia la fecha (combina estáticas + store)
   useEffect(() => {
     const key = getFechaKey(fechaActual)
     const actividadesDia = ACTIVIDADES_POR_DIA[key] || []
-    // Crear copia para no mutar el original
-    setActividades(actividadesDia.map(a => ({ ...a })))
-  }, [fechaActual])
+    // Crear copia para no mutar el original y combinar con store
+    setActividades([...actividadesDia.map(a => ({ ...a })), ...actividadesDelStore])
+  }, [fechaActual, actividadesDelStore])
   
   const toggleActividad = (id: string) => {
     setActividades(prev => prev.map(a => 

@@ -18,9 +18,9 @@ import { cn } from '@/utils'
 // Opciones de navegación principal
 const navItems = [
   { icon: MessageSquare, label: 'Chat', path: 'chat' },
-  { icon: Users, label: 'Clientes', path: 'clientes' },
-  { icon: UserPlus, label: 'Prospectos', path: 'prospectos' },
   { icon: CheckSquare, label: 'Tareas', path: 'tareas' },
+  { icon: Users, label: 'Oportunidades', path: 'oportunidades' },
+  { icon: UserPlus, label: 'Prospectos', path: 'prospectos' },
   { icon: Calculator, label: 'Cotizador', path: 'cotizador' },
 ]
 

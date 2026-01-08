@@ -4,9 +4,9 @@
  * Click on events to see popup with details
  */
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { ChevronLeft, ChevronRight, Clock, X, MapPin, User, Calendar as CalendarIcon } from 'lucide-react'
-import { useUIStore } from '@/stores'
+import { useUIStore, useEventosStore } from '@/stores'
 import { cn } from '@/utils'
 
 type Vista = 'dia' | 'semana' | 'mes'
@@ -294,17 +294,52 @@ export function AgendaCalendar() {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
   
+  // Obtener eventos del store compartido
+  const eventosStore = useEventosStore((state) => state.eventos)
+  
   const [vista, setVista] = useState<Vista>('semana')
   const [fechaActual, setFechaActual] = useState(new Date(2026, 0, 7)) // 7 de enero 2026
   const [eventoSeleccionado, setEventoSeleccionado] = useState<Evento | null>(null)
   
-  // Obtener eventos del día
+  // Convertir eventos del store al formato del calendario
+  const eventosDelStore = useMemo(() => {
+    return eventosStore
+      .filter(e => e.tipo === 'reunion') // Solo reuniones en el calendario
+      .map(e => {
+        const [year, month, day] = e.fecha.split('-').map(Number)
+        const duracionMin = e.duracion || 60
+        const horaInicio = e.hora || '09:00'
+        const [h, m] = horaInicio.split(':').map(Number)
+        const horaFinMin = (h || 0) * 60 + (m || 0) + duracionMin
+        const horaFin = `${String(Math.floor(horaFinMin / 60)).padStart(2, '0')}:${String(horaFinMin % 60).padStart(2, '0')}`
+        
+        return {
+          id: e.id,
+          titulo: e.nombre,
+          fecha: new Date(year || 2026, (month || 1) - 1, day || 1),
+          horaInicio,
+          horaFin,
+          tipo: 'reunion' as const,
+          descripcion: e.descripcion || 'Evento agendado desde el chat',
+          cliente: e.cliente,
+          color: 'bg-purple-500' // Color distintivo para eventos del chat
+        }
+      })
+  }, [eventosStore])
+  
+  // Obtener eventos del día (combina ejemplos + store)
   const getEventosDelDia = (fecha: Date) => {
-    return EVENTOS_EJEMPLO.filter(e => 
+    const ejemplos = EVENTOS_EJEMPLO.filter(e => 
       e.fecha.getFullYear() === fecha.getFullYear() &&
       e.fecha.getMonth() === fecha.getMonth() &&
       e.fecha.getDate() === fecha.getDate()
     )
+    const delStore = eventosDelStore.filter(e =>
+      e.fecha.getFullYear() === fecha.getFullYear() &&
+      e.fecha.getMonth() === fecha.getMonth() &&
+      e.fecha.getDate() === fecha.getDate()
+    )
+    return [...ejemplos, ...delStore]
   }
   
   // Navegación

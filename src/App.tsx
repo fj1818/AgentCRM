@@ -8,6 +8,7 @@ import { ChatContainer } from '@/components/chat'
 import { ClientesTable } from '@/components/clientes'
 import { CotizadorContainer } from '@/components/cotizador'
 import { TareasContainer } from '@/components/tareas'
+import { ProspectosContainer } from '@/components/prospectos'
 
 function App() {
   const [currentView, setCurrentView] = useState('chat')
@@ -15,7 +16,8 @@ function App() {
   return (
     <AppLayout currentView={currentView} onNavigate={setCurrentView}>
       {currentView === 'chat' && <ChatContainer />}
-      {currentView === 'clientes' && <ClientesTable />}
+      {currentView === 'oportunidades' && <ClientesTable />}
+      {currentView === 'prospectos' && <ProspectosContainer />}
       {currentView === 'cotizador' && <CotizadorContainer />}
       {currentView === 'tareas' && <TareasContainer />}
     </AppLayout>

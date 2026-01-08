@@ -9,7 +9,7 @@ import {
   ChevronDown, ChevronRight, Calendar, 
   MessageSquare, Clock, Send
 } from 'lucide-react'
-import { useUIStore } from '@/stores'
+import { useUIStore, useEventosStore } from '@/stores'
 import { cn } from '@/utils'
 import { AgendaCalendar } from './AgendaCalendar'
 import { CronogramaDiario } from './CronogramaDiario'
@@ -71,44 +71,172 @@ function AccordionItem({
   )
 }
 
-// Webhook URL para el scheduler
-const WEBHOOK_SCHEDULER = 'https://abrahamnavarrete.app.n8n.cloud/webhook/scheduler'
-
 // Tipos para el scheduler
 interface MensajeChat {
   id: string
   tipo: 'usuario' | 'asistente'
   contenido: string
-  datosAgendados?: {
-    tipo: 'reunion' | 'tarea'
-    nombre: string
-    fecha: string
-    hora?: string
-    duracion: string
-  }
+  datosAgendados?: DatosEvento
   timestamp: Date
 }
 
-// Enviar mensaje al webhook de n8n (el agente procesará el mensaje)
-async function enviarAlScheduler(mensaje: string): Promise<{ exito: boolean; respuesta?: string }> {
+interface DatosEvento {
+  tipo: 'reunion' | 'tarea'
+  nombre: string
+  fecha: string
+  hora?: string
+  duracion: number
+}
+
+// Respuesta estructurada de n8n AI
+interface RespuestaIA {
+  tipo: 'reunion' | 'tarea' | null
+  nombre: string | null
+  fecha: string | null
+  hora: string | null
+  duracion: number | null
+  completo: boolean
+  mensaje: string
+}
+
+// Estado acumulado de la conversación (local)
+interface EstadoConversacion {
+  tipo?: 'reunion' | 'tarea'
+  nombre?: string
+  fecha?: string
+  hora?: string
+  duracion?: number
+}
+
+// Webhook URL para el scheduler
+const WEBHOOK_SCHEDULER = 'https://abrahamnavarrete.app.n8n.cloud/webhook/scheduler'
+
+// Enviar mensaje a n8n y recibir respuesta estructurada
+async function enviarAlScheduler(mensaje: string, sessionId: string): Promise<RespuestaIA> {
   try {
+    // Obtener fecha actual para que n8n pueda interpretar "hoy", "mañana", etc.
+    const fechaActual = new Date().toISOString().split('T')[0] // YYYY-MM-DD
+    const horaActual = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false })
+    
+    console.log('📤 Enviando a n8n:', { mensaje, sessionId, fechaActual, horaActual })
     const response = await fetch(WEBHOOK_SCHEDULER, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        mensaje,
-        sessionId: `scheduler_${Date.now()}`
+      body: JSON.stringify({ 
+        mensaje, 
+        sessionId,
+        fechaActual,
+        horaActual
       })
     })
     
-    if (response.ok) {
-      const data = await response.json()
-      return { exito: true, respuesta: data.output || data.mensaje || 'Evento procesado' }
+    if (!response.ok) {
+      throw new Error(`Error ${response.status}`)
     }
-    return { exito: false }
+    
+    const data = await response.json()
+    console.log('📥 Respuesta de n8n:', data)
+    
+    // Intentar parsear la respuesta como JSON
+    let respuestaIA: RespuestaIA
+    
+    // Función auxiliar para extraer el objeto de respuesta
+    const extraerRespuesta = (obj: unknown): RespuestaIA | null => {
+      if (!obj || typeof obj !== 'object') return null
+      const o = obj as Record<string, unknown>
+      
+      // Si tiene los campos esperados directamente
+      if ('tipo' in o || 'completo' in o || 'mensaje' in o) {
+        return {
+          tipo: (o.tipo as RespuestaIA['tipo']) ?? null,
+          nombre: (o.nombre as string) ?? null,
+          fecha: (o.fecha as string) ?? null,
+          hora: (o.hora as string) ?? null,
+          duracion: (o.duracion as number) ?? null,
+          completo: (o.completo as boolean) ?? false,
+          mensaje: (o.mensaje as string) ?? ''
+        }
+      }
+      return null
+    }
+    
+    // 1. Si es un array, tomar el primer elemento
+    let dataToProcess = data
+    if (Array.isArray(data) && data.length > 0) {
+      console.log('📥 Respuesta es un array, tomando primer elemento')
+      dataToProcess = data[0]
+    }
+    
+    // 2. Intentar parsear directamente
+    let resultado = extraerRespuesta(dataToProcess)
+    
+    // 3. Si no funciona, buscar en campos comunes
+    if (!resultado) {
+      const campos = ['output', 'text', 'mensaje', 'response', 'result', 'data']
+      for (const campo of campos) {
+        const valor = dataToProcess[campo]
+        if (valor) {
+          // Si es string, intentar parsearlo como JSON
+          if (typeof valor === 'string') {
+            const textoLimpio = valor
+              .replace(/```json\n?/g, '')
+              .replace(/```\n?/g, '')
+              .trim()
+            try {
+              const parsed = JSON.parse(textoLimpio)
+              resultado = extraerRespuesta(parsed)
+              if (resultado) break
+            } catch {
+              // Continuar buscando
+            }
+          } else if (typeof valor === 'object') {
+            // Si el campo es un objeto, buscar dentro de él
+            resultado = extraerRespuesta(valor)
+            if (resultado) break
+            // También intentar si tiene un campo 'output' anidado
+            if (valor && typeof valor === 'object' && 'output' in (valor as object)) {
+              const nested = (valor as Record<string, unknown>).output
+              if (typeof nested === 'string') {
+                try {
+                  const parsed = JSON.parse(nested.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim())
+                  resultado = extraerRespuesta(parsed)
+                  if (resultado) break
+                } catch { /* continuar */ }
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    // 3. Si aún no hay resultado, crear respuesta de error
+    if (resultado) {
+      respuestaIA = resultado
+    } else {
+      console.warn('⚠️ No se pudo parsear la respuesta de n8n:', data)
+      respuestaIA = {
+        tipo: null,
+        nombre: null,
+        fecha: null,
+        hora: null,
+        duracion: null,
+        completo: false,
+        mensaje: 'No pude procesar tu solicitud. Por favor intenta de nuevo.'
+      }
+    }
+    
+    return respuestaIA
   } catch (error) {
     console.error('Error enviando al scheduler:', error)
-    return { exito: false }
+    return {
+      tipo: null,
+      nombre: null,
+      fecha: null,
+      hora: null,
+      duracion: null,
+      completo: false,
+      mensaje: '❌ Error de conexión. Por favor intenta de nuevo.'
+    }
   }
 }
 
@@ -127,12 +255,21 @@ function ChatSidebar() {
     {
       id: '1',
       tipo: 'asistente',
-      contenido: '¡Hola! Soy tu asistente de agenda. Puedo ayudarte a:\n\n📅 Agendar reuniones\n✅ Crear tareas\n\nEscríbeme lo que necesitas, por ejemplo:\n"Agendar reunión con Juan mañana a las 10 por 60 minutos"',
+      contenido: '¡Hola! Soy tu asistente de agenda. Puedo ayudarte a:\n\n📅 Agendar reuniones\n✅ Crear tareas\n\nEscríbeme lo que necesitas, por ejemplo:\n"Reunión con Juan mañana a las 10 por 60 minutos"',
       timestamp: new Date()
     }
   ])
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  
+  // SessionId persistente para memoria de conversación en n8n
+  const [sessionId] = useState(() => `scheduler_${Date.now()}`)
+  
+  // Estado local para acumular datos entre mensajes
+  const [estadoConversacion, setEstadoConversacion] = useState<EstadoConversacion>({})
+  
+  // Hook para agregar eventos al store compartido
+  const agregarEventoStore = useEventosStore((state) => state.agregarEvento)
   
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -151,18 +288,82 @@ function ChatSidebar() {
   const handleEnviarMensaje = async (texto: string) => {
     if (!texto.trim()) return
     
+    console.log('🚀 Enviando mensaje:', texto.trim())
     agregarMensaje('usuario', texto.trim())
     setInputValue('')
     setIsLoading(true)
     
     try {
-      // Enviar mensaje crudo a n8n - el agente procesará todo
-      const resultado = await enviarAlScheduler(texto.trim())
+      // Enviar a n8n para interpretar el mensaje
+      const respuesta = await enviarAlScheduler(texto.trim(), sessionId)
+      console.log('📊 Respuesta IA:', respuesta)
       
-      if (resultado.exito) {
-        agregarMensaje('asistente', resultado.respuesta || '✅ Evento procesado correctamente')
+      // Combinar datos nuevos de n8n con estado existente (local)
+      const estadoActualizado: EstadoConversacion = { ...estadoConversacion }
+      if (respuesta.tipo) estadoActualizado.tipo = respuesta.tipo
+      if (respuesta.nombre) estadoActualizado.nombre = respuesta.nombre
+      if (respuesta.fecha) estadoActualizado.fecha = respuesta.fecha
+      if (respuesta.hora) estadoActualizado.hora = respuesta.hora
+      if (respuesta.duracion) estadoActualizado.duracion = respuesta.duracion
+      
+      setEstadoConversacion(estadoActualizado)
+      console.log('💾 Estado acumulado:', estadoActualizado)
+      
+      // Verificar si tenemos todos los datos necesarios
+      const datosCompletos = 
+        estadoActualizado.tipo && 
+        estadoActualizado.nombre && 
+        estadoActualizado.fecha && 
+        estadoActualizado.duracion &&
+        (estadoActualizado.tipo === 'tarea' || estadoActualizado.hora) // hora solo requerida para reuniones
+      
+      if (datosCompletos) {
+        // Tenemos todos los datos, crear el evento
+        const datos: DatosEvento = {
+          tipo: estadoActualizado.tipo!,
+          nombre: estadoActualizado.nombre!,
+          fecha: estadoActualizado.fecha!,
+          hora: estadoActualizado.hora,
+          duracion: estadoActualizado.duracion!
+        }
+        
+        // Agregar evento al store compartido
+        agregarEventoStore({
+          tipo: datos.tipo,
+          nombre: datos.nombre,
+          fecha: datos.fecha,
+          hora: datos.hora,
+          duracion: datos.duracion
+        })
+        
+        // Formatear confirmación
+        const fechaObj = new Date(datos.fecha + 'T12:00:00')
+        const fechaFormateada = fechaObj.toLocaleDateString('es-MX', { 
+          weekday: 'long', day: 'numeric', month: 'long' 
+        })
+        const tipoTexto = datos.tipo === 'reunion' ? 'Reunión' : 'Tarea'
+        const horaTexto = datos.hora ? ` a las ${datos.hora}` : ''
+        const confirmacion = `✅ ${tipoTexto} agendada:\n\n📝 ${datos.nombre}\n📅 ${fechaFormateada}${horaTexto}\n⏱️ ${datos.duracion} minutos`
+        
+        agregarMensaje('asistente', confirmacion, datos)
+        
+        // Reiniciar estado para nuevo evento
+        setEstadoConversacion({})
       } else {
-        agregarMensaje('asistente', '❌ Hubo un error al procesar tu solicitud. Por favor intenta de nuevo.')
+        // Mostrar lo que extrajo n8n o pedir lo faltante
+        const faltantes: string[] = []
+        if (!estadoActualizado.tipo) faltantes.push('tipo (reunión o tarea)')
+        if (!estadoActualizado.nombre) faltantes.push('nombre')
+        if (!estadoActualizado.fecha) faltantes.push('fecha')
+        if (estadoActualizado.tipo === 'reunion' && !estadoActualizado.hora) faltantes.push('hora')
+        if (!estadoActualizado.duracion) faltantes.push('duración')
+        
+        // Usar mensaje de n8n si es útil, sino generar pregunta
+        const mensaje = respuesta.mensaje && !respuesta.mensaje.includes('null') 
+          ? respuesta.mensaje 
+          : `Me falta: ${faltantes.join(', ')}. ¿Puedes decirme?`
+        
+        agregarMensaje('asistente', mensaje)
       }
     } catch (error) {
       console.error('Error procesando mensaje:', error)
