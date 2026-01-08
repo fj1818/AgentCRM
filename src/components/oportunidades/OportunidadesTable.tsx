@@ -177,7 +177,7 @@ export function OportunidadesTable({ filtros }: OportunidadesTableProps) {
                 <ColumnHeader columna="promotor" label="Promotor" />
                 {/* <ColumnHeader columna="nombreRazonSocial" label="Nombre / Razón Social" /> - Eliminado por petición */}
                 <ColumnHeader columna="familia" label="Familia" />
-                <ColumnHeader columna="producto" label="Producto" />
+
                 <ColumnHeader columna="montoOferta" label="Monto Oferta" />
                 <ColumnHeader columna="tipoPersona" label="Tipo" />
                 <ColumnHeader columna="fechaAlta" label="Fecha Alta" />
@@ -211,9 +211,7 @@ export function OportunidadesTable({ filtros }: OportunidadesTableProps) {
                   <td className={cn("px-3 py-2 text-sm", isHey ? "text-cyan-400" : "text-orange-600")}>
                     {item.familia}
                   </td>
-                  <td className={cn("px-3 py-2 text-sm", isHey ? "text-gray-400" : "text-gray-600")}>
-                    {item.producto}
-                  </td>
+
                   <td className={cn("px-3 py-2 text-sm font-medium", isHey ? "text-emerald-400" : "text-emerald-600")}>
                     {formatCurrency(item.montoOferta)}
                   </td>
