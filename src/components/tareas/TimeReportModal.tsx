@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { X, Download, FileText, Calendar, Users, TrendingUp, Clock, User } from 'lucide-react'
+import { X, Download, FileText, Users, TrendingUp, User } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 import jsPDF from 'jspdf'
@@ -78,11 +78,11 @@ export function TimeReportModal({ isOpen, onClose, actividades }: TimeReportModa
     doc.rect(0, 0, 210, 40, 'F')
     
     doc.setFontSize(22)
-    doc.setTextColor(primaryColor[0], primaryColor[1], 0) // Naranja
+    doc.setTextColor(primaryColor[0] ?? 0, primaryColor[1] ?? 0, 0) // Naranja
     doc.text('Informe Mensual de Productividad', 14, 20)
     
     doc.setFontSize(10)
-    doc.setTextColor(secondaryColor[0], secondaryColor[1], secondaryColor[2])
+    doc.setTextColor(secondaryColor[0] ?? 0, secondaryColor[1] ?? 0, secondaryColor[2] ?? 0)
     doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 14, 28)
     doc.text(`Ejecutivo: ${promotor}`, 14, 33)
 

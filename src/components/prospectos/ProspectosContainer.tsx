@@ -377,11 +377,11 @@ export function ProspectosContainer() {
           p.nombreProspecto.toLowerCase().includes(termino)
       )
       
-      if (index === -1) return false
-      
       // Modificar prospecto
       const nuevosProspectos = [...prospectos]
       const prospecto = nuevosProspectos[index]
+
+      if (!prospecto) return false
       
       // Mapear campos 'coloquiales' a reales
       if (campo === 'etapa') prospecto.etapa = valor
