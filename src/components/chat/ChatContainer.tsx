@@ -49,6 +49,7 @@ export function ChatContainer() {
         messagesEndRef={messagesEndRef}
         ultimoGrafico={ultimoGrafico}
         ultimaTabla={ultimaTabla}
+        onSendMessage={sendMessage}
       />
 
       {/* Error si existe */}

@@ -36,6 +36,7 @@ interface MessageListProps {
   ultimoGrafico?: GraficoData | null
   ultimaTabla?: TablaData | null
   historialResultados?: ResultadoHistorico[]
+  onSendMessage?: (message: string) => void
 }
 
 /** Traduce nombres de columnas técnicos a español legible */
@@ -269,13 +270,14 @@ export function MessageList({
   messages,
   isLoading,
   messagesEndRef,
+  onSendMessage,
 }: MessageListProps) {
   const isEmpty = messages.length === 0
 
   return (
     <div className="flex-1 overflow-y-auto px-6 py-8 space-y-6">
       {isEmpty ? (
-        <WelcomeMessage />
+        <WelcomeMessage onSend={onSendMessage} />
       ) : (
         <>
           {messages.map((message) => {

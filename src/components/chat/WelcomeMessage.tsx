@@ -11,7 +11,11 @@ import { useUIStore } from '@/stores'
 // Iconos para las sugerencias
 const suggestionIcons = [TrendingUp, Briefcase, CreditCard, GitBranch]
 
-export function WelcomeMessage() {
+interface WelcomeMessageProps {
+  onSend?: (message: string) => void
+}
+
+export function WelcomeMessage({ onSend }: WelcomeMessageProps) {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
   const suggestions = obtenerSugerencias()
@@ -69,6 +73,15 @@ export function WelcomeMessage() {
             return (
               <button
                 key={index}
+                type="button"
+                onClick={() => {
+                  console.log('Click en sugerencia:', suggestion.query)
+                  if (onSend) {
+                    onSend(suggestion.query)
+                  } else {
+                    console.error('onSend no está definido en WelcomeMessage')
+                  }
+                }}
                 className={cn(
                   "group flex items-center gap-4 px-5 py-4 rounded-2xl text-left",
                   "border transition-all duration-300",
@@ -96,7 +109,7 @@ export function WelcomeMessage() {
                       : "text-gray-700 group-hover:text-gray-900"
                   )}
                 >
-                  {suggestion}
+                  {suggestion.label}
                 </span>
               </button>
             )

@@ -246,8 +246,12 @@ const SUGERENCIAS = [
   { texto: '✅ Crear tarea', valor: 'Quiero crear una tarea' },
 ]
 
+interface ChatSidebarProps {
+  onEventoCreado?: (fecha: Date) => void
+}
+
 // Chat Sidebar conversacional
-function ChatSidebar() {
+function ChatSidebar({ onEventoCreado }: ChatSidebarProps) {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
   const [inputValue, setInputValue] = useState('')
@@ -333,11 +337,17 @@ function ChatSidebar() {
           nombre: datos.nombre,
           fecha: datos.fecha,
           hora: datos.hora,
-          duracion: datos.duracion
+          duracion: datos.duracion,
+          esPlaneada: false // Tareas creadas por el agente son NO PLANEADAS
         })
         
         // Formatear confirmación
         const fechaObj = new Date(datos.fecha + 'T12:00:00')
+        
+        // Actualizar vista si se proporcionó el callback
+        if (onEventoCreado) {
+          onEventoCreado(fechaObj)
+        }
         const fechaFormateada = fechaObj.toLocaleDateString('es-MX', { 
           weekday: 'long', day: 'numeric', month: 'long' 
         })
@@ -499,6 +509,10 @@ export function TareasContainer() {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
   
+  // Estado compartido de fecha para sincronizar chat y cronograma
+  // Inicializamos con la fecha actual REAL (hoy) para que coincida con el chat
+  const [fechaActual, setFechaActual] = useState(new Date())
+  
   return (
     <div className={cn(
       "flex h-full",
@@ -522,7 +536,10 @@ export function TareasContainer() {
             icono={Clock}
             defaultOpen={true}
           >
-            <CronogramaDiario />
+            <CronogramaDiario 
+              fechaActual={fechaActual}
+              onFechaChange={setFechaActual}
+            />
           </AccordionItem>
           
           {/* Accordion: Agenda */}
@@ -538,7 +555,7 @@ export function TareasContainer() {
       
       {/* Right: Chat sidebar - expanded */}
       <div className="w-[450px] shrink-0">
-        <ChatSidebar />
+        <ChatSidebar onEventoCreado={setFechaActual} />
       </div>
     </div>
   )

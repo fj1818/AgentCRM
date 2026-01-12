@@ -357,12 +357,29 @@ export async function procesarPregunta(pregunta: string): Promise<AIResponse> {
   }
 }
 
+export interface Suggestion {
+  label: string
+  query: string
+}
+
 /** Obtiene sugerencias de preguntas */
-export function obtenerSugerencias(): string[] {
+export function obtenerSugerencias(): Suggestion[] {
   return [
-    'Consultar variaciones relevantes por periodos',
-    'Consultar mi portafolio',
-    'Consultar mi cartera de crédito',
-    'Consultar mi tubería de ventas',
+    {
+      label: 'Consultar variaciones relevantes',
+      query: 'Muestrame el Top 10 de variaciones positivas y el Top 10 de variaciones negativas del mes'
+    },
+    {
+      label: 'Consultar mi portafolio',
+      query: 'Consultar mi portafolio'
+    },
+    {
+      label: 'Consultar el listado de oportunidades',
+      query: 'Consultar el listado de oportunidades'
+    },
+    {
+      label: 'Consultar el listado de prospectos',
+      query: 'Consultar el listado de prospectos'
+    },
   ]
 }

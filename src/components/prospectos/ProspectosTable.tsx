@@ -9,22 +9,6 @@ import { cn } from '@/utils'
 import type { FiltrosProspectos } from './ProspectosContainer'
 import { DetalleProspectoModal } from './DetalleProspectoModal'
 
-// Datos de ejemplo (en producción vendrían de SQL)
-interface ProspectoOferta {
-  idOferta: string
-  idProspecto: string
-  rfc: string
-  tipoPersona: string
-  familiaProducto: string
-  productoInteres: string
-  etapa: string
-  campaña: string
-  montoInteres: number
-  fechaAlta: string
-  nombrePromotor: string
-  descripcion: string // Nuevo campo
-}
-
 // Colores por etapa
 const ETAPA_COLORS: Record<string, { bg: string; text: string; bgHey: string; textHey: string }> = {
   'No contactado': { bg: 'bg-gray-100', text: 'text-gray-700', bgHey: 'bg-gray-500/20', textHey: 'text-gray-300' },
@@ -34,76 +18,14 @@ const ETAPA_COLORS: Record<string, { bg: string; text: string; bgHey: string; te
   'Convertido': { bg: 'bg-green-100', text: 'text-green-700', bgHey: 'bg-green-500/20', textHey: 'text-green-300' },
 }
 
-// Nombres de promotores ficticios
-const PROMOTORES = [
-  'Roberto Hernández',
-  'María del Carmen López',
-  'Alejandro González',
-  'Ana Sofía Martínez',
-  'Carlos Alberto Ruiz',
-  'Lucía Fernández',
-  'Jorge Luis Ramírez',
-  'Patricia Torres'
-]
-
-// Generar datos de ejemplo
-function generarDatosEjemplo(): ProspectoOferta[] {
-  const tiposPersona = ['Persona Moral', 'Persona Fisica con Actividad Empresarial', 'Persona Fisica']
-  const familias = ['TDC', 'TPV', 'Cheques']
-  const productos: Record<string, string[]> = {
-    'TDC': ['TDC Básica', 'TDC Oro', 'TDC Platinum', 'TDC Empresarial'],
-    'TPV': ['TPV Fija', 'TPV Móvil', 'TPV E-commerce'],
-    'Cheques': ['Cuenta Cheques Básica', 'Cuenta Cheques Empresarial', 'Cuenta Cheques PyME'],
-  }
-  const etapas = ['No contactado', 'En negociación', 'Interesado', 'Descartado', 'Convertido']
-  const campanas = ['Referencia Propia', 'Pagina Web', 'App', 'Portal', 'Campaña Prospectos Perfilados 2026']
-  
-  const descripciones = [
-    "Cliente interesado en mejorar su tasa actual. Solicita visita presencial.",
-    "Prospecto proveniente de campaña web. Requiere terminal punto de venta urgente.",
-    "Empresa en expansión, busca línea de crédito para capital de trabajo.",
-    "Cliente refiere mala experiencia con banco anterior. Ofrecer atención personalizada.",
-    "Solicita información sobre beneficios de nómina para 50 empleados.",
-    "Interesado en tarjeta corporativa con límites altos.",
-    "Busca financiamiento para maquinaria nueva."
-  ]
-  
-  const datos: ProspectoOferta[] = []
-  
-  for (let i = 0; i < 100; i++) {
-    const familia = familias[Math.floor(Math.random() * familias.length)]!
-    const tipoPersona = tiposPersona[Math.floor(Math.random() * tiposPersona.length)]!
-    
-    const productosFamilia = productos[familia]!
-    
-    datos.push({
-      idOferta: `OP${String(i + 1).padStart(16, '0')}`,
-      idProspecto: `Pr${String(i + 1).padStart(16, '0')}`,
-      rfc: tipoPersona === 'Persona Moral' 
-        ? `${['ABC', 'XYZ', 'DEF', 'GHI'][Math.floor(Math.random() * 4)]}${String(Math.floor(Math.random() * 900000) + 100000)}XX0`
-        : `${['GARA', 'LOMB', 'NAVM', 'HERX'][Math.floor(Math.random() * 4)]}${String(Math.floor(Math.random() * 900000) + 100000)}XX0`,
-      tipoPersona,
-      familiaProducto: familia,
-      productoInteres: productosFamilia[Math.floor(Math.random() * productosFamilia.length)]!,
-      etapa: etapas[Math.floor(Math.random() * etapas.length)]!,
-      campaña: campanas[Math.floor(Math.random() * campanas.length)]!,
-      montoInteres: Math.floor(Math.random() * 500000) + 50000,
-      fechaAlta: `${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}/${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}/2026`,
-      nombrePromotor: PROMOTORES[Math.floor(Math.random() * PROMOTORES.length)]!,
-      descripcion: descripciones[Math.floor(Math.random() * descripciones.length)]! + " " + descripciones[Math.floor(Math.random() * descripciones.length)]!
-    })
-  }
-  
-  return datos
-}
-
-const DATOS_EJEMPLO = generarDatosEjemplo()
+import { ProspectoOferta } from '@/data/prospectosData'
 
 interface ProspectosTableProps {
   filtros: FiltrosProspectos
+  data: ProspectoOferta[]
 }
 
-export function ProspectosTable({ filtros }: ProspectosTableProps) {
+export function ProspectosTable({ filtros, data }: ProspectosTableProps) {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
   
@@ -122,7 +44,7 @@ export function ProspectosTable({ filtros }: ProspectosTableProps) {
   
   // Filtrar datos
   const datosFiltrados = useMemo(() => {
-    return DATOS_EJEMPLO.filter(item => {
+    return data.filter(item => {
       if (filtros.tipoPersona && item.tipoPersona !== filtros.tipoPersona) return false
       if (filtros.campana && item.campaña !== filtros.campana) return false
       if (filtros.etapa && item.etapa !== filtros.etapa) return false
@@ -131,6 +53,7 @@ export function ProspectosTable({ filtros }: ProspectosTableProps) {
       if (filtros.busqueda) {
         const busqueda = filtros.busqueda.toLowerCase()
         return (
+          (item.nombreProspecto && item.nombreProspecto.toLowerCase().includes(busqueda)) ||
           item.rfc.toLowerCase().includes(busqueda) ||
           item.productoInteres.toLowerCase().includes(busqueda) ||
           item.idProspecto.toLowerCase().includes(busqueda) ||
@@ -139,7 +62,7 @@ export function ProspectosTable({ filtros }: ProspectosTableProps) {
       }
       return true
     })
-  }, [filtros])
+  }, [filtros, data])
   
   // Ordenar datos
   const datosOrdenados = useMemo(() => {
@@ -168,10 +91,10 @@ export function ProspectosTable({ filtros }: ProspectosTableProps) {
     paginaActual * itemsPorPagina
   )
   
-  // Reset página al cambiar filtros
+  // Reset página al cambiar filtros o data
   useEffect(() => {
     setPaginaActual(1)
-  }, [filtros])
+  }, [filtros, data])
   
   const handleOrden = (columna: string) => {
     if (ordenColumna === columna) {
@@ -257,7 +180,7 @@ export function ProspectosTable({ filtros }: ProspectosTableProps) {
                       isHey ? "hover:bg-white/5" : "hover:bg-orange-50/50"
                     )}
                   >
-                    <td className={cn("px-3 py-2 text-sm font-medium", isHey ? "text-white" : "text-gray-900")}>
+                    <td className={cn("px-3 py-2 text-sm font-medium", isHey ? "text-gray-300" : "text-gray-700")}>
                       {item.nombrePromotor}
                     </td>
                     <td className={cn("px-3 py-2 text-sm font-medium", 

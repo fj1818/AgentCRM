@@ -1,148 +1,92 @@
-/**
- * Datos de prospectos pre-generados
- * 
- * Columnas:
- * - IdProspecto: 18 caracteres ("Pr" + 16 alfanuméricos)
- * - FechaAlta: dd/mm/yyyy
- * - FechaConversion: dd/mm/yyyy (opcional, cuando se convierte a cliente)
- * - IDE: número de 8 cifras (solo si se convirtió a cliente)
- */
+export interface ProspectoOferta {
+  idOferta: string
+  idProspecto: string
+  nombreProspecto: string
+  rfc: string
+  tipoPersona: string
+  familiaProducto: string
+  productoInteres: string
+  etapa: string
+  campaña: string
+  montoInteres: number
+  fechaAlta: string
+  nombrePromotor: string
+  descripcion: string
+}
 
-import type { Prospecto, TipoPersonaProspecto } from '@/types/prospecto.types'
-import { clientesData } from './clientesData'
-
-const tiposPersona: TipoPersonaProspecto[] = [
-  'Persona Moral',
-  'Persona Fisica con Actividad Empresarial',
-  'Persona Fisica',
+// Lista de promotores disponibles
+export const PROMOTORES = [
+  'Roberto Hernández',
+  'María del Carmen López',
+  'Alejandro González',
+  'Ana Sofía Martínez',
+  'Carlos Alberto Ruiz',
+  'Lucía Fernández',
+  'Jorge Luis Ramírez',
+  'Patricia Torres'
 ]
 
-function generarAlfanumerico(length: number): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  let result = ''
-  for (let i = 0; i < length; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length))
+// Generar datos de ejemplo
+export function generarDatosEjemplo(): ProspectoOferta[] {
+  const tiposPersona = ['Persona Moral', 'Persona Fisica con Actividad Empresarial', 'Persona Fisica']
+  const familias = ['TDC', 'TPV', 'Cheques']
+  const productos: Record<string, string[]> = {
+    'TDC': ['TDC Básica', 'TDC Oro', 'TDC Platinum', 'TDC Empresarial'],
+    'TPV': ['TPV Fija', 'TPV Móvil', 'TPV E-commerce'],
+    'Cheques': ['Cuenta Cheques Básica', 'Cuenta Cheques Empresarial', 'Cuenta Cheques PyME'],
   }
-  return result
-}
+  const etapas = ['No contactado', 'En negociación', 'Interesado', 'Descartado', 'Convertido']
+  const campanas = ['Referencia Propia', 'Pagina Web', 'App', 'Portal', 'Campaña Prospectos Perfilados 2026']
+  
+  const descripciones = [
+    "Cliente interesado en mejorar su tasa actual. Solicita visita presencial.",
+    "Prospecto proveniente de campaña web. Requiere terminal punto de venta urgente.",
+    "Empresa en expansión, busca línea de crédito para capital de trabajo.",
+    "Cliente refiere mala experiencia con banco anterior. Ofrecer atención personalizada.",
+    "Solicita información sobre beneficios de nómina para 50 empleados.",
+    "Interesado en tarjeta corporativa con límites altos.",
+    "Busca financiamiento para maquinaria nueva."
+  ]
+  
+  const promotores = PROMOTORES
 
-function generarRFC(tipoPersona: TipoPersonaProspecto): string {
-  const letras = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-  const numeros = '0123456789'
-  let rfc = ''
+  const nombres = [
+    "Juan Pérez", "María González", "Carlos López", "Ana Martínez", "Pedro Sánchez",
+    "Laura Ramírez", "Jorge Fernández", "Sofía Torres", "Miguel Rodríguez", "Lucía Díaz",
+    "Empresa ABC S.A. de C.V.", "Comercializadora del Norte", "Servicios Integrales", "Tecnología Avanzada",
+    "Distribuidora Mexicana", "Consultores Asociados", "Constructora del Valle", "Logística Express"
+  ]
   
-  // Persona Moral: 12 caracteres (3 letras + 6 números + 3 alfanuméricos)
-  // Persona Física: 13 caracteres (4 letras + 6 números + 3 alfanuméricos)
-  const longitud = tipoPersona === 'Persona Moral' ? 3 : 4
+  const datos: ProspectoOferta[] = []
   
-  for (let i = 0; i < longitud; i++) {
-    rfc += letras.charAt(Math.floor(Math.random() * letras.length))
-  }
-  for (let i = 0; i < 6; i++) {
-    rfc += numeros.charAt(Math.floor(Math.random() * numeros.length))
-  }
-  for (let i = 0; i < 3; i++) {
-    rfc += (Math.random() > 0.5 ? letras : numeros).charAt(Math.floor(Math.random() * 10))
-  }
-  return rfc
-}
-
-function generarFecha(añoInicio: number = 2015, añoFin: number = 2024): string {
-  const año = Math.floor(Math.random() * (añoFin - añoInicio + 1)) + añoInicio
-  const mes = Math.floor(Math.random() * 12) + 1
-  const dia = Math.floor(Math.random() * 28) + 1
-  return `${dia.toString().padStart(2, '0')}/${mes.toString().padStart(2, '0')}/${año}`
-}
-
-function generarFechaPosterior(fechaBase: string): string {
-  // Parsear fecha base
-  const partes = fechaBase.split('/')
-  const diaBase = parseInt(partes[0]!)
-  const mesBase = parseInt(partes[1]!)
-  const añoBase = parseInt(partes[2]!)
-  
-  // Agregar entre 1 y 12 meses
-  let nuevoMes = mesBase + Math.floor(Math.random() * 12) + 1
-  let nuevoAño = añoBase
-  
-  while (nuevoMes > 12) {
-    nuevoMes -= 12
-    nuevoAño++
-  }
-  
-  // Limitar a 2024
-  if (nuevoAño > 2024) {
-    nuevoAño = 2024
-    nuevoMes = 12
-  }
-  
-  const nuevoDia = Math.min(diaBase, 28)
-  return `${nuevoDia.toString().padStart(2, '0')}/${nuevoMes.toString().padStart(2, '0')}/${nuevoAño}`
-}
-
-export function generarProspectosSimulados(cantidad: number = 500): Prospecto[] {
-  const prospectos: Prospecto[] = []
-  const idsUsados = new Set<string>()
-  
-  // Obtener IDEs de clientes existentes para vincular
-  const idesClientes = clientesData.map(c => c.ide)
-  let idxCliente = 0
-  
-  while (prospectos.length < cantidad) {
-    // Generar IdProspecto único
-    let idProspecto: string
-    do {
-      idProspecto = 'Pr' + generarAlfanumerico(16)
-    } while (idsUsados.has(idProspecto))
-    idsUsados.add(idProspecto)
-    
-    // Tipo de persona aleatorio
+  for (let i = 0; i < 100; i++) {
+    const familia = familias[Math.floor(Math.random() * familias.length)]!
     const tipoPersona = tiposPersona[Math.floor(Math.random() * tiposPersona.length)]!
-    const rfc = generarRFC(tipoPersona)
     
-    const fechaAlta = generarFecha(2015, 2023)
+    const productosFamilia = productos[familia]!
+    const nombreBase = nombres[Math.floor(Math.random() * nombres.length)]!
     
-    // ~70% de los prospectos se convierten a clientes
-    const seConvierte = Math.random() < 0.70
-    
-    let fechaConversion: string | undefined
-    let ide: number | undefined
-    
-    if (seConvierte && idxCliente < idesClientes.length) {
-      fechaConversion = generarFechaPosterior(fechaAlta)
-      ide = idesClientes[idxCliente]
-      idxCliente++
-    }
-    
-    prospectos.push({
-      idProspecto,
-      rfc,
+    datos.push({
+      idOferta: `OP${String(i + 1).padStart(16, '0')}`,
+      idProspecto: `Pr${String(i + 1).padStart(16, '0')}`,
+      nombreProspecto: nombreBase,
+      rfc: tipoPersona === 'Persona Moral' 
+        ? `${['ABC', 'XYZ', 'DEF', 'GHI'][Math.floor(Math.random() * 4)]}${String(Math.floor(Math.random() * 900000) + 100000)}XX0`
+        : `${['GARA', 'LOMB', 'NAVM', 'HERX'][Math.floor(Math.random() * 4)]}${String(Math.floor(Math.random() * 900000) + 100000)}XX0`,
       tipoPersona,
-      fechaAlta,
-      fechaConversion,
-      ide,
+      familiaProducto: familia,
+      productoInteres: productosFamilia[Math.floor(Math.random() * productosFamilia.length)]!,
+      etapa: etapas[Math.floor(Math.random() * etapas.length)]!,
+      campaña: campanas[Math.floor(Math.random() * campanas.length)]!,
+      montoInteres: Math.floor(Math.random() * 500000) + 50000,
+      fechaAlta: `${String(Math.floor(Math.random() * 28) + 1).padStart(2, '0')}/${String(Math.floor(Math.random() * 12) + 1).padStart(2, '0')}/2026`,
+      nombrePromotor: promotores[Math.floor(Math.random() * promotores.length)]!,
+      descripcion: descripciones[Math.floor(Math.random() * descripciones.length)]! + " " + descripciones[Math.floor(Math.random() * descripciones.length)]!
     })
   }
   
-  return prospectos
+  return datos
 }
 
-// Pre-generar datos de prospectos
-export const prospectosData = generarProspectosSimulados(500)
-
-// Funciones de acceso
-export function obtenerProspectoPorId(idProspecto: string): Prospecto | undefined {
-  return prospectosData.find(p => p.idProspecto === idProspecto)
-}
-
-export function obtenerProspectosConvertidos(): Prospecto[] {
-  return prospectosData.filter(p => p.ide !== undefined)
-}
-
-export function obtenerProspectosPendientes(): Prospecto[] {
-  return prospectosData.filter(p => p.ide === undefined)
-}
-
-export function obtenerProspectoPorIde(ide: number): Prospecto | undefined {
-  return prospectosData.find(p => p.ide === ide)
-}
+// Exportar datos generados para uso compartido
+export const prospectosData = generarDatosEjemplo()

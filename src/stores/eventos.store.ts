@@ -15,6 +15,7 @@ export interface EventoAgendado {
   descripcion?: string
   cliente?: string
   completado?: boolean
+  esPlaneada?: boolean
   createdAt: Date
 }
 
@@ -40,6 +41,7 @@ export const useEventosStore = create<EventosState>((set, get) => ({
       ...evento,
       id: `evt_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       duracion: typeof evento.duracion === 'string' ? parseInt(evento.duracion) : evento.duracion,
+      esPlaneada: evento.esPlaneada ?? true, // Por defecto es planeada si no se especifica
       createdAt: new Date()
     }
     

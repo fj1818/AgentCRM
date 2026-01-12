@@ -13,6 +13,8 @@ import { cn } from '@/utils'
 import { ProspectosFilters } from './ProspectosFilters'
 import { ProspectosTable } from './ProspectosTable'
 
+import { generarDatosEjemplo, ProspectoOferta, PROMOTORES } from '@/data/prospectosData'
+
 // Tipos para el chat de prospectos
 interface MensajeChat {
   id: string
@@ -22,10 +24,25 @@ interface MensajeChat {
 }
 
 // Webhook URL para el agente de prospectos
-const WEBHOOK_PROSPECTOS = 'https://abrahamnavarrete.app.n8n.cloud/webhook/prospectos'
+const WEBHOOK_PROSPECTOS = 'https://abrahamnavarrete.app.n8n.cloud/webhook/prospect'
+
+// Definición de respuesta del agente
+interface AgenteResponse {
+  intent?: 'CREAR_PROSPECTO' | 'ACTUALIZAR_PROSPECTO'
+  data?: {
+    nombre?: string // Puede venir nombre para buscar
+    rfc?: string
+    contacto?: string
+    producto?: string
+    campo?: 'etapa' | 'monto' | 'producto' | 'contacto' // Para actualizaciones
+    valor?: any
+  }
+  mensaje?: string
+  output?: string // Fallback n8n
+}
 
 // Enviar mensaje al agente de prospectos
-async function enviarAlAgente(mensaje: string, sessionId: string): Promise<string> {
+async function enviarAlAgente(mensaje: string, sessionId: string): Promise<AgenteResponse | string> {
   try {
     const fechaActual = new Date().toISOString().split('T')[0]
     const horaActual = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false })
@@ -46,18 +63,43 @@ async function enviarAlAgente(mensaje: string, sessionId: string): Promise<strin
     }
     
     const data = await response.json()
-    
-    // Extraer respuesta del formato de n8n
-    let respuesta = ''
+    console.log('Respuesta Agente Debug:', data)
+
+    // Intentar parsear si viene como objeto directo o array
+    let rawOutput: any = data
     if (Array.isArray(data) && data.length > 0) {
-      respuesta = data[0].output || data[0].response || data[0].mensaje || JSON.stringify(data[0])
-    } else if (typeof data === 'object') {
-      respuesta = data.output || data.response || data.mensaje || JSON.stringify(data)
-    } else {
-      respuesta = String(data)
+      rawOutput = data[0]
     }
+
+    // Verificar si el output es JSON string o ya es objeto
+    if (rawOutput.output && typeof rawOutput.output === 'string') {
+        try {
+            let cleanOutput = rawOutput.output.trim();
+            // Limpiar bloques de markdown si existen
+            if (cleanOutput.includes('```')) {
+                cleanOutput = cleanOutput.replace(/```json/g, '').replace(/```/g, '').trim();
+            }
+            
+            // Intentar parsear el output string a JSON
+            if (cleanOutput.startsWith('{')) {
+                const parsed = JSON.parse(cleanOutput)
+                return parsed as AgenteResponse
+            }
+        } catch (e) {
+            console.error('Error parseando JSON del agente:', e)
+            // Si falla, es texto normal
+        }
+        return rawOutput.output
+    } else if (rawOutput.output) {
+      // Si output ya es objeto
+      return rawOutput.output as unknown as AgenteResponse
+    } else if (rawOutput.mensaje) {
+        return rawOutput as AgenteResponse
+    }
+
+    // Fallback general
+    return JSON.stringify(rawOutput)
     
-    return respuesta || 'No pude procesar tu solicitud.'
   } catch (error) {
     console.error('Error enviando al agente:', error)
     return '❌ Error de conexión. Por favor intenta de nuevo.'
@@ -66,12 +108,16 @@ async function enviarAlAgente(mensaje: string, sessionId: string): Promise<strin
 
 // Sugerencias rápidas para el chat
 const SUGERENCIAS = [
-  { texto: '📊 Ver estadísticas', valor: '¿Cuántos prospectos tengo en cada etapa?' },
-  { texto: '🔍 Buscar prospecto', valor: 'Buscar prospectos de TDC' },
+  { texto: '➕ Crear oferta', valor: 'Quiero agregar un nuevo prospecto' },
 ]
 
+interface ProspectosChatSidebarProps {
+  onNuevoProspecto: (prospecto: Partial<ProspectoOferta>) => void
+  onActualizarProspecto: (nombreOrRfc: string, campo: string, valor: any) => boolean
+}
+
 // Chat Sidebar para prospectos
-function ProspectosChatSidebar() {
+function ProspectosChatSidebar({ onNuevoProspecto, onActualizarProspecto }: ProspectosChatSidebarProps) {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
   const [inputValue, setInputValue] = useState('')
@@ -79,7 +125,7 @@ function ProspectosChatSidebar() {
     {
       id: '1',
       tipo: 'asistente',
-      contenido: '¡Hola! Soy tu asistente de prospectos. Puedo ayudarte a:\n\n📊 Consultar estadísticas\n🔍 Buscar prospectos\n➕ Crear ofertas\n📈 Ver pipeline\n\n¿En qué puedo ayudarte?',
+      contenido: '¡Hola! Soy tu asistente de prospectos. Puedo ayudarte a:\n\n➕ Crear ofertas de prospectos con AI\n\nEjemplo: "Quiero agregar a Juan Pérez RFC... para TDC"',
       timestamp: new Date()
     }
   ])
@@ -110,10 +156,47 @@ function ProspectosChatSidebar() {
     setIsLoading(true)
     
     try {
+      // Enviar todo al agente (backend n8n)
       const respuesta = await enviarAlAgente(texto.trim(), sessionId)
-      agregarMensaje('asistente', respuesta)
+      
+      // Procesar respuesta
+      if (typeof respuesta === 'object' && respuesta !== null) {
+          // Es un JSON Estructurado
+          if (respuesta.intent === 'CREAR_PROSPECTO' && respuesta.data) {
+              onNuevoProspecto({
+                  nombreProspecto: respuesta.data.nombre || 'Nuevo Prospecto',
+                  rfc: respuesta.data.rfc,
+                  familiaProducto: respuesta.data.producto || 'TDC', 
+                  descripcion: `Prospecto creado por Agente IA. Contacto: ${respuesta.data.contacto}`,
+              })
+              agregarMensaje('asistente', respuesta.mensaje || `✅ Prospecto ${respuesta.data.nombre} creado exitosamente.`)
+          } else if (respuesta.intent === 'ACTUALIZAR_PROSPECTO' && respuesta.data) {
+              // Manejar actualización
+              const { nombre, rfc, campo, valor } = respuesta.data
+              const identificador = nombre || rfc
+              
+              if (identificador && campo && valor) {
+                  const exito = onActualizarProspecto(identificador, campo, valor)
+                  if (exito) {
+                      agregarMensaje('asistente', respuesta.mensaje || `✅ Actualizado ${campo} de ${identificador} a ${valor}.`)
+                  } else {
+                      agregarMensaje('asistente', `⚠️ No encontré al prospecto "${identificador}" para actualizar.`)
+                  }
+              } else {
+                   agregarMensaje('asistente', 'No pude entender qué dato actualizar.')
+              }
+          } else {
+              // Otro intent o mensaje genérico en JSON
+              agregarMensaje('asistente', respuesta.mensaje || JSON.stringify(respuesta))
+          }
+      } else {
+          // Es texto plano (pregunta o respuesta general)
+          agregarMensaje('asistente', String(respuesta))
+      }
+
     } catch (error) {
-      agregarMensaje('asistente', '❌ Hubo un error. Por favor intenta de nuevo.')
+      console.error(error)
+      agregarMensaje('asistente', '❌ Hubo un error procesando tu solicitud.')
     } finally {
       setIsLoading(false)
     }
@@ -176,13 +259,13 @@ function ProspectosChatSidebar() {
       
       {/* Sugerencias */}
       {mensajes.length <= 2 && (
-        <div className={cn("px-3 pb-2 flex gap-2", isHey ? "border-white/10" : "border-orange-100")}>
+        <div className={cn("px-3 pb-2 flex gap-2 flex-wrap", isHey ? "border-white/10" : "border-orange-100")}>
           {SUGERENCIAS.map((sug, i) => (
             <button
               key={i}
               onClick={() => handleEnviarMensaje(sug.valor)}
               className={cn(
-                "flex-1 py-2 px-3 text-xs rounded-lg transition-colors",
+                "flex-1 py-2 px-3 text-xs rounded-lg transition-colors whitespace-nowrap",
                 isHey 
                   ? "bg-white/5 text-gray-300 hover:bg-white/10 border border-white/10" 
                   : "bg-orange-50 text-gray-600 hover:bg-orange-100 border border-orange-200"
@@ -248,6 +331,9 @@ export function ProspectosContainer() {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
   
+  // Estado de prospectos
+  const [prospectos, setProspectos] = useState<ProspectoOferta[]>(() => generarDatosEjemplo())
+  
   const [filtros, setFiltros] = useState<FiltrosProspectos>({
     tipoPersona: '',
     campana: '',
@@ -259,6 +345,55 @@ export function ProspectosContainer() {
   
   const handleFiltroChange = (campo: keyof FiltrosProspectos, valor: string) => {
     setFiltros(prev => ({ ...prev, [campo]: valor }))
+  }
+  
+  const handleNuevoProspecto = (datos: Partial<ProspectoOferta>) => {
+    const nuevoProspecto: ProspectoOferta = {
+      idOferta: `OP${String(Date.now()).slice(-8)}`,
+      idProspecto: `Pr${String(Date.now()).slice(-8)}`,
+      rfc: datos.rfc || 'XAXX010101000',
+      tipoPersona: datos.rfc?.length === 12 ? 'Persona Moral' : 'Persona Fisica',
+      familiaProducto: 'TDC', // Default
+      productoInteres: 'Por definir', // Default
+      etapa: 'No contactado',
+      campaña: 'Referencia Propia',
+      montoInteres: 0,
+      fechaAlta: new Date().toLocaleDateString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric' }),
+      nombrePromotor: PROMOTORES[Math.floor(Math.random() * PROMOTORES.length)] || 'Asignación Automática',
+      descripcion: datos.descripcion || 'Prospecto creado manualmente',
+      nombreProspecto: (datos as any).nombre || 'Nuevo Prospecto', // Mappear nombre desde el chat
+      ...datos as any
+    }
+    
+    setProspectos(prev => [nuevoProspecto, ...prev])
+  }
+  
+  const handleActualizarProspecto = (nombreOrRfc: string, campo: string, valor: any): boolean => {
+      const termino = nombreOrRfc.toLowerCase()
+      // Buscar prospecto (puede ser por nombre o RFC)
+      // Priorizar match exacto de RFC, luego autocompletar nombre
+      const index = prospectos.findIndex(p => 
+          p.rfc.toLowerCase().includes(termino) || 
+          p.nombreProspecto.toLowerCase().includes(termino)
+      )
+      
+      if (index === -1) return false
+      
+      // Modificar prospecto
+      const nuevosProspectos = [...prospectos]
+      const prospecto = nuevosProspectos[index]
+      
+      // Mapear campos 'coloquiales' a reales
+      if (campo === 'etapa') prospecto.etapa = valor
+      else if (campo === 'monto') prospecto.montoInteres = typeof valor === 'string' ? parseFloat(valor.replace(/[^0-9.]/g, '')) : valor
+      else if (campo === 'producto') {
+          prospecto.familiaProducto = valor
+          prospecto.productoInteres = valor
+      }
+      else if (campo === 'contacto') prospecto.descripcion += ` | Nuevo contacto: ${valor}`
+      
+      setProspectos(nuevosProspectos)
+      return true
   }
   
   return (
@@ -311,13 +446,16 @@ export function ProspectosContainer() {
         
         {/* Table */}
         <div className="mt-4">
-          <ProspectosTable filtros={filtros} />
+          <ProspectosTable filtros={filtros} data={prospectos} />
         </div>
       </div>
       
       {/* Right: Chat sidebar */}
       <div className="w-[450px] shrink-0">
-        <ProspectosChatSidebar />
+        <ProspectosChatSidebar 
+            onNuevoProspecto={handleNuevoProspecto} 
+            onActualizarProspecto={handleActualizarProspecto}
+        />
       </div>
     </div>
   )

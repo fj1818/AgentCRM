@@ -25,7 +25,7 @@ export function OportunidadesChatSidebar() {
     {
       id: '1',
       rol: 'agente',
-      contenido: '¡Hola! Soy tu asistente de oportunidades. Puedo ayudarte a:\n\n📊 Analizar cartera de clientes\n🔍 Buscar oportunidades de venta\n💼 Gestionar renovaciones\n📈 Ver rendimiento por promotor\n\n¿Qué necesitas hoy?',
+      contenido: '¡Hola! Soy tu asistente de oportunidades. Puedo ayudarte a:\n\n💼 Crear ofertas de clientes\n\n¿Qué necesitas hoy?',
       timestamp: new Date()
     }
   ])
@@ -120,10 +120,7 @@ export function OportunidadesChatSidebar() {
   }
 
   const sugerencias = [
-    { texto: '📊 Análisis de cartera', valor: 'Analiza mi cartera de oportunidades actual' },
-    { texto: '🔍 Buscar renovaciones', valor: '¿Qué clientes tienen renovaciones próximas?' },
-    { texto: '💰 Top oportunidades', valor: 'Muestra las oportunidades de mayor valor' },
-    { texto: '📈 Rendimiento', valor: 'Comparativa de rendimiento por semana' },
+    { texto: '💼 Crear oferta de cliente', valor: 'Quiero crear una nueva oferta para un cliente existente' },
   ]
 
   return (
