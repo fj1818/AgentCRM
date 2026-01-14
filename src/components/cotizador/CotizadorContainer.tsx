@@ -4,7 +4,7 @@
  */
 
 import { useState, useRef, useEffect } from 'react'
-import { Send, Calculator, Sparkles, RefreshCw, PlusCircle, Home, Car, Wallet } from 'lucide-react'
+import { Send, Calculator, Sparkles, RefreshCw, PlusCircle, Home, Car, Wallet, Download } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 import {
@@ -14,6 +14,7 @@ import {
   type ResultadoCotizacion,
   type TipoCredito,
 } from '@/services/cotizadorService'
+import { generarPDFCotizacion } from '@/services/pdfCotizacionService'
 
 interface Mensaje {
   id: string
@@ -93,17 +94,27 @@ function ResultadoCotizacionCard({ cotizacion }: { cotizacion: ResultadoCotizaci
       </div>
       
       {/* Toggle para tabla de amortización */}
-      <button
-        onClick={() => setMostrarTabla(!mostrarTabla)}
-        className={cn(
-          "w-full py-2 text-xs font-medium border-t transition-colors",
-          isHey 
-            ? "border-white/10 text-gray-400 hover:bg-white/5" 
-            : "border-orange-200 text-gray-600 hover:bg-orange-100"
-        )}
-      >
-        {mostrarTabla ? 'Ocultar' : 'Ver'} tabla de amortización ({cotizacion.plazoMeses} meses)
-      </button>
+      <div className={cn("flex border-t divide-x", isHey ? "divide-white/10 border-white/10" : "divide-orange-200 border-orange-200")}>
+        <button
+          onClick={() => setMostrarTabla(!mostrarTabla)}
+          className={cn(
+            "flex-1 py-2 text-xs font-medium transition-colors hover:bg-black/5",
+            isHey ? "text-gray-400 hover:bg-white/5" : "text-gray-600 hover:bg-orange-50"
+          )}
+        >
+          {mostrarTabla ? 'Ocultar' : 'Ver'} tabla de amortización
+        </button>
+        <button
+          onClick={() => generarPDFCotizacion(cotizacion)}
+          className={cn(
+            "px-4 py-2 text-xs font-medium transition-colors flex items-center gap-2 hover:bg-black/5",
+            isHey ? "text-cyan-400 hover:bg-white/5" : "text-orange-600 hover:bg-orange-50"
+          )}
+        >
+          <Download className="w-3.5 h-3.5" />
+          PDF
+        </button>
+      </div>
       
       {/* Tabla de amortización */}
       {mostrarTabla && cotizacion.tablaAmortizacion.length > 0 && (

@@ -23,9 +23,10 @@ import { ProspectoOferta } from '@/data/prospectosData'
 interface ProspectosTableProps {
   filtros: FiltrosProspectos
   data: ProspectoOferta[]
+  onUpdateProspecto: (id: string, updates: Partial<ProspectoOferta>) => void
 }
 
-export function ProspectosTable({ filtros, data }: ProspectosTableProps) {
+export function ProspectosTable({ filtros, data, onUpdateProspecto }: ProspectosTableProps) {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
   
@@ -293,7 +294,8 @@ export function ProspectosTable({ filtros, data }: ProspectosTableProps) {
       {modalOpen && prospectoSeleccionado && (
         <DetalleProspectoModal 
           prospecto={prospectoSeleccionado} 
-          onClose={() => setModalOpen(false)} 
+          onClose={() => setModalOpen(false)}
+          onUpdateProspecto={onUpdateProspecto} 
         />
       )}
     </>

@@ -20,6 +20,8 @@ interface TablaData {
   columnas: string[]
   filas: Record<string, unknown>[]
   titulo?: string
+  paginate?: boolean
+  pageSize?: number
 }
 
 interface ResultadoHistorico {
@@ -124,8 +126,19 @@ function ResultTable({ tabla }: { tabla: TablaData }) {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
   const [selectedRow, setSelectedRow] = useState<Record<string, unknown> | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
   
   if (!tabla.filas.length) return null
+  
+  // Paginación
+  const shouldPaginate = tabla.paginate ?? false
+  const pageSize = tabla.pageSize ?? 20
+  const totalPages = Math.ceil(tabla.filas.length / pageSize)
+  
+  // Obtener filas de la página actual
+  const startIdx = (currentPage - 1) * pageSize
+  const endIdx = startIdx + pageSize
+  const filasActuales = shouldPaginate ? tabla.filas.slice(startIdx, endIdx) : tabla.filas
 
   const todasLasColumnas = tabla.columnas.length > 0 
     ? tabla.columnas 
@@ -203,7 +216,7 @@ function ResultTable({ tabla }: { tabla: TablaData }) {
               "divide-y",
               isHey ? "divide-white/10" : "divide-orange-100"
             )}>
-              {tabla.filas.map((fila, rowIdx) => (
+              {filasActuales.map((fila, rowIdx) => (
                 <tr 
                   key={rowIdx}
                   className={cn(
@@ -246,13 +259,57 @@ function ResultTable({ tabla }: { tabla: TablaData }) {
           </table>
           <div 
             className={cn(
-              "px-5 py-3 text-xs font-medium",
+              "px-5 py-3 text-xs font-medium flex items-center justify-between",
               isHey 
                 ? "bg-white/5 text-white/50 border-t border-white/10" 
                 : "bg-orange-50/50 text-gray-500 border-t border-orange-100"
             )}
           >
-            {tabla.filas.length} resultado{tabla.filas.length !== 1 ? 's' : ''}
+            <span>
+              {tabla.filas.length} resultado{tabla.filas.length !== 1 ? 's' : ''}
+              {shouldPaginate && ` (Mostrando ${startIdx + 1}-${Math.min(endIdx, tabla.filas.length)})`}
+            </span>
+            
+            {shouldPaginate && totalPages > 1 && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className={cn(
+                    "px-3 py-1 rounded-md text-xs font-medium transition-colors",
+                    currentPage === 1
+                      ? "opacity-50 cursor-not-allowed"
+                      : isHey
+                        ? "bg-cyan-600/20 text-cyan-300 hover:bg-cyan-600/30"
+                        : "bg-orange-200 text-orange-700 hover:bg-orange-300"
+                  )}
+                >
+                  Anterior
+                </button>
+                
+                <span className={cn(
+                  "text-xs font-semibold px-2",
+                  isHey ? "text-white" : "text-gray-700"
+                )}>
+                  {currentPage} / {totalPages}
+                </span>
+                
+                <button
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className={cn(
+                    "px-3 py-1 rounded-md text-xs font-medium transition-colors",
+                    currentPage === totalPages
+                      ? "opacity-50 cursor-not-allowed"
+                      : isHey
+                        ? "bg-cyan-600/20 text-cyan-300 hover:bg-cyan-600/30"
+                        : "bg-orange-200 text-orange-700 hover:bg-orange-300"
+                  )}
+                >
+                  Siguiente
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

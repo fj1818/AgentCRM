@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react'
-import { X, Download, FileText, Users, TrendingUp, User } from 'lucide-react'
+import { X, Download, FileText, Users, User } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
-import jsPDF from 'jspdf'
+import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
 interface TimeReportModalProps {
@@ -12,20 +12,36 @@ interface TimeReportModalProps {
 }
 
 // Datos simulados para el reporte mensual y de equipo
+// Actualizado para reflejar perfiles mixtos (no siempre correlacionados)
 const MOCK_TEAM_STATS = [
-  { nombre: 'Ana García', reuniones: 45, tareas: 120, tiempoAsignado: 85, eficiencia: 96 },   // Altamente Eficiente
-  { nombre: 'Carlos Ruiz', reuniones: 42, tareas: 115, tiempoAsignado: 88, eficiencia: 85 },   // Moderadamente Eficiente
-  { nombre: 'Jorge Trejo', reuniones: 30, tareas: 80, tiempoAsignado: 75, eficiencia: 72 },    // Promedio
-  { nombre: 'Sofia Méndez', reuniones: 25, tareas: 60, tiempoAsignado: 65, eficiencia: 62 },   // Deficiente
-  { nombre: 'Luis Torres', reuniones: 15, tareas: 40, tiempoAsignado: 50, eficiencia: 45 },    // Altamente Deficiente
+  { nombre: 'Ana García', reuniones: 45, tareas: 120, tiempoAsignado: 85, eficiencia: 96, captacion: 450000, colocacion: 1200000 },   // Estrella (Alto en todo)
+  { nombre: 'Carlos Ruiz', reuniones: 42, tareas: 115, tiempoAsignado: 88, eficiencia: 92, captacion: 180000, colocacion: 450000 },    // Muy eficiente en tiempo, pero bajos resultados financieros
+  { nombre: 'Jorge Trejo', reuniones: 30, tareas: 80, tiempoAsignado: 75, eficiencia: 72, captacion: 550000, colocacion: 1100000 },     // Eficiencia media, pero EXCELENTE vendedor (Alta captación/colocación)
+  { nombre: 'Sofia Méndez', reuniones: 25, tareas: 60, tiempoAsignado: 65, eficiencia: 62, captacion: 250000, colocacion: 800000 },    // Eficiencia baja, resultados financieros promedio
+  { nombre: 'Luis Torres', reuniones: 15, tareas: 40, tiempoAsignado: 50, eficiencia: 45, captacion: 80000, colocacion: 200000 },      // Bajo en todo
 ]
 
+// Categorización por Eficiencia de Tiempo (0-100%)
 const getEfficiencyCategory = (efficiency: number) => {
-  if (efficiency >= 90) return { label: 'Altamente Eficiente', color: 'text-emerald-600 bg-emerald-100' }
-  if (efficiency >= 80) return { label: 'Moderadamente Eficiente', color: 'text-blue-600 bg-blue-100' }
-  if (efficiency >= 70) return { label: 'Promedio', color: 'text-yellow-600 bg-yellow-100' }
-  if (efficiency >= 60) return { label: 'Deficiente', color: 'text-orange-600 bg-orange-100' }
-  return { label: 'Altamente Deficiente', color: 'text-red-600 bg-red-100' }
+  if (efficiency >= 90) return { label: 'Muy Alta', color: 'text-emerald-700 bg-emerald-100 border-emerald-200' }
+  if (efficiency >= 80) return { label: 'Alta', color: 'text-blue-700 bg-blue-100 border-blue-200' }
+  if (efficiency >= 70) return { label: 'Promedio', color: 'text-yellow-700 bg-yellow-100 border-yellow-200' }
+  if (efficiency >= 60) return { label: 'Baja', color: 'text-orange-700 bg-orange-100 border-orange-200' }
+  return { label: 'Muy Baja', color: 'text-red-700 bg-red-100 border-red-200' }
+}
+
+// Categorización por Captación ($)
+const getCaptacionCategory = (amount: number) => {
+  if (amount >= 400000) return { label: 'Excelente', color: 'text-emerald-700 bg-emerald-100 border-emerald-200' }
+  if (amount >= 200000) return { label: 'Promedio', color: 'text-blue-700 bg-blue-100 border-blue-200' }
+  return { label: 'Baja', color: 'text-red-700 bg-red-100 border-red-200' }
+}
+
+// Categorización por Colocación ($)
+const getColocacionCategory = (amount: number) => {
+  if (amount >= 1000000) return { label: 'Excelente', color: 'text-emerald-700 bg-emerald-100 border-emerald-200' }
+  if (amount >= 500000) return { label: 'Promedio', color: 'text-blue-700 bg-blue-100 border-blue-200' }
+  return { label: 'Baja', color: 'text-red-700 bg-red-100 border-red-200' }
 }
 
 export function TimeReportModal({ isOpen, onClose, actividades }: TimeReportModalProps) {
@@ -53,125 +69,133 @@ export function TimeReportModal({ isOpen, onClose, actividades }: TimeReportModa
       utilizacion: Math.round((totalSemanal / (540 * 5)) * 100), // Base 9h diarias * 5 días
       reunionesMes: 48, // Mock
       tareasMes: 156, // Mock
-      eficienciaActual: 94 // Mock
+      eficienciaActual: 94, // Mock - Alta eficiencia
+      captacionActual: 380000, // Mock - Captación Promedio (casi alta)
+      colocacionActual: 1050000 // Mock - Colocación Excelente
     }
   }, [actividades])
 
-  // Ranking calculation
-  const ranking = useMemo(() => {
-    const allEfficiencies = [...MOCK_TEAM_STATS.map(s => s.eficiencia), stats.eficienciaActual]
-    const average = Math.round(allEfficiencies.reduce((a, b) => a + b, 0) / allEfficiencies.length)
-    const diff = stats.eficienciaActual - average
-    return { average, diff }
-  }, [stats.eficienciaActual])
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', maximumFractionDigits: 0 }).format(amount)
+  }
 
   const handleExportPDF = () => {
-    setIsExporting(true)
-    const doc = new jsPDF()
-    
-    // Configuración de colores y fuentes
-    const primaryColor = [255, 107, 0] // Orange-500
-    const secondaryColor = [75, 85, 99] // Gray-600
-    
-    // Encabezado
-    doc.setFillColor(255, 247, 237) // Orange-50
-    doc.rect(0, 0, 210, 40, 'F')
-    
-    doc.setFontSize(22)
-    doc.setTextColor(primaryColor[0] ?? 0, primaryColor[1] ?? 0, 0) // Naranja
-    doc.text('Informe Mensual de Productividad', 14, 20)
-    
-    doc.setFontSize(10)
-    doc.setTextColor(secondaryColor[0] ?? 0, secondaryColor[1] ?? 0, secondaryColor[2] ?? 0)
-    doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 14, 28)
-    doc.text(`Ejecutivo: ${promotor}`, 14, 33)
+    try {
+      setIsExporting(true)
+      const doc = new jsPDF()
+      
+      // Configuración de colores y fuentes
+      const primaryColor = [255, 107, 0] // Orange-500
+      const secondaryColor = [75, 85, 99] // Gray-600
+      
+      // Encabezado
+      doc.setFillColor(255, 247, 237) // Orange-50
+      doc.rect(0, 0, 210, 40, 'F')
+      
+      doc.setFontSize(22)
+      doc.setTextColor(primaryColor[0] ?? 0, primaryColor[1] ?? 0, 0) // Naranja
+      doc.text('Informe Mensual de Productividad', 14, 20)
+      
+      doc.setFontSize(10)
+      doc.setTextColor(secondaryColor[0] ?? 0, secondaryColor[1] ?? 0, secondaryColor[2] ?? 0)
+      doc.text(`Generado el: ${new Date().toLocaleDateString()}`, 14, 28)
+      doc.text(`Ejecutivo: ${promotor}`, 14, 33)
 
-    // Sección 1: Resumen Ejecutivo
-    doc.setFontSize(14)
-    doc.setTextColor(0, 0, 0)
-    doc.text('Resumen de Utilización de Tiempo', 14, 55)
-    
-    // Crear tabla de métricas principales
-    autoTable(doc, {
-      startY: 60,
-      head: [['Métrica', 'Valor', 'Descripción Temporal']],
-      body: [
-        ['Tiempo Total Asignado', `${stats.totalHoras} Horas`, 'Acumulado total del mes'],
-        ['Tiempo Planeado', `${stats.horasPlaneadas} Horas`, 'Suma mensual estimada'],
-        ['Tareas No Programadas', `${stats.horasNoPlaneadas} Horas`, 'Suma mensual acumulada'],
-        ['% Ocupación Diaria', `${stats.utilizacion}%`, 'Promedio diario de ocupación'],
-      ],
-      headStyles: { fillColor: [249, 115, 22] }, // Orange-500
-      theme: 'grid'
-    })
+      // Sección 1: Resumen Ejecutivo
+      doc.setFontSize(14)
+      doc.setTextColor(0, 0, 0)
+      doc.text('Resumen de Utilización de Tiempo', 14, 55)
+      
+      // Crear tabla de métricas principales
+      autoTable(doc, {
+        startY: 60,
+        head: [['Métrica', 'Valor', 'Descripción Temporal']],
+        body: [
+          ['Tiempo Total Asignado', `${stats.totalHoras} Horas`, 'Acumulado total del mes'],
+          ['Tiempo Planeado', `${stats.horasPlaneadas} Horas`, 'Suma mensual estimada'],
+          ['Tareas No Programadas', `${stats.horasNoPlaneadas} Horas`, 'Suma mensual acumulada'],
+          ['% Ocupación Diaria', `${stats.utilizacion}%`, 'Promedio diario de ocupación'],
+        ],
+        headStyles: { fillColor: [249, 115, 22] }, // Orange-500
+        theme: 'grid'
+      })
 
-    // Sección 2: Desglose por Actividad
-    const finalY = (doc as any).lastAutoTable.finalY + 15
-    doc.text('Desglose de Actividades', 14, finalY)
-    
-    autoTable(doc, {
-      startY: finalY + 5,
-      head: [['Tipo', 'Cantidad Mensual', '% del Tiempo']],
-      body: [
-        ['Reuniones', `${stats.reunionesMes}`, '35%'],
-        ['Tareas Administrativas', `${stats.tareasMes}`, '45%'],
-        ['Prospección', '85', '20%'],
-      ],
-      theme: 'striped'
-    })
+      // Sección 2: Desglose por Actividad
+      const finalY = (doc as any).lastAutoTable.finalY + 15
+      doc.text('Desglose de Actividades', 14, finalY)
+      
+      autoTable(doc, {
+        startY: finalY + 5,
+        head: [['Tipo', 'Cantidad Mensual', '% del Tiempo']],
+        body: [
+          ['Reuniones', `${stats.reunionesMes}`, '35%'],
+          ['Tareas Administrativas', `${stats.tareasMes}`, '45%'],
+          ['Prospección', '85', '20%'],
+        ],
+        theme: 'striped'
+      })
 
-    // Sección 3: Comparativa de Equipo (Tabla solicitada)
-    const teamY = (doc as any).lastAutoTable.finalY + 15
-    doc.text('Ranking de Desempeño y Comparativa', 14, teamY)
+      // Sección 3: Comparativa de Equipo (Tabla solicitada)
+      const teamY = (doc as any).lastAutoTable.finalY + 15
+      doc.text('Análisis Multidimensional de Desempeño', 14, teamY)
 
-    // Combinar usuario actual con equipo para el PDF
-    const currentUserStats = {
-      nombre: promotor, // Usar nombre actual
-      reuniones: stats.reunionesMes,
-      tareas: stats.tareasMes,
-      tiempoAsignado: stats.utilizacion,
-      eficiencia: stats.eficienciaActual
+      // Combinar usuario actual con equipo para el PDF
+      const currentUserStats = {
+        nombre: promotor, // Usar nombre actual
+        reuniones: stats.reunionesMes,
+        tareas: stats.tareasMes,
+        tiempoAsignado: stats.utilizacion,
+        eficiencia: stats.eficienciaActual,
+        captacion: stats.captacionActual,
+        colocacion: stats.colocacionActual
+      }
+      
+      const allStats = [currentUserStats, ...MOCK_TEAM_STATS].sort((a, b) => b.eficiencia - a.eficiencia)
+
+      autoTable(doc, {
+        startY: teamY + 5,
+        head: [['Ranking', 'Ejecutivo', 'Eficiencia Tiempo', 'Captación', 'Colocación']],
+        body: allStats.map((p, index) => {
+          const efCat = getEfficiencyCategory(p.eficiencia)
+          const capCat = getCaptacionCategory(p.captacion)
+          const colCat = getColocacionCategory(p.colocacion)
+          
+          return [
+            `${index + 1}°`,
+            p.nombre === promotor ? `${p.nombre} (Tú)` : p.nombre,
+            `${p.eficiencia}% (${efCat.label})`,
+            `${formatCurrency(p.captacion)}\n(${capCat.label})`,
+            `${formatCurrency(p.colocacion)}\n(${colCat.label})`,
+          ]
+        }),
+        headStyles: { fillColor: [59, 130, 246] }, // Blue-500 para distinguir sección
+        styles: { cellPadding: 2, valign: 'middle' },
+      })
+      
+      // Footer
+      const pageCount = (doc as any).internal.getNumberOfPages()
+      for(let i = 1; i <= pageCount; i++) {
+          doc.setPage(i)
+          doc.setFontSize(8)
+          doc.setTextColor(150)
+          doc.text(`Página ${i} de ${pageCount}`, 190, 290, { align: 'right' })
+          doc.text('AgenteCRM - Reporte Confidencial', 14, 290)
+      }
+
+        // Save using Data URI method to avoid Blob issues
+      const dataUri = doc.output('datauristring')
+      const link = document.createElement('a')
+      link.href = dataUri
+      link.download = `Reporte_Desempeño_${new Date().getMonth() + 1}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    } catch (error) {
+      console.error('Error al generar el PDF:', error)
+      alert('Hubo un error al generar el informe. Por favor intenta de nuevo.')
+    } finally {
+      setIsExporting(false)
     }
-    
-    const allStats = [currentUserStats, ...MOCK_TEAM_STATS].sort((a, b) => b.eficiencia - a.eficiencia)
-
-    autoTable(doc, {
-      startY: teamY + 5,
-      head: [['Ranking', 'Ejecutivo', 'Reuniones', 'Tareas', 'Eficiencia', 'Categoría']],
-      body: allStats.map((p, index) => {
-        const category = getEfficiencyCategory(p.eficiencia)
-        return [
-          `${index + 1}°`,
-          p.nombre === promotor ? `${p.nombre} (Tú)` : p.nombre,
-          p.reuniones,
-          p.tareas,
-          `${p.eficiencia}%`,
-          category.label
-        ]
-      }),
-      headStyles: { fillColor: [59, 130, 246] }, // Blue-500 para distinguir sección
-    })
-    
-    // Nota al pie sobre ranking
-    const rankingY = (doc as any).lastAutoTable.finalY + 10
-    doc.setFontSize(10)
-    doc.setTextColor(100)
-    const diffText = ranking.diff >= 0 ? `+${ranking.diff}% por encima` : `${ranking.diff}% por debajo`
-    doc.text(`* Tu eficiencia está ${diffText} del promedio del equipo (${ranking.average}%).`, 14, rankingY)
-
-
-    // Footer
-    const pageCount = (doc as any).internal.getNumberOfPages()
-    for(let i = 1; i <= pageCount; i++) {
-        doc.setPage(i)
-        doc.setFontSize(8)
-        doc.setTextColor(150)
-        doc.text(`Página ${i} de ${pageCount}`, 190, 290, { align: 'right' })
-        doc.text('AgenteCRM - Reporte Confidencial', 14, 290)
-    }
-
-    doc.save(`Informe_Tiempo_${promotor.replace(' ', '_')}_${new Date().getMonth() + 1}.pdf`)
-    setIsExporting(false)
   }
 
   if (!isOpen) return null
@@ -182,14 +206,16 @@ export function TimeReportModal({ isOpen, onClose, actividades }: TimeReportModa
       reuniones: stats.reunionesMes,
       tareas: stats.tareasMes,
       tiempoAsignado: stats.utilizacion,
-      eficiencia: stats.eficienciaActual
+      eficiencia: stats.eficienciaActual,
+      captacion: stats.captacionActual,
+      colocacion: stats.colocacionActual
   }
   const displayTeamStats = [currentUserStatsObj, ...MOCK_TEAM_STATS].sort((a, b) => b.eficiencia - a.eficiencia)
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
       <div className={cn(
-        "w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl",
+        "w-full max-w-6xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl transition-all",
         isHey ? "bg-[#1a1f2e] border border-white/10" : "bg-white"
       )}>
         {/* Header */}
@@ -203,10 +229,10 @@ export function TimeReportModal({ isOpen, onClose, actividades }: TimeReportModa
             </div>
             <div>
               <h2 className={cn("text-xl font-bold", isHey ? "text-white" : "text-gray-800")}>
-                Informe de Tiempo Ejecutivo
+                Análisis Multidimensional de Desempeño
               </h2>
               <p className={cn("text-sm", isHey ? "text-gray-400" : "text-gray-500")}>
-                Análisis mensual de productividad y eficiencia
+                Evaluación cruzada: Eficiencia Temporal vs Resultados Financieros
               </p>
             </div>
           </div>
@@ -249,32 +275,42 @@ export function TimeReportModal({ isOpen, onClose, actividades }: TimeReportModa
               )}
             >
               <Download className="w-4 h-4" />
-              {isExporting ? 'Generando...' : 'Descargar Informe PDF'}
+              {isExporting ? 'Generando...' : 'Descargar PDF'}
             </button>
           </div>
 
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className={cn("p-4 rounded-xl border", isHey ? "bg-white/5 border-white/10" : "bg-blue-50 border-blue-100")}>
-              <p className={cn("text-xs mb-1", isHey ? "text-gray-400" : "text-blue-600")}>% Ocupación Diaria</p>
+              <p className={cn("text-xs mb-1", isHey ? "text-gray-400" : "text-blue-600")}>Eficiencia Temporal</p>
               <div className="flex items-baseline gap-2">
-                <span className={cn("text-2xl font-bold", isHey ? "text-white" : "text-blue-700")}>{stats.utilizacion}%</span>
-                <span className="text-xs text-green-500 flex items-center">
-                  <TrendingUp className="w-3 h-3 mr-0.5" /> +2.5%
+                <span className={cn("text-2xl font-bold", isHey ? "text-white" : "text-blue-700")}>{stats.eficienciaActual}%</span>
+                <span className={cn("text-xs px-1.5 py-0.5 rounded-full", getEfficiencyCategory(stats.eficienciaActual).color)}>
+                    {getEfficiencyCategory(stats.eficienciaActual).label}
                 </span>
               </div>
             </div>
-            <div className={cn("p-4 rounded-xl border", isHey ? "bg-white/5 border-white/10" : "bg-purple-50 border-purple-100")}>
-              <p className={cn("text-xs mb-1", isHey ? "text-gray-400" : "text-purple-600")}>Horas Planeadas (Mes)</p>
-              <span className={cn("text-2xl font-bold", isHey ? "text-white" : "text-purple-700")}>{stats.horasPlaneadas}h</span>
+            <div className={cn("p-4 rounded-xl border", isHey ? "bg-white/5 border-white/10" : "bg-emerald-50 border-emerald-100")}>
+              <p className={cn("text-xs mb-1", isHey ? "text-gray-400" : "text-emerald-600")}>Captación Mensual</p>
+              <div className="flex flex-col">
+                <span className={cn("text-xl font-bold", isHey ? "text-white" : "text-emerald-700")}>{formatCurrency(stats.captacionActual)}</span>
+                 <span className={cn("text-xs px-0 py-0.5 w-fit mt-1 rounded-full", getCaptacionCategory(stats.captacionActual).color.replace('bg-', 'text-').split(' ')[0])}>
+                    {getCaptacionCategory(stats.captacionActual).label}
+                </span>
+              </div>
             </div>
-            <div className={cn("p-4 rounded-xl border", isHey ? "bg-white/5 border-white/10" : "bg-yellow-50 border-yellow-100")}>
-              <p className={cn("text-xs mb-1", isHey ? "text-gray-400" : "text-yellow-700")}>Tareas No Programadas (Mes)</p>
-              <span className={cn("text-2xl font-bold", isHey ? "text-white" : "text-yellow-800")}>{stats.horasNoPlaneadas}h</span>
+            <div className={cn("p-4 rounded-xl border", isHey ? "bg-white/5 border-white/10" : "bg-indigo-50 border-indigo-100")}>
+              <p className={cn("text-xs mb-1", isHey ? "text-gray-400" : "text-indigo-600")}>Colocación Mensual</p>
+               <div className="flex flex-col">
+                <span className={cn("text-xl font-bold", isHey ? "text-white" : "text-indigo-700")}>{formatCurrency(stats.colocacionActual)}</span>
+                 <span className={cn("text-xs px-0 py-0.5 w-fit mt-1 rounded-full", getColocacionCategory(stats.colocacionActual).color.replace('bg-', 'text-').split(' ')[0])}>
+                    {getColocacionCategory(stats.colocacionActual).label}
+                </span>
+              </div>
             </div>
-            <div className={cn("p-4 rounded-xl border", isHey ? "bg-white/5 border-white/10" : "bg-green-50 border-green-100")}>
-              <p className={cn("text-xs mb-1", isHey ? "text-gray-400" : "text-green-600")}>Eficiencia General</p>
-              <span className={cn("text-2xl font-bold", isHey ? "text-white" : "text-green-700")}>94%</span>
+             <div className={cn("p-4 rounded-xl border", isHey ? "bg-white/5 border-white/10" : "bg-gray-50 border-gray-100")}>
+              <p className={cn("text-xs mb-1", isHey ? "text-gray-400" : "text-gray-600")}>Ranking General</p>
+              <span className={cn("text-2xl font-bold", isHey ? "text-white" : "text-gray-700")}>2° <span className="text-sm font-normal text-gray-400">/ 6</span></span>
             </div>
           </div>
 
@@ -285,18 +321,6 @@ export function TimeReportModal({ isOpen, onClose, actividades }: TimeReportModa
                 <Users className="w-5 h-5" />
                 Comparativa de Equipo (Ranking)
               </h3>
-              <div className="flex items-center gap-3">
-                 <div className={cn("text-xs px-3 py-1 rounded-full border", 
-                  ranking.diff >= 0 
-                    ? "bg-green-50 text-green-700 border-green-200" 
-                    : "bg-red-50 text-red-700 border-red-200"
-                 )}>
-                   {ranking.diff >= 0 ? `+${ranking.diff}% sobre media` : `${ranking.diff}% bajo media`}
-                 </div>
-                 <span className={cn("text-xs px-2 py-1 rounded-full", isHey ? "bg-white/10 text-gray-400" : "bg-gray-100 text-gray-500")}>
-                  Enero 2026
-                </span>
-              </div>
             </div>
             
             <div className={cn("rounded-xl border overflow-hidden", isHey ? "border-white/10" : "border-gray-200")}>
@@ -305,16 +329,18 @@ export function TimeReportModal({ isOpen, onClose, actividades }: TimeReportModa
                   <tr className={cn(isHey ? "bg-white/5 text-gray-300" : "bg-gray-50 text-gray-600")}>
                     <th className="px-4 py-3 text-center font-medium w-12">#</th>
                     <th className="px-4 py-3 text-left font-medium">Ejecutivo</th>
-                    <th className="px-4 py-3 text-center font-medium">Reuniones</th>
-                    <th className="px-4 py-3 text-center font-medium">Tareas</th>
-                    <th className="px-4 py-3 text-center font-medium">Eficiencia</th>
-                    <th className="px-4 py-3 text-center font-medium">Categoría</th>
+                    <th className="px-4 py-3 text-center font-medium">Eficiencia Temporal</th>
+                    <th className="px-4 py-3 text-right font-medium">Captación</th>
+                    <th className="px-4 py-3 text-right font-medium">Colocación</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-white/10">
                   {displayTeamStats.map((stat, i) => {
                     const isMe = stat.nombre === promotor
-                    const category = getEfficiencyCategory(stat.eficiencia)
+                    const efCat = getEfficiencyCategory(stat.eficiencia)
+                    const capCat = getCaptacionCategory(stat.captacion)
+                    const colCat = getColocacionCategory(stat.colocacion)
+                    
                     return (
                     <tr key={i} className={cn(
                        "transition-colors",
@@ -326,21 +352,46 @@ export function TimeReportModal({ isOpen, onClose, actividades }: TimeReportModa
                         {i + 1}
                       </td>
                       <td className="px-4 py-3 font-medium">
-                        {stat.nombre} {isMe && '(Tú)'}
+                        <div className="flex flex-col">
+                            <span>{stat.nombre} {isMe && '(Tú)'}</span>
+                            <span className="text-[10px] text-gray-400">{stat.reuniones} reuniones • {stat.tareas} tareas</span>
+                        </div>
                       </td>
-                      <td className="px-4 py-3 text-center">{stat.reuniones}</td>
-                      <td className="px-4 py-3 text-center">{stat.tareas}</td>
-                      <td className="px-4 py-3 text-center font-bold">{stat.eficiencia}%</td>
+                      
                       <td className="px-4 py-3 text-center">
-                        <span className={cn("px-2 py-1 rounded-full text-xs font-medium", category.color)}>
-                          {category.label}
-                        </span>
+                         <div className="flex flex-col items-center gap-1">
+                            <span className="font-bold text-base">{stat.eficiencia}%</span>
+                            <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium border", efCat.color)}>
+                              {efCat.label}
+                            </span>
+                         </div>
+                      </td>
+
+                      <td className="px-4 py-3 text-right">
+                         <div className="flex flex-col items-end gap-1">
+                            <span className="font-mono">{formatCurrency(stat.captacion)}</span>
+                            <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium border", capCat.color)}>
+                              {capCat.label}
+                            </span>
+                         </div>
+                      </td>
+
+                      <td className="px-4 py-3 text-right">
+                         <div className="flex flex-col items-end gap-1">
+                            <span className="font-mono">{formatCurrency(stat.colocacion)}</span>
+                            <span className={cn("px-2 py-0.5 rounded-full text-[10px] font-medium border", colCat.color)}>
+                              {colCat.label}
+                            </span>
+                         </div>
                       </td>
                     </tr>
                   )})} 
                 </tbody>
               </table>
             </div>
+             <p className={cn("text-xs text-center mt-4", isHey ? "text-gray-500" : "text-gray-400")}>
+                * Categorías calculadas independientemente para cada métrica.
+             </p>
           </div>
         </div>
       </div>

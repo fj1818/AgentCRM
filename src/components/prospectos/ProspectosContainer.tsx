@@ -24,7 +24,7 @@ interface MensajeChat {
 }
 
 // Webhook URL para el agente de prospectos
-const WEBHOOK_PROSPECTOS = 'https://abrahamnavarrete.app.n8n.cloud/webhook/prospect'
+const WEBHOOK_PROSPECTOS = 'https://abrahamnavarrete.app.n8n.cloud/webhook/Register'
 
 // Definición de respuesta del agente
 interface AgenteResponse {
@@ -368,7 +368,7 @@ export function ProspectosContainer() {
     setProspectos(prev => [nuevoProspecto, ...prev])
   }
   
-  const handleActualizarProspecto = (nombreOrRfc: string, campo: string, valor: any): boolean => {
+  const handleUpdateProspecto = (nombreOrRfc: string, campo: string, valor: any): boolean => {
       const termino = nombreOrRfc.toLowerCase()
       // Buscar prospecto (puede ser por nombre o RFC)
       // Priorizar match exacto de RFC, luego autocompletar nombre
@@ -446,7 +446,7 @@ export function ProspectosContainer() {
         
         {/* Table */}
         <div className="mt-4">
-          <ProspectosTable filtros={filtros} data={prospectos} />
+          <ProspectosTable filtros={filtros} data={prospectos} onUpdateProspecto={handleUpdateProspecto} />
         </div>
       </div>
       
@@ -454,7 +454,7 @@ export function ProspectosContainer() {
       <div className="w-[450px] shrink-0">
         <ProspectosChatSidebar 
             onNuevoProspecto={handleNuevoProspecto} 
-            onActualizarProspecto={handleActualizarProspecto}
+            onActualizarProspecto={handleUpdateProspecto}
         />
       </div>
     </div>

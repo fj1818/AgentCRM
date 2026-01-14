@@ -142,16 +142,13 @@ export function calcularCotizacion(solicitud: SolicitudCotizacion): ResultadoCot
     const capitalMes = pagoMensual - interesMes
     saldo = saldo - capitalMes
     
-    // Solo incluir primeros 12 y últimos 3 para no hacer muy larga la tabla
-    if (mes <= 12 || mes > plazo - 3) {
-      tablaAmortizacion.push({
-        mes,
-        pagoMensual: Math.round(pagoMensual * 100) / 100,
-        capital: Math.round(capitalMes * 100) / 100,
-        interes: Math.round(interesMes * 100) / 100,
-        saldo: Math.max(0, Math.round(saldo * 100) / 100),
-      })
-    }
+    tablaAmortizacion.push({
+      mes,
+      pagoMensual: Math.round(pagoMensual * 100) / 100,
+      capital: Math.round(capitalMes * 100) / 100,
+      interes: Math.round(interesMes * 100) / 100,
+      saldo: Math.max(0, Math.round(saldo * 100) / 100),
+    })
   }
   
   return {
