@@ -23,7 +23,7 @@ import { ProspectoOferta } from '@/data/prospectosData'
 interface ProspectosTableProps {
   filtros: FiltrosProspectos
   data: ProspectoOferta[]
-  onUpdateProspecto: (id: string, updates: Partial<ProspectoOferta>) => void
+  onUpdateProspecto: (nombreOrRfc: string, campo: string, valor: any) => boolean
 }
 
 export function ProspectosTable({ filtros, data, onUpdateProspecto }: ProspectosTableProps) {

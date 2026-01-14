@@ -7,7 +7,7 @@ import { ProspectoOferta } from '@/data/prospectosData'
 interface DetalleProspectoModalProps {
   prospecto: ProspectoOferta
   onClose: () => void
-  onUpdateProspecto: (id: string, updates: Partial<ProspectoOferta>) => void
+  onUpdateProspecto: (nombreOrRfc: string, campo: string, valor: any) => boolean
 }
 
 interface MensajeAgent {
@@ -104,7 +104,7 @@ export function DetalleProspectoModal({ prospecto, onClose, onUpdateProspecto }:
       }
 
       if (nuevaEtapa) {
-        onUpdateProspecto(prospecto.idProspecto, { etapa: nuevaEtapa as any })
+        onUpdateProspecto(prospecto.idProspecto, 'etapa', nuevaEtapa)
         respuesta = `✅ Listo. He actualizado la etapa a "${nuevaEtapa}".`
       } else {
         respuesta = `❌ No reconozco esa etapa. Las etapas válidas son:\n\n• ${etapasValidas.join('\n• ')}`
@@ -129,7 +129,7 @@ export function DetalleProspectoModal({ prospecto, onClose, onUpdateProspecto }:
          if (monto < 0) {
            respuesta = `⚠️ No puedo asignar un monto negativo ($${monto}).`
          } else {
-           onUpdateProspecto(prospecto.idProspecto, { montoInteres: monto })
+           onUpdateProspecto(prospecto.idProspecto, 'monto', monto)
            respuesta = `✅ Entendido. He actualizado el monto de interés a ${formatCurrency(monto)}.`
          }
       } else {

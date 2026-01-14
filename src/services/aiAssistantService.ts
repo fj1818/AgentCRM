@@ -228,10 +228,7 @@ function aplicarReglasPrivacidad(
   console.log('🔒 [Privacidad] Columnas financieras detectadas:', columnasFinancieras)
   console.log('🔒 [Privacidad] Hay datos financieros:', hayDatosFinancieros)
   
-  // 2. Detectar si hay columna IDE disponible
-  const tieneIDE = columnas.some(col => col.toLowerCase() === 'ide' || col.toLowerCase() === 'id')
-  
-  // 3. Filtrar columnas - Reglas de IDs
+  // 2. Filtrar columnas - Reglas de IDs
   let columnasFilterdas = columnas.filter(col => {
     const colLower = col.toLowerCase()
     
