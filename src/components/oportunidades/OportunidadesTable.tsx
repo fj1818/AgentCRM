@@ -30,6 +30,9 @@ export function OportunidadesTable({ filtros }: OportunidadesTableProps) {
   const { clientes } = useClientesStore() // Obtener lista completa de clientes para lookup
   const isHey = theme === 'hey'
   
+  // Estado local para ofertas (permite actualizaciones desde el modal)
+  const [ofertas, setOfertas] = useState(() => ofertasClientesData)
+  
   const [paginaActual, setPaginaActual] = useState(1)
   const [ordenColumna, setOrdenColumna] = useState<string>('')
   const [ordenDireccion, setOrdenDireccion] = useState<'asc' | 'desc'>('asc')
@@ -40,7 +43,7 @@ export function OportunidadesTable({ filtros }: OportunidadesTableProps) {
     // Crear mapa de clientes para acceso rápido
     const clientesMap = new Map(clientes.map(c => [c.ide, c]))
 
-    return ofertasClientesData.map(oferta => {
+    return ofertas.map(oferta => {
       const cliente = clientesMap.get(oferta.ide)
       
       return {
@@ -54,7 +57,7 @@ export function OportunidadesTable({ filtros }: OportunidadesTableProps) {
         producto: oferta.productoInteres
       }
     })
-  }, [clientes]) // Se recalcula si cambian clientes
+  }, [clientes, ofertas]) // Se recalcula si cambian clientes u ofertas
 
   // Filtrado
   const datosFiltrados = useMemo(() => {
@@ -148,6 +151,34 @@ export function OportunidadesTable({ filtros }: OportunidadesTableProps) {
   const handleVerDetalle = (oferta: any) => {
     setOfertaSeleccionada(oferta)
     setModalOpen(true)
+  }
+
+  // Función para actualizar una oferta desde el modal
+  const handleUpdateOferta = (idOferta: string, campo: string, valor: any): boolean => {
+    const index = ofertas.findIndex(o => o.idOferta === idOferta)
+    
+    if (index === -1) return false
+    
+    const nuevasOfertas = [...ofertas]
+    const oferta = nuevasOfertas[index]
+    
+    if (!oferta) return false
+    
+    // Mapear campos
+    if (campo === 'etapa') {
+      oferta.etapa = valor
+    } else if (campo === 'montoOferta') {
+      oferta.montoOferta = typeof valor === 'string' ? parseFloat(valor.replace(/[^0-9.]/g, '')) : valor
+    }
+    
+    setOfertas(nuevasOfertas)
+    
+    // También actualizar la oferta seleccionada si está visible
+    if (ofertaSeleccionada && ofertaSeleccionada.idOferta === idOferta) {
+      setOfertaSeleccionada({ ...ofertaSeleccionada, [campo]: valor })
+    }
+    
+    return true
   }
 
   return (
@@ -319,7 +350,8 @@ export function OportunidadesTable({ filtros }: OportunidadesTableProps) {
       {modalOpen && ofertaSeleccionada && (
         <DetalleOfertaModal 
           oferta={ofertaSeleccionada} 
-          onClose={() => setModalOpen(false)} 
+          onClose={() => setModalOpen(false)}
+          onUpdateOferta={handleUpdateOferta}
         />
       )}
     </>
