@@ -47,8 +47,10 @@ export function DetalleProspectoModal({ prospecto, onClose, onUpdateProspecto }:
     }).format(amount)
   }
 
+  const [isLoading, setIsLoading] = useState(false)
+
   const handleEnviar = async () => {
-    if (!inputValue.trim()) return
+    if (!inputValue.trim() || isLoading) return
 
     const textoUsuario = inputValue.trim()
     setInputValue('')
@@ -61,10 +63,10 @@ export function DetalleProspectoModal({ prospecto, onClose, onUpdateProspecto }:
       timestamp: new Date()
     }])
 
+    setIsLoading(true)
+
     try {
       // Enviar al agente
-      // Usamos el ID del prospecto como sessionId para mantener contexto si es necesario, 
-      // o generamos uno nuevo. Por ahora usaremos el ID del prospecto.
       const sessionId = `prospecto-${prospecto.idProspecto}-${Date.now()}`
       // Inyectar contexto explícito para que el agente sepa qué registro actualizar sin preguntar
       const contextoSistema = `\n\n[SISTEMA: El usuario está visualizando el prospecto ID: ${prospecto.idProspecto}, Nombre: ${prospecto.nombrePromotor}, RFC: ${prospecto.rfc || 'No disponible'}. Si la intención es actualizar, aplica los cambios DIRECTAMENTE a este registro sin pedir confirmación de nombre o RFC.]`
@@ -73,22 +75,54 @@ export function DetalleProspectoModal({ prospecto, onClose, onUpdateProspecto }:
       let respuestaTexto = 'Lo siento, no pude procesar tu solicitud.'
 
       if (typeof response === 'object' && response !== null) {
-        if (response.intent === 'ACTUALIZAR_PROSPECTO' && response.data) {
-           const { campo, valor } = response.data
-           // Forzamos la actualización sobre el prospecto actual
-           if (campo && valor) {
-             // Lógica especial para productos
-             const familias = ['TDC', 'TPV', 'Cheques']
-             if (campo === 'producto' && familias.includes(valor)) {
-                 respuestaTexto = `Entendido, te interesa ${valor}. ¿Qué producto específico deseas asignar? (Ej. ${valor} Clásica, ${valor} Oro)`
-             } else {
-                 const exito = onUpdateProspecto(prospecto.idProspecto, campo, valor)
-                 if (exito) {
-                     respuestaTexto = response.mensaje || `✅ Actualizado ${campo} a ${valor}.`
-                 } else {
-                     respuestaTexto = `⚠️ No pude actualizar el prospecto.`
-                 }
+        // Aceptamos tanto ACTUALIZAR_PROSPECTO como ACTUALIZAR_OFERTA ya que el agente puede confundir contextos
+        const isUpdateIntent = response.intent === 'ACTUALIZAR_PROSPECTO' || response.intent === 'ACTUALIZAR_OFERTA';
+        
+        if (isUpdateIntent && response.data) {
+           const data = response.data as any
+           // Intentar extraer campo/valor estándar
+           let campo = data.campo
+           let valor = data.valor
+           
+           // Si no vienen campo/valor, intentar inferir de otras propiedades comunes
+           if (!campo || !valor) {
+             if (data.estado) {
+               campo = 'etapa'
+               valor = data.estado
+             } else if (data.etapa) {
+               campo = 'etapa'
+               valor = data.etapa
+             } else if (data.monto) {
+               campo = 'monto' // ProspectosContainer espera 'monto' o 'montoInteres'? Revisar container.
+               valor = data.monto
+             } else if (data.montoInteres) {
+               campo = 'monto'
+               valor = data.montoInteres
+             } else if (data.producto) {
+               campo = 'producto'
+               valor = data.producto
              }
+           }
+
+           // Normalizar nombre de campo
+           if (campo === 'montoInteres') campo = 'monto'
+           if (campo === 'productoInteres') campo = 'producto'
+
+           if (campo && valor) {
+               // Lógica especial para productos
+               const familias = ['TDC', 'TPV', 'Cheques']
+               if (campo === 'producto' && familias.includes(valor)) {
+                   respuestaTexto = `Entendido, te interesa ${valor}. ¿Qué producto específico deseas asignar? (Ej. ${valor} Clásica, ${valor} Oro)`
+               } else {
+                   // Usamos RFC o Nombre para actualizar, ya que el container busca por eso
+                   const identificador = prospecto.rfc || prospecto.nombreProspecto
+                   const exito = onUpdateProspecto(identificador, campo, valor)
+                   if (exito) {
+                       respuestaTexto = response.mensaje || `✅ Actualizado ${campo} a ${valor}.`
+                   } else {
+                       respuestaTexto = `⚠️ No pude actualizar el prospecto.`
+                   }
+               }
            } else {
              respuestaTexto = response.mensaje || 'No entendí qué actualizar.'
            }
@@ -114,6 +148,8 @@ export function DetalleProspectoModal({ prospecto, onClose, onUpdateProspecto }:
         texto: 'Error de conexión con el agente.',
         timestamp: new Date()
       }])
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -264,6 +300,20 @@ export function DetalleProspectoModal({ prospecto, onClose, onUpdateProspecto }:
                 </div>
               </div>
             ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className={cn(
+                  "rounded-2xl px-4 py-3 text-sm",
+                  isHey ? "bg-white/10 text-gray-400" : "bg-gray-100 text-gray-500"
+                )}>
+                  <div className="flex gap-1">
+                    <span className="animate-bounce">●</span>
+                    <span className="animate-bounce delay-100">●</span>
+                    <span className="animate-bounce delay-200">●</span>
+                  </div>
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
