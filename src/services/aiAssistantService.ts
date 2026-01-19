@@ -421,7 +421,7 @@ export async function procesarPregunta(pregunta: string): Promise<AIResponse> {
     preguntaLower.includes('planifica') ||
     preguntaLower.includes('redacta') ||
     preguntaLower.includes('tablero de metas') ||
-    preguntaLower.includes('resultado de metas') ||
+    preguntaLower.includes('cumplimiento de objetivos') ||
     preguntaLower.includes('sin consultar') ||
     preguntaLower.includes('valores de ejemplo') ||
     preguntaLower.includes('genera un tablero')
@@ -533,6 +533,12 @@ Plazo: 3 meses`,
     }
   }
   
+  // Enriquecer pregunta para asegurar que se incluyan productos en listado de prospectos
+  if (preguntaLower.includes('listado de prospectos') || preguntaLower.includes('lista de prospectos')) {
+    console.log('🔄 Enriqueciendo pregunta de prospectos para incluir productos...')
+    pregunta = 'Genera un listado de prospectos mostrando: Nombre, RFC, Familia de Producto (hacer JOIN con ofertas_prospectos), Producto Específico, Etapa y Fecha de Alta. Oculta IDs internos.'
+  }
+
   // 2. AGENTE 1: Generar SQL
   const sqlResponseRaw = await enviarAAgenteSQL(pregunta, sessionId)
   
@@ -597,9 +603,39 @@ Plazo: 3 meses`,
     return {
       respuesta: `Error ejecutando la consulta: ${resultado.error}`,
       tipo: 'texto',
-      error: resultado.error,
-      sql: sqlResponse.sql,
     }
+  }
+
+  // Lógica específica para Prospectos: Ocultar ID y reordenar columnas
+  if (preguntaLower.includes('prospectos') && resultado.datos.length > 0) {
+    console.log('🔄 Aplicando formato específico para Prospectos...')
+    
+    // 1. Filtrar columnas no deseadas (idProspecto)
+    const columnasOcultas = ['idProspecto', 'numeroPromotor', 'idOferta']
+    resultado.columnas = resultado.columnas.filter(col => !columnasOcultas.includes(col))
+    
+    // 2. Reordenar columnas: Poner producto antes de fechas
+    // Orden deseado: Nombre, RFC, Producto, Etapa, Fecha Alta, ...
+    const ordenPreferido = ['nombre', 'rfc', 'familiaProducto', 'productoInteres', 'etapa', 'fechaAlta']
+    
+    resultado.columnas.sort((a, b) => {
+      const idxA = ordenPreferido.indexOf(a)
+      const idxB = ordenPreferido.indexOf(b)
+      
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB
+      if (idxA !== -1) return -1
+      if (idxB !== -1) return 1
+      return 0
+    })
+    
+    // 3. Limpiar datos
+    resultado.datos = resultado.datos.map(fila => {
+      const nuevaFila: Record<string, unknown> = {}
+      resultado.columnas.forEach(col => {
+        nuevaFila[col] = fila[col]
+      })
+      return nuevaFila
+    })
   }
   
   console.log('✅ Resultados SQL:', resultado.total, 'registros')
@@ -692,8 +728,8 @@ export function obtenerSugerencias(): Suggestion[] {
       query: 'Muestrame las 15 variaciones más grandes del último mes (ingresos y egresos) ordenadas por magnitud'
     },
     {
-      label: 'Consultar mi portafolio',
-      query: 'Consultar mi portafolio'
+      label: 'Cumplimiento de Objetivos',
+      query: 'Genera un tablero de metas SIN consultar la base de datos. Crea una tabla con estos indicadores: Captación, Colocación, Facturación TPV, Seguros, Créditos. Columnas: Meta Mensual, Avance Actual, % Cumplimiento, Delta. Usa valores de ejemplo donde el Avance sea entre 50% y 120% de la Meta. En la columna Delta agrega un indicador: si el avance supera la meta usa "🟢 ↑" y si falta para llegar usa "🔴 ↓". Delta = Avance - Meta.'
     },
     {
       label: 'Consultar el listado de oportunidades',
