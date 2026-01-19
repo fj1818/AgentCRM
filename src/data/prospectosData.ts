@@ -29,11 +29,14 @@ export const PROMOTORES = [
 // Generar datos de ejemplo
 export function generarDatosEjemplo(): ProspectoOferta[] {
   const tiposPersona = ['Persona Moral', 'Persona Fisica con Actividad Empresarial', 'Persona Fisica']
-  const familias = ['TDC', 'TPV', 'Cheques']
+  const familias = ['TDC', 'TPV', 'Cheques', 'Crédito', 'Seguros', 'Nómina']
   const productos: Record<string, string[]> = {
-    'TDC': ['TDC Básica', 'TDC Oro', 'TDC Platinum', 'TDC Empresarial'],
-    'TPV': ['TPV Fija', 'TPV Móvil', 'TPV E-commerce'],
-    'Cheques': ['Cuenta Cheques Básica', 'Cuenta Cheques Empresarial', 'Cuenta Cheques PyME'],
+    'TDC': ['TDC Clásica', 'TDC Oro', 'TDC Platinum', 'TDC Empresarial'],
+    'TPV': ['TPV Básica', 'TPV Plus', 'TPV Móvil', 'TPV eCommerce'],
+    'Cheques': ['Cuenta Básica', 'Cuenta Plus', 'Cuenta Empresarial'],
+    'Crédito': ['Crédito Personal', 'Crédito Auto', 'Crédito Negocios', 'Crédito Hipotecario', 'Crédito PYME'],
+    'Seguros': ['Seguro de Vida', 'Seguro Auto', 'Seguro Hogar', 'Seguro Gastos Médicos', 'Seguro Empresarial'],
+    'Nómina': ['Nómina Básica', 'Nómina Plus', 'Nómina Empresarial', 'Dispersión de Nómina'],
   }
   const etapas = ['No contactado', 'En negociación', 'Interesado', 'Descartado', 'Convertido']
   const campanas = ['Referencia Propia', 'Pagina Web', 'App', 'Portal', 'Campaña Prospectos Perfilados 2026']

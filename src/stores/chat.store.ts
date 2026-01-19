@@ -83,6 +83,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
           titulo: response.respuesta,
         } : null
         
+        if (response.tablas) {
+          assistantMessage.tablas = response.tablas
+        }
+        
         addMessage(assistantMessage)
         
         // También actualizar el estado global para compatibilidad

@@ -26,7 +26,7 @@ interface MensajeChat {
 
 // Sugerencias rápidas para el chat
 const SUGERENCIAS = [
-  { texto: '➕ Crear oferta', valor: 'Quiero agregar un nuevo prospecto' },
+  { texto: '➕ Crear prospecto', valor: 'Quiero agregar un nuevo prospecto' },
 ]
 
 interface ProspectosChatSidebarProps {
@@ -43,7 +43,7 @@ function ProspectosChatSidebar({ onNuevoProspecto, onActualizarProspecto }: Pros
     {
       id: '1',
       tipo: 'asistente',
-      contenido: '¡Hola! Soy tu asistente de prospectos. Puedo ayudarte a:\n\n➕ Crear ofertas de prospectos con AI\n\nEjemplo: "Quiero agregar a Juan Pérez RFC... para TDC"',
+      contenido: '¡Hola! Soy tu asistente de prospectos. Puedo ayudarte a:\n\n➕ Crear prospectos con AI\n\nEjemplo: "Quiero agregar a Juan Pérez RFC... para TDC"',
       timestamp: new Date()
     }
   ])

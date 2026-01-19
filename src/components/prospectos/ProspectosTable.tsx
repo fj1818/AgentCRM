@@ -156,7 +156,6 @@ export function ProspectosTable({ filtros, data, onUpdateProspecto }: Prospectos
               isHey ? "bg-white/5" : "bg-orange-50"
             )}>
               <tr>
-                <ColumnHeader columna="nombrePromotor" label="Promotor" />
                 <ColumnHeader columna="familiaProducto" label="Familia" />
                 <ColumnHeader columna="etapa" label="Etapa" />
                 <ColumnHeader columna="campaña" label="Campaña" />
@@ -185,9 +184,6 @@ export function ProspectosTable({ filtros, data, onUpdateProspecto }: Prospectos
                       isHey ? "hover:bg-white/5" : "hover:bg-orange-50/50"
                     )}
                   >
-                    <td className={cn("px-3 py-2 text-sm font-medium", isHey ? "text-gray-300" : "text-gray-700")}>
-                      {item.nombrePromotor}
-                    </td>
                     <td className={cn("px-3 py-2 text-sm font-medium", 
                       isHey ? "text-cyan-400" : "text-orange-600"
                     )}>

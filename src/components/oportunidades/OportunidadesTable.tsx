@@ -191,9 +191,7 @@ export function OportunidadesTable({ filtros, data: ofertas, onUpdateOferta }: O
               isHey ? "bg-white/5" : "bg-orange-50"
             )}>
               <tr>
-                <ColumnHeader columna="numeroPromotor" label="No. Promotor" />
-                <ColumnHeader columna="promotor" label="Promotor" />
-                {/* <ColumnHeader columna="nombreRazonSocial" label="Nombre / Razón Social" /> - Eliminado por petición */}
+                {/* Columnas Promotor ocultadas por petición */}
                 <ColumnHeader columna="familia" label="Familia" />
 
                 <ColumnHeader columna="montoOferta" label="Monto Oferta" />
@@ -220,12 +218,7 @@ export function OportunidadesTable({ filtros, data: ofertas, onUpdateOferta }: O
                     isHey ? "hover:bg-white/5" : "hover:bg-orange-50/50"
                   )}
                 >
-                  <td className={cn("px-3 py-2 text-sm", isHey ? "text-gray-400" : "text-gray-600")}>
-                    {item.numeroPromotor}
-                  </td>
-                  <td className={cn("px-3 py-2 text-sm font-medium", isHey ? "text-white" : "text-gray-900")}>
-                    {item.promotorNombre}
-                  </td>
+                  {/* Celdas Promotor ocultadas por petición */}
                   <td className={cn("px-3 py-2 text-sm", isHey ? "text-cyan-400" : "text-orange-600")}>
                     {item.familia}
                   </td>

@@ -1,6 +1,6 @@
 
 // Webhook URLs
-const WEBHOOK_PROSPECTOS = 'https://abrahamnavarrete.app.n8n.cloud/webhook/Register'
+const WEBHOOK_PROSPECTOS = 'https://abrahamnavarrete.app.n8n.cloud/webhook/prospect'
 const WEBHOOK_OPORTUNIDADES = 'https://abrahamnavarrete.app.n8n.cloud/webhook/Register'
 
 export interface AgenteResponse {
@@ -9,7 +9,7 @@ export interface AgenteResponse {
     nombre?: string
     rfc?: string
     contacto?: string
-    producto?: string
+    producto?: string // TDC, TPV, Cheques, Crédito, Seguros, Nóminas
     campo?: 'etapa' | 'monto' | 'producto' | 'contacto' | 'montoOferta'
     valor?: any
     idOferta?: string
@@ -34,7 +34,7 @@ export async function enviarAlAgente(
     // Inyectar contexto de productos válidos para oportunidades
     let mensajeFinal = mensaje
     if (contexto === 'oportunidades') {
-        mensajeFinal += `\n\n[Instrucción del Sistema: Las familias de productos válidas son ÚNICAMENTE: TDC, TPV, Cheques. Si el usuario menciona un producto específico (ej. TDC Oro), extrae 'TDC' como familia y 'TDC Oro' como producto. Si menciona un monto, extráelo como 'montoOferta'. IMPORTANTE: Para crear una oferta, intenta obtener el NOMBRE, RFC o IDE del cliente para buscarlo en la base de datos.]`
+        mensajeFinal += `\n\n[Instrucción del Sistema: Las familias de productos válidas son ÚNICAMENTE: TDC, TPV, Cheques, Crédito, Seguros, Nóminas. Si el usuario menciona un producto específico (ej. TDC Oro), extrae 'TDC' como familia y 'TDC Oro' como producto. Si menciona un monto, extráelo como 'montoOferta'. IMPORTANTE: Para crear una oferta, intenta obtener el NOMBRE, RFC o IDE del cliente para buscarlo en la base de datos.]`
     }
 
     const response = await fetch(url, {

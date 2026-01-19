@@ -161,11 +161,18 @@ function ResultTable({ tabla }: { tabla: TablaData }) {
   )
   const esTablaOfertas = !!colIdOferta
 
-  const columnasFiltradas = todasLasColumnas.filter(col => 
-    !columnasOcultas.includes(col) && 
-    !col.includes('_ide') &&
-    col !== colIdOferta // Ocultar idOferta de la vista principal
-  )
+  // Filtrar columnas duplicadas (ej: ide, IDE, Id)
+  const columnasVistas = new Set<string>()
+  const columnasFiltradas = todasLasColumnas.filter(col => {
+    const colLower = col.toLowerCase()
+    // Evitar duplicados por nombre normalizado
+    if (columnasVistas.has(colLower)) return false
+    columnasVistas.add(colLower)
+    
+    return !columnasOcultas.includes(col) && 
+      !col.includes('_ide') &&
+      col !== colIdOferta // Ocultar idOferta de la vista principal
+  })
 
   return (
     <>
@@ -379,6 +386,16 @@ export function MessageList({
                     <div className="my-4"><FilterableProductTable data={tabla.filas} columns={tabla.columnas} titulo={tabla.titulo} /></div>
                   ) : <ResultTable tabla={tabla} />
                 })()}
+
+                {message.role === 'assistant' && message.tablas && message.tablas.length > 0 && (
+                  message.tablas.map((tabla, index) => (
+                    <ResultTable key={index} tabla={{
+                      columnas: tabla.columnas,
+                      filas: tabla.datos,
+                      titulo: tabla.titulo
+                    }} />
+                  ))
+                )}
                 
                 {message.role === 'assistant' && grafico && grafico.datos?.length > 0 && (
                   <div className="max-w-2xl mx-auto animate-fade-in my-4">
