@@ -11,9 +11,6 @@
         "deploy": "npm run build && npx gh-pages -d dist"
     },
     "dependencies": {
-        "anychart": "^8.14.0",
-        "anychart-react": "^1.4.1",
-        "axios": "^1.7.7",
         "chart.js": "^4.5.1",
         "clsx": "^2.1.1",
         "date-fns": "^4.1.0",

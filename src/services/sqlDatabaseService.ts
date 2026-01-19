@@ -80,6 +80,7 @@ function crearEsquema(): void {
   db.run(`
     CREATE TABLE IF NOT EXISTS promotores (
       numeroPromotor TEXT PRIMARY KEY,
+      nombre TEXT,
       fechaAlta TEXT,
       fechaBaja TEXT,
       activo INTEGER,
@@ -382,11 +383,11 @@ async function cargarDatos(): Promise<void> {
   const { promotores } = await import('@/data')
   
   const stmtProm = db.prepare(`
-    INSERT INTO promotores (numeroPromotor, fechaAlta, fechaBaja, activo, banco, territorio, region, sucursalEquipo)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO promotores (numeroPromotor, nombre, fechaAlta, fechaBaja, activo, banco, territorio, region, sucursalEquipo)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
-  promotores.forEach((p: { numeroPromotor: string; fechaAlta: string; fechaBaja?: string; activo: boolean; banco: string; territorio: string; region: string; sucursalEquipo: string }) => {
-    stmtProm.run([p.numeroPromotor, p.fechaAlta, p.fechaBaja || null, p.activo ? 1 : 0, p.banco, p.territorio, p.region, p.sucursalEquipo])
+  promotores.forEach((p: { numeroPromotor: string; nombre: string; fechaAlta: string; fechaBaja?: string; activo: boolean; banco: string; territorio: string; region: string; sucursalEquipo: string }) => {
+    stmtProm.run([p.numeroPromotor, p.nombre, p.fechaAlta, p.fechaBaja || null, p.activo ? 1 : 0, p.banco, p.territorio, p.region, p.sucursalEquipo])
   })
   stmtProm.free()
   console.log(`  - ${promotores.length} promotores cargados`)
@@ -620,3 +621,67 @@ RELACIONES:
 `
 }
 
+
+/**
+ * Obtiene el detalle completo de un cliente por su IDE
+ */
+export async function obtenerDetalleCliente(ide: string): Promise<Record<string, unknown> | null> {
+  // Asegurar que la BD esté inicializada
+  await inicializarBaseDatos()
+  
+  if (!db) return null
+  
+  try {
+    // 1. Obtener datos básicos del cliente
+    const sqlCliente = `SELECT * FROM clientes WHERE ide = '${ide}'`
+    const resCliente = db.exec(sqlCliente)
+    
+    if (!resCliente.length || !resCliente[0]?.values.length) return null
+    
+    const clienteCols = resCliente[0].columns
+    const clienteVals = resCliente[0].values[0]
+    const cliente: Record<string, unknown> = {}
+    
+    if (clienteVals) {
+      clienteCols.forEach((col, i) => {
+        cliente[col] = clienteVals[i]
+      })
+    }
+    
+    // 2. Obtener teléfonos
+    const sqlTel = `SELECT telefono FROM telefonos WHERE ide = '${ide}'`
+    const resTel = db.exec(sqlTel)
+    const telefonos = (resTel.length && resTel[0]?.values) ? resTel[0].values.map(v => v[0]) : []
+    
+    // 3. Obtener correos
+    const sqlCorreo = `SELECT correo FROM correos WHERE ide = '${ide}'`
+    const resCorreo = db.exec(sqlCorreo)
+    const correos = (resCorreo.length && resCorreo[0]?.values) ? resCorreo[0].values.map(v => v[0]) : []
+    
+    // 4. Obtener direcciones
+    const sqlDir = `SELECT * FROM direcciones WHERE ide = '${ide}'`
+    const resDir = db.exec(sqlDir)
+    const direcciones: Record<string, unknown>[] = []
+    
+    if (resDir.length && resDir[0]?.values) {
+      const dirCols = resDir[0].columns
+      resDir[0].values.forEach(vals => {
+        const dir: Record<string, unknown> = {}
+        dirCols.forEach((col, i) => {
+          dir[col] = vals[i]
+        })
+        direcciones.push(dir)
+      })
+    }
+    
+    return {
+      ...cliente,
+      telefonos,
+      correos,
+      direcciones
+    }
+  } catch (error) {
+    console.error('Error obteniendo detalle cliente:', error)
+    return null
+  }
+}

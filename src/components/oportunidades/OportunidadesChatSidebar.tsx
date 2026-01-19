@@ -6,9 +6,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Send, Bot, User, Sparkles, Loader2 } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
-
-// Webhook URL para el agente de oportunidades (placeholder)
-const WEBHOOK_OPORTUNIDADES = 'https://abrahamnavarrete.app.n8n.cloud/webhook/oportunidades'
+import { enviarAlAgente } from '@/services'
 
 interface Mensaje {
   id: string
@@ -17,7 +15,12 @@ interface Mensaje {
   timestamp: Date
 }
 
-export function OportunidadesChatSidebar() {
+interface OportunidadesChatSidebarProps {
+  onUpdateOferta?: (idOferta: string, campo: string, valor: any) => boolean
+  onCreateOferta?: (datos: any) => boolean
+}
+
+export function OportunidadesChatSidebar({ onUpdateOferta, onCreateOferta }: OportunidadesChatSidebarProps) {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
   
@@ -44,38 +47,40 @@ export function OportunidadesChatSidebar() {
     scrollToBottom()
   }, [mensajes])
 
-  const enviarAlAgente = async (texto: string) => {
+  const enviarMensaje = async (texto: string) => {
     try {
       setCargando(true)
       
-      const response = await fetch(WEBHOOK_OPORTUNIDADES, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          mensaje: texto,
-          sessionId: sessionId,
-          fechaActual: new Date().toISOString(),
-          contexto: 'oportunidades' 
-        })
-      })
+      const response = await enviarAlAgente(texto, sessionId, 'oportunidades')
 
-      if (!response.ok) throw new Error('Error en el servicio')
-
-      const data = await response.json()
-      
-      // Procesar respuesta del agente (similar a TareasContainer)
+      // Procesar respuesta del agente
       let respuestaTexto = 'Lo siento, no pude procesar tu solicitud.'
       
-      if (typeof data.output === 'string') {
-        respuestaTexto = data.output
-      } else if (typeof data.text === 'string') {
-        respuestaTexto = data.text
-      } else if (typeof data.message === 'string') {
-        respuestaTexto = data.message
-      } else if (typeof data === 'string') {
-        respuestaTexto = data
+      if (typeof response === 'object' && response !== null) {
+          // Verificar si hay intent de actualización
+          if (response.intent === 'ACTUALIZAR_OFERTA' && response.data && onUpdateOferta) {
+              const { idOferta, campo, valor } = response.data
+              if (idOferta && campo && valor) {
+                  const exito = onUpdateOferta(idOferta, campo, valor)
+                  if (exito) {
+                      respuestaTexto = response.mensaje || `✅ Oferta actualizada correctamente.`
+                  } else {
+                      respuestaTexto = `⚠️ No pude encontrar la oferta con ID ${idOferta}.`
+                  }
+              }
+          } else if (response.intent === 'CREAR_OFERTA' && response.data && onCreateOferta) {
+              // Manejar creación de oferta
+              const exito = onCreateOferta(response.data)
+              if (exito) {
+                  respuestaTexto = response.mensaje || `✅ Oferta creada exitosamente para ${response.data.nombre || 'el cliente'}.`
+              } else {
+                  respuestaTexto = `⚠️ No pude crear la oferta. Verifica los datos.`
+              }
+          } else {
+              respuestaTexto = response.mensaje || response.output || response.text || response.message || JSON.stringify(response)
+          }
+      } else {
+          respuestaTexto = String(response)
       }
 
       const mensajeAgente: Mensaje = {
@@ -116,7 +121,7 @@ export function OportunidadesChatSidebar() {
     const textoEnviado = input
     setInput('')
     
-    await enviarAlAgente(textoEnviado)
+    await enviarMensaje(textoEnviado)
   }
 
   const sugerencias = [
@@ -217,9 +222,15 @@ export function OportunidadesChatSidebar() {
               <button
                 key={i}
                 onClick={() => {
-                  setInput(sug.valor)
-                  // Opcionalmente enviar automáticamente:
-                  // handleEnviar() // O mejor solo llenar input
+                  // Enviar directamente
+                  const nuevoMensaje: Mensaje = {
+                    id: Date.now().toString(),
+                    rol: 'usuario',
+                    contenido: sug.valor,
+                    timestamp: new Date()
+                  }
+                  setMensajes(prev => [...prev, nuevoMensaje])
+                  enviarMensaje(sug.valor)
                 }}
                 className={cn(
                   "whitespace-nowrap px-3 py-1.5 rounded-full text-xs font-medium border transition-colors",

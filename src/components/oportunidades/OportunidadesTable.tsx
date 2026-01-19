@@ -7,9 +7,8 @@ import { ChevronLeft, ChevronRight, ArrowUpDown, Eye } from 'lucide-react'
 import { useUIStore, useClientesStore } from '@/stores'
 import { cn } from '@/utils'
 import type { FiltrosOportunidades } from './OportunidadesFilters'
-import { ofertasClientesData } from '@/data/ofertasClientesData'
+import type { OfertaCliente } from '@/types/ofertaCliente.types'
 import { DetalleOfertaModal } from './DetalleOfertaModal'
-
 
 // Formateador de moneda
 const formatCurrency = (amount: number) => {
@@ -23,15 +22,17 @@ const formatCurrency = (amount: number) => {
 
 interface OportunidadesTableProps {
   filtros: FiltrosOportunidades
+  data: OfertaCliente[]
+  onUpdateOferta?: (idOferta: string, campo: string, valor: any) => boolean
 }
 
-export function OportunidadesTable({ filtros }: OportunidadesTableProps) {
+export function OportunidadesTable({ filtros, data: ofertas, onUpdateOferta }: OportunidadesTableProps) {
   const { theme } = useUIStore()
   const { clientes } = useClientesStore() // Obtener lista completa de clientes para lookup
   const isHey = theme === 'hey'
   
-  // Estado local para ofertas (permite actualizaciones desde el modal)
-  const [ofertas, setOfertas] = useState(() => ofertasClientesData)
+  // Estado local para ofertas (ELIMINADO - ahora viene por props)
+  // const [ofertas, setOfertas] = useState(() => ofertasClientesData)
   
   const [paginaActual, setPaginaActual] = useState(1)
   const [ordenColumna, setOrdenColumna] = useState<string>('')
@@ -51,6 +52,7 @@ export function OportunidadesTable({ filtros }: OportunidadesTableProps) {
         // Datos enriquecidos del cliente
         nombreRazonSocial: cliente?.nombreRazonSocial || 'Cliente Desconocido',
         tipoPersona: cliente?.tipoPersona || 'Persona Fisica',
+        rfc: cliente?.rfc || '',
         // Datos transformados/mapeados
         promotorNombre: oferta.promotorNombre,
         familia: oferta.familiaProducto,
@@ -146,39 +148,24 @@ export function OportunidadesTable({ filtros }: OportunidadesTableProps) {
   
   // State para el modal
   const [modalOpen, setModalOpen] = useState(false)
-  const [ofertaSeleccionada, setOfertaSeleccionada] = useState<any>(null)
+  const [idOfertaSeleccionada, setIdOfertaSeleccionada] = useState<string | null>(null)
+
+  const ofertaParaModal = useMemo(() => {
+      return dataCompleta.find(o => o.idOferta === idOfertaSeleccionada)
+  }, [dataCompleta, idOfertaSeleccionada])
 
   const handleVerDetalle = (oferta: any) => {
-    setOfertaSeleccionada(oferta)
+    setIdOfertaSeleccionada(oferta.idOferta)
     setModalOpen(true)
   }
 
   // Función para actualizar una oferta desde el modal
-  const handleUpdateOferta = (idOferta: string, campo: string, valor: any): boolean => {
-    const index = ofertas.findIndex(o => o.idOferta === idOferta)
-    
-    if (index === -1) return false
-    
-    const nuevasOfertas = [...ofertas]
-    const oferta = nuevasOfertas[index]
-    
-    if (!oferta) return false
-    
-    // Mapear campos
-    if (campo === 'etapa') {
-      oferta.etapa = valor
-    } else if (campo === 'montoOferta') {
-      oferta.montoOferta = typeof valor === 'string' ? parseFloat(valor.replace(/[^0-9.]/g, '')) : valor
+  const handleUpdateOfertaLocal = (idOferta: string, campo: string, valor: any): boolean => {
+    // Usar la función prop si existe
+    if (onUpdateOferta) {
+        return onUpdateOferta(idOferta, campo, valor)
     }
-    
-    setOfertas(nuevasOfertas)
-    
-    // También actualizar la oferta seleccionada si está visible
-    if (ofertaSeleccionada && ofertaSeleccionada.idOferta === idOferta) {
-      setOfertaSeleccionada({ ...ofertaSeleccionada, [campo]: valor })
-    }
-    
-    return true
+    return false
   }
 
   return (
@@ -347,11 +334,11 @@ export function OportunidadesTable({ filtros }: OportunidadesTableProps) {
       </div>
       </div>
 
-      {modalOpen && ofertaSeleccionada && (
+      {modalOpen && ofertaParaModal && (
         <DetalleOfertaModal 
-          oferta={ofertaSeleccionada} 
+          oferta={ofertaParaModal} 
           onClose={() => setModalOpen(false)}
-          onUpdateOferta={handleUpdateOferta}
+          onUpdateOferta={handleUpdateOfertaLocal}
         />
       )}
     </>

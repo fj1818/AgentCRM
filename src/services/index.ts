@@ -2,7 +2,9 @@
  * Barrel file para exportar todos los servicios
  */
 
-export * from './api.service'
-export * from './webhook.service'
-export * from './chat.service'
+
 export * from './sqlDatabaseService'
+export * from './aiAssistantService'
+export * from './chat.service'
+export * from './cotizadorService'
+export * from './prospectosAgentService'

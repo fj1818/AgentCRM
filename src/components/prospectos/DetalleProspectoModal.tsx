@@ -3,6 +3,7 @@ import { X, Send, Bot } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 import { ProspectoOferta } from '@/data/prospectosData'
+import { enviarAlAgente } from '@/services'
 
 interface DetalleProspectoModalProps {
   prospecto: ProspectoOferta
@@ -46,10 +47,11 @@ export function DetalleProspectoModal({ prospecto, onClose, onUpdateProspecto }:
     }).format(amount)
   }
 
-  const handleEnviar = () => {
+  const handleEnviar = async () => {
     if (!inputValue.trim()) return
 
     const textoUsuario = inputValue.trim()
+    setInputValue('')
     
     // Agregar mensaje usuario
     setMensajes(prev => [...prev, {
@@ -58,95 +60,61 @@ export function DetalleProspectoModal({ prospecto, onClose, onUpdateProspecto }:
       texto: textoUsuario,
       timestamp: new Date()
     }])
-    setInputValue('')
 
-    // Procesar comando (Agent Logic)
-    setTimeout(() => {
-      procesarComando(textoUsuario)
-    }, 500)
-  }
+    try {
+      // Enviar al agente
+      // Usamos el ID del prospecto como sessionId para mantener contexto si es necesario, 
+      // o generamos uno nuevo. Por ahora usaremos el ID del prospecto.
+      const sessionId = `prospecto-${prospecto.idProspecto}-${Date.now()}`
+      // Inyectar contexto explícito para que el agente sepa qué registro actualizar sin preguntar
+      const contextoSistema = `\n\n[SISTEMA: El usuario está visualizando el prospecto ID: ${prospecto.idProspecto}, Nombre: ${prospecto.nombrePromotor}, RFC: ${prospecto.rfc || 'No disponible'}. Si la intención es actualizar, aplica los cambios DIRECTAMENTE a este registro sin pedir confirmación de nombre o RFC.]`
+      const response = await enviarAlAgente(textoUsuario + contextoSistema, sessionId, 'prospectos')
 
-  const procesarComando = (texto: string) => {
-    const textoLower = texto.toLowerCase()
-    let respuesta = ''
+      let respuestaTexto = 'Lo siento, no pude procesar tu solicitud.'
 
-    // 1. Intentar cambiar etapa
-    if (textoLower.includes('etapa') || textoLower.includes('estatus')) {
-      const etapasValidas = ['No contactado', 'En negociación', 'Interesado', 'Descartado', 'Convertido']
-      const stagesMap: Record<string, string> = {
-        'no contactado': 'No contactado',
-        'negociacion': 'En negociación',
-        'negociación': 'En negociación',
-        'interesado': 'Interesado',
-        'descartado': 'Descartado',
-        'convertido': 'Convertido',
-        'venta': 'Convertido',
-        'cerrado': 'Convertido'
-      }
-
-      let nuevaEtapa = ''
-      
-      // Buscar coincidencia exacta o aproximada
-      for (const key in stagesMap) {
-        if (textoLower.includes(key)) {
-          nuevaEtapa = stagesMap[key] || ''
-          break
+      if (typeof response === 'object' && response !== null) {
+        if (response.intent === 'ACTUALIZAR_PROSPECTO' && response.data) {
+           const { campo, valor } = response.data
+           // Forzamos la actualización sobre el prospecto actual
+           if (campo && valor) {
+             // Lógica especial para productos
+             const familias = ['TDC', 'TPV', 'Cheques']
+             if (campo === 'producto' && familias.includes(valor)) {
+                 respuestaTexto = `Entendido, te interesa ${valor}. ¿Qué producto específico deseas asignar? (Ej. ${valor} Clásica, ${valor} Oro)`
+             } else {
+                 const exito = onUpdateProspecto(prospecto.idProspecto, campo, valor)
+                 if (exito) {
+                     respuestaTexto = response.mensaje || `✅ Actualizado ${campo} a ${valor}.`
+                 } else {
+                     respuestaTexto = `⚠️ No pude actualizar el prospecto.`
+                 }
+             }
+           } else {
+             respuestaTexto = response.mensaje || 'No entendí qué actualizar.'
+           }
+        } else {
+           respuestaTexto = response.mensaje || response.output || response.text || response.message || JSON.stringify(response)
         }
-      }
-
-      // Si no encontró en el mapa, buscar en el array original
-      if (!nuevaEtapa) {
-        etapasValidas.forEach(etapa => {
-          if (textoLower.includes(etapa.toLowerCase())) {
-            nuevaEtapa = etapa
-          }
-        })
-      }
-
-      if (nuevaEtapa) {
-        onUpdateProspecto(prospecto.idProspecto, 'etapa', nuevaEtapa)
-        respuesta = `✅ Listo. He actualizado la etapa a "${nuevaEtapa}".`
       } else {
-        respuesta = `❌ No reconozco esa etapa. Las etapas válidas son:\n\n• ${etapasValidas.join('\n• ')}`
+        respuestaTexto = String(response)
       }
-    }
-    // 2. Intentar cambiar monto
-    else if (textoLower.includes('monto') || textoLower.includes('cantidad') || textoLower.includes('precio') || textoLower.includes('valor')) {
-      // Extraer número
-      const montoMatch = texto.match(/\$?\s*([0-9,]+(\.[0-9]+)?)\s*(mil(?:lones?)?|millones?|m)?/i)
-      
-      if (montoMatch) {
-         let monto = parseFloat(montoMatch[1]!.replace(/,/g, ''))
-         const unidad = (montoMatch[3] || '').toLowerCase()
-         
-         if (unidad.includes('mil') || unidad === 'm') {
-           if (unidad.includes('millon')) monto *= 1000000
-           else monto *= 1000
-         } else if (unidad.includes('millon')) {
-            monto *= 1000000
-         }
 
-         if (monto < 0) {
-           respuesta = `⚠️ No puedo asignar un monto negativo ($${monto}).`
-         } else {
-           onUpdateProspecto(prospecto.idProspecto, 'monto', monto)
-           respuesta = `✅ Entendido. He actualizado el monto de interés a ${formatCurrency(monto)}.`
-         }
-      } else {
-        respuesta = '❓ No entendí el monto. Intenta escribirlo así: "1.5 millones" o "$500,000".'
-      }
-    }
-    // 3. Fallback
-    else {
-      respuesta = '🤔 No estoy seguro de qué hacer. Puedo ayudarte a cambiar la "etapa" o el "monto" del prospecto.'
-    }
+      setMensajes(prev => [...prev, {
+        id: Date.now().toString(),
+        tipo: 'agente',
+        texto: respuestaTexto,
+        timestamp: new Date()
+      }])
 
-    setMensajes(prev => [...prev, {
-      id: Date.now().toString(),
-      tipo: 'agente',
-      texto: respuesta,
-      timestamp: new Date()
-    }])
+    } catch (error) {
+      console.error('Error enviando mensaje:', error)
+      setMensajes(prev => [...prev, {
+        id: Date.now().toString(),
+        tipo: 'agente',
+        texto: 'Error de conexión con el agente.',
+        timestamp: new Date()
+      }])
+    }
   }
 
   return (

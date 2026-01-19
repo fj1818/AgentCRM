@@ -5,6 +5,8 @@ import { TypingIndicator } from './TypingIndicator'
 import { WelcomeMessage } from './WelcomeMessage'
 import { DynamicChart } from '@/components/charts'
 import { OfferDetailModal } from './OfferDetailModal'
+import { FilterableProductTable } from './FilterableProductTable'
+import { ClientDetailsModal } from '@/components/clientes/ClientDetailsModal'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 import { Eye } from 'lucide-react'
@@ -100,6 +102,11 @@ function formatearValor(valor: unknown, columna: string): string {
   }
   
   if (typeof valor === 'number') {
+    // Columnas de porcentaje
+    if (colLower.includes('porcentaje') || colLower.includes('percent')) {
+      return `${valor.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}%`
+    }
+
     // Columnas que son montos de dinero
     const esMoneda = 
       colLower.includes('linea') || 
@@ -107,7 +114,7 @@ function formatearValor(valor: unknown, columna: string): string {
       colLower.includes('saldo') || 
       colLower.includes('facturacion') || 
       colLower.includes('total') ||
-      colLower.includes('uso') ||
+      (colLower.includes('uso') && !colLower.includes('porcentaje')) || // Evitar conflicto con porcentajeUso
       colLower.includes('disponible') ||
       colLower.includes('ingreso') ||
       colLower.includes('egreso')
@@ -126,6 +133,7 @@ function ResultTable({ tabla }: { tabla: TablaData }) {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
   const [selectedRow, setSelectedRow] = useState<Record<string, unknown> | null>(null)
+  const [selectedClientIde, setSelectedClientIde] = useState<string | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   
   if (!tabla.filas.length) return null
@@ -234,7 +242,19 @@ function ResultTable({ tabla }: { tabla: TablaData }) {
                         isHey ? "text-white/80" : "text-gray-700"
                       )}
                     >
-                      {formatearValor(fila[col], col)}
+                      {col.toLowerCase() === 'ide' || col.toLowerCase() === 'id' ? (
+                        <button
+                          onClick={() => setSelectedClientIde(String(fila[col]))}
+                          className={cn(
+                            "font-mono hover:underline cursor-pointer transition-colors",
+                            isHey ? "text-cyan-400 hover:text-cyan-300" : "text-orange-600 hover:text-orange-700"
+                          )}
+                        >
+                          {formatearValor(fila[col], col)}
+                        </button>
+                      ) : (
+                        formatearValor(fila[col], col)
+                      )}
                     </td>
                   ))}
                   {esTablaOfertas && (
@@ -319,6 +339,12 @@ function ResultTable({ tabla }: { tabla: TablaData }) {
         onClose={() => setSelectedRow(null)}
         data={selectedRow}
       />
+      
+      <ClientDetailsModal
+        isOpen={!!selectedClientIde}
+        onClose={() => setSelectedClientIde(null)}
+        ide={selectedClientIde}
+      />
     </>
   )
 }
@@ -347,9 +373,12 @@ export function MessageList({
               <div key={message.id}>
                 <ChatMessage message={message} />
                 
-                {message.role === 'assistant' && tabla && tabla.filas?.length > 0 && (
-                  <ResultTable tabla={tabla} />
-                )}
+                {message.role === 'assistant' && tabla && tabla.filas?.length > 0 && (() => {
+                  const esDistribucion = tabla.titulo?.toLowerCase().includes('distribución') || tabla.titulo?.toLowerCase().includes('distribucion')
+                  return esDistribucion ? (
+                    <div className="my-4"><FilterableProductTable data={tabla.filas} columns={tabla.columnas} titulo={tabla.titulo} /></div>
+                  ) : <ResultTable tabla={tabla} />
+                })()}
                 
                 {message.role === 'assistant' && grafico && grafico.datos?.length > 0 && (
                   <div className="max-w-2xl mx-auto animate-fade-in my-4">

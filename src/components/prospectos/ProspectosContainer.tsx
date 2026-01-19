@@ -12,6 +12,7 @@ import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 import { ProspectosFilters } from './ProspectosFilters'
 import { ProspectosTable } from './ProspectosTable'
+import { enviarAlAgente } from '@/services'
 
 import { generarDatosEjemplo, ProspectoOferta, PROMOTORES } from '@/data/prospectosData'
 
@@ -21,89 +22,6 @@ interface MensajeChat {
   tipo: 'usuario' | 'asistente'
   contenido: string
   timestamp: Date
-}
-
-// Webhook URL para el agente de prospectos
-const WEBHOOK_PROSPECTOS = 'https://abrahamnavarrete.app.n8n.cloud/webhook/Register'
-
-// Definición de respuesta del agente
-interface AgenteResponse {
-  intent?: 'CREAR_PROSPECTO' | 'ACTUALIZAR_PROSPECTO'
-  data?: {
-    nombre?: string // Puede venir nombre para buscar
-    rfc?: string
-    contacto?: string
-    producto?: string
-    campo?: 'etapa' | 'monto' | 'producto' | 'contacto' // Para actualizaciones
-    valor?: any
-  }
-  mensaje?: string
-  output?: string // Fallback n8n
-}
-
-// Enviar mensaje al agente de prospectos
-async function enviarAlAgente(mensaje: string, sessionId: string): Promise<AgenteResponse | string> {
-  try {
-    const fechaActual = new Date().toISOString().split('T')[0]
-    const horaActual = new Date().toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', hour12: false })
-    
-    const response = await fetch(WEBHOOK_PROSPECTOS, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        mensaje, 
-        sessionId,
-        fechaActual,
-        horaActual
-      })
-    })
-    
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}`)
-    }
-    
-    const data = await response.json()
-    console.log('Respuesta Agente Debug:', data)
-
-    // Intentar parsear si viene como objeto directo o array
-    let rawOutput: any = data
-    if (Array.isArray(data) && data.length > 0) {
-      rawOutput = data[0]
-    }
-
-    // Verificar si el output es JSON string o ya es objeto
-    if (rawOutput.output && typeof rawOutput.output === 'string') {
-        try {
-            let cleanOutput = rawOutput.output.trim();
-            // Limpiar bloques de markdown si existen
-            if (cleanOutput.includes('```')) {
-                cleanOutput = cleanOutput.replace(/```json/g, '').replace(/```/g, '').trim();
-            }
-            
-            // Intentar parsear el output string a JSON
-            if (cleanOutput.startsWith('{')) {
-                const parsed = JSON.parse(cleanOutput)
-                return parsed as AgenteResponse
-            }
-        } catch (e) {
-            console.error('Error parseando JSON del agente:', e)
-            // Si falla, es texto normal
-        }
-        return rawOutput.output
-    } else if (rawOutput.output) {
-      // Si output ya es objeto
-      return rawOutput.output as unknown as AgenteResponse
-    } else if (rawOutput.mensaje) {
-        return rawOutput as AgenteResponse
-    }
-
-    // Fallback general
-    return JSON.stringify(rawOutput)
-    
-  } catch (error) {
-    console.error('Error enviando al agente:', error)
-    return '❌ Error de conexión. Por favor intenta de nuevo.'
-  }
 }
 
 // Sugerencias rápidas para el chat
@@ -157,7 +75,7 @@ function ProspectosChatSidebar({ onNuevoProspecto, onActualizarProspecto }: Pros
     
     try {
       // Enviar todo al agente (backend n8n)
-      const respuesta = await enviarAlAgente(texto.trim(), sessionId)
+      const respuesta = await enviarAlAgente(texto.trim(), sessionId, 'prospectos')
       
       // Procesar respuesta
       if (typeof respuesta === 'object' && respuesta !== null) {
@@ -176,11 +94,18 @@ function ProspectosChatSidebar({ onNuevoProspecto, onActualizarProspecto }: Pros
               const identificador = nombre || rfc
               
               if (identificador && campo && valor) {
-                  const exito = onActualizarProspecto(identificador, campo, valor)
-                  if (exito) {
-                      agregarMensaje('asistente', respuesta.mensaje || `✅ Actualizado ${campo} de ${identificador} a ${valor}.`)
+                  // Lógica especial para productos: Si es una familia, pedir aclaración
+                  const familias = ['TDC', 'TPV', 'Cheques']
+                  if (campo === 'producto' && familias.includes(valor)) {
+                      agregarMensaje('asistente', `Entendido, te interesa ${valor}. ¿Qué producto específico deseas asignar? (Ej. ${valor} Clásica, ${valor} Oro)`)
+                      // Aquí podríamos guardar un estado temporal para saber que esperamos un producto
                   } else {
-                      agregarMensaje('asistente', `⚠️ No encontré al prospecto "${identificador}" para actualizar.`)
+                      const exito = onActualizarProspecto(identificador, campo, valor)
+                      if (exito) {
+                          agregarMensaje('asistente', respuesta.mensaje || `✅ Actualizado ${campo} de ${identificador} a ${valor}.`)
+                      } else {
+                          agregarMensaje('asistente', `⚠️ No encontré al prospecto "${identificador}" para actualizar.`)
+                      }
                   }
               } else {
                    agregarMensaje('asistente', 'No pude entender qué dato actualizar.')
@@ -371,12 +296,13 @@ export function ProspectosContainer() {
   const handleUpdateProspecto = (nombreOrRfc: string, campo: string, valor: any): boolean => {
       const termino = nombreOrRfc.toLowerCase()
       // Buscar prospecto (puede ser por nombre o RFC)
-      // Priorizar match exacto de RFC, luego autocompletar nombre
       const index = prospectos.findIndex(p => 
           p.rfc.toLowerCase().includes(termino) || 
           p.nombreProspecto.toLowerCase().includes(termino)
       )
       
+      if (index === -1) return false
+
       // Modificar prospecto
       const nuevosProspectos = [...prospectos]
       const prospecto = nuevosProspectos[index]
@@ -384,13 +310,47 @@ export function ProspectosContainer() {
       if (!prospecto) return false
       
       // Mapear campos 'coloquiales' a reales
-      if (campo === 'etapa') prospecto.etapa = valor
-      else if (campo === 'monto') prospecto.montoInteres = typeof valor === 'string' ? parseFloat(valor.replace(/[^0-9.]/g, '')) : valor
-      else if (campo === 'producto') {
-          prospecto.familiaProducto = valor
-          prospecto.productoInteres = valor
+      if (campo === 'etapa') {
+          const etapasValidas = ['No contactado', 'En negociación', 'Interesado', 'Descartado', 'Convertido'];
+          if (etapasValidas.includes(valor)) {
+              prospecto.etapa = valor
+          } else {
+              return false;
+          }
       }
-      else if (campo === 'contacto') prospecto.descripcion += ` | Nuevo contacto: ${valor}`
+      else if (campo === 'monto') {
+          // Limpiar el valor de caracteres no numéricos si es string
+          const montoLimpio = typeof valor === 'string' ? parseFloat(valor.replace(/[^0-9.]/g, '')) : valor
+          if (montoLimpio > 0) {
+              prospecto.montoInteres = montoLimpio
+          } else {
+              return false;
+          }
+      }
+      else if (campo === 'producto') {
+          prospecto.productoInteres = valor
+          
+          // Inferir familia (siempre)
+          const prodUpper = String(valor).toUpperCase();
+          if (prodUpper.includes('TARJETA') || prodUpper.includes('TDC') || prodUpper.includes('CREDITO')) {
+              prospecto.familiaProducto = 'TDC';
+          } else if (prodUpper.includes('TPV') || prodUpper.includes('TERMINAL')) {
+              prospecto.familiaProducto = 'TPV';
+          } else if (prodUpper.includes('NOMINA') || prodUpper.includes('CHEQUE') || prodUpper.includes('CUENTA')) {
+              prospecto.familiaProducto = 'Cheques';
+          }
+      }
+      else if (campo === 'familiaProducto') {
+          const familiasValidas = ['TDC', 'TPV', 'Cheques'];
+          if (familiasValidas.includes(valor)) {
+              prospecto.familiaProducto = valor;
+          } else {
+              return false;
+          }
+      }
+      else if (campo === 'contacto') {
+          prospecto.descripcion += ` | Nuevo contacto: ${valor}`
+      }
       
       setProspectos(nuevosProspectos)
       return true
