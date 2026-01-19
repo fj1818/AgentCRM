@@ -81,10 +81,26 @@ function ProspectosChatSidebar({ onNuevoProspecto, onActualizarProspecto }: Pros
       if (typeof respuesta === 'object' && respuesta !== null) {
           // Es un JSON Estructurado
           if (respuesta.intent === 'CREAR_PROSPECTO' && respuesta.data) {
+              // Mapear producto a familia
+              const productoRecibido = respuesta.data.producto || 'TDC'
+              const familiaMap: Record<string, string> = {
+                'TDC': 'TDC', 'TDC Clásica': 'TDC', 'TDC Oro': 'TDC', 'TDC Platinum': 'TDC', 'TDC Empresarial': 'TDC',
+                'TPV': 'TPV', 'TPV Básica': 'TPV', 'TPV Plus': 'TPV', 'TPV Móvil': 'TPV', 'TPV eCommerce': 'TPV',
+                'Cheques': 'Cheques', 'Cuenta Básica': 'Cheques', 'Cuenta Plus': 'Cheques', 'Cuenta Empresarial': 'Cheques',
+                'Crédito': 'Crédito', 'Crédito Personal': 'Crédito', 'Crédito Auto': 'Crédito', 'Crédito Negocios': 'Crédito', 'Crédito Hipotecario': 'Crédito', 'Crédito PYME': 'Crédito',
+                'Seguros': 'Seguros', 'Seguro de Vida': 'Seguros', 'Seguro Auto': 'Seguros', 'Seguro Hogar': 'Seguros', 'Seguro Gastos Médicos': 'Seguros', 'Seguro Empresarial': 'Seguros',
+                'Nómina': 'Nómina', 'Nómina Básica': 'Nómina', 'Nómina Plus': 'Nómina', 'Nómina Empresarial': 'Nómina', 'Dispersión de Nómina': 'Nómina',
+              }
+              const familiaProducto = familiaMap[productoRecibido] || productoRecibido
+              // Si el producto es igual a la familia, usar producto por defecto de esa familia
+              const esSoloFamilia = ['TDC', 'TPV', 'Cheques', 'Crédito', 'Seguros', 'Nómina'].includes(productoRecibido)
+              const productoInteres = esSoloFamilia ? `${productoRecibido} Personal` : productoRecibido
+              
               onNuevoProspecto({
                   nombreProspecto: respuesta.data.nombre || 'Nuevo Prospecto',
                   rfc: respuesta.data.rfc,
-                  familiaProducto: respuesta.data.producto || 'TDC', 
+                  familiaProducto,
+                  productoInteres,
                   descripcion: `Prospecto creado por Agente IA. Contacto: ${respuesta.data.contacto}`,
               })
               agregarMensaje('asistente', respuesta.mensaje || `✅ Prospecto ${respuesta.data.nombre} creado exitosamente.`)
@@ -95,7 +111,7 @@ function ProspectosChatSidebar({ onNuevoProspecto, onActualizarProspecto }: Pros
               
               if (identificador && campo && valor) {
                   // Lógica especial para productos: Si es una familia, pedir aclaración
-                  const familias = ['TDC', 'TPV', 'Cheques']
+                  const familias = ['TDC', 'TPV', 'Cheques', 'Crédito', 'Seguros', 'Nómina']
                   if (campo === 'producto' && familias.includes(valor)) {
                       agregarMensaje('asistente', `Entendido, te interesa ${valor}. ¿Qué producto específico deseas asignar? (Ej. ${valor} Clásica, ${valor} Oro)`)
                       // Aquí podríamos guardar un estado temporal para saber que esperamos un producto
