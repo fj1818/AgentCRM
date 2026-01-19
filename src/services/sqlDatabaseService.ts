@@ -428,8 +428,8 @@ async function cargarDatos(): Promise<void> {
     ide,
     numeroLinea: `NOM${String(idx + 1).padStart(6, '0')}`,
     fechaAlta: '2023-01-15',
-    fechaBaja: null,
-    producto: ['Nómina Básica', 'Nómina Plus', 'Nómina Empresarial'][idx % 3],
+    fechaBaja: '' as string,
+    producto: ['Nómina Básica', 'Nómina Plus', 'Nómina Empresarial'][idx % 3]!,
     montoNomina: 15000 + Math.random() * 50000
   }))
   
@@ -448,8 +448,8 @@ async function cargarDatos(): Promise<void> {
     ide,
     numeroLinea: `CRE${String(idx + 1).padStart(6, '0')}`,
     fechaAlta: '2022-06-01',
-    fechaBaja: null,
-    producto: ['Crédito Personal', 'Crédito Hipotecario', 'Crédito Automotriz', 'Crédito PYME'][idx % 4],
+    fechaBaja: '' as string,
+    producto: ['Crédito Personal', 'Crédito Hipotecario', 'Crédito Automotriz', 'Crédito PYME'][idx % 4]!,
     montoCredito: 100000 + Math.random() * 500000,
     saldoActual: 50000 + Math.random() * 300000
   }))
@@ -469,8 +469,8 @@ async function cargarDatos(): Promise<void> {
     ide,
     numeroPoliza: `POL${String(idx + 1).padStart(8, '0')}`,
     fechaAlta: '2023-03-01',
-    fechaBaja: null,
-    producto: ['Seguro de Vida', 'Seguro de Auto', 'Seguro de Gastos Médicos', 'Seguro de Hogar'][idx % 4],
+    fechaBaja: '' as string,
+    producto: ['Seguro de Vida', 'Seguro de Auto', 'Seguro de Gastos Médicos', 'Seguro de Hogar'][idx % 4]!,
     primaAnual: 5000 + Math.random() * 20000
   }))
   
