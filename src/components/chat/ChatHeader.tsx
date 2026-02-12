@@ -3,8 +3,9 @@
  * Diseño premium con glassmorphism
  */
 
-import { MessageSquarePlus, Trash2, Bot } from 'lucide-react'
+import { MessageSquarePlus, Trash2, Bot, Database, BookOpen } from 'lucide-react'
 import { useUIStore } from '@/stores'
+import { useChatStore } from '@/stores/chat.store'
 import { cn } from '@/utils'
 
 interface ChatHeaderProps {
@@ -20,6 +21,7 @@ export function ChatHeader({
 }: ChatHeaderProps) {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
+  const chatMode = useChatStore((s) => s.chatMode)
 
   return (
     <header 
@@ -45,14 +47,33 @@ export function ChatHeader({
         </div>
         
         <div>
-          <h1 
-            className={cn(
-              "text-lg font-bold",
-              isHey ? "text-white" : "text-gray-800"
-            )}
-          >
-            Asistente IA
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 
+              className={cn(
+                "text-lg font-bold",
+                isHey ? "text-white" : "text-gray-800"
+              )}
+            >
+              Asistente IA
+            </h1>
+            {/* Badge del modo activo */}
+            <span className={cn(
+              "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold uppercase tracking-wide",
+              chatMode === 'datos'
+                ? isHey
+                  ? "bg-cyan-500/20 text-cyan-300 border border-cyan-400/30"
+                  : "bg-orange-100 text-orange-600 border border-orange-200"
+                : isHey
+                  ? "bg-purple-500/20 text-purple-300 border border-purple-400/30"
+                  : "bg-purple-100 text-purple-600 border border-purple-200"
+            )}>
+              {chatMode === 'datos' ? (
+                <><Database className="w-3 h-3" /> Datos</>
+              ) : (
+                <><BookOpen className="w-3 h-3" /> Procedimientos</>
+              )}
+            </span>
+          </div>
           <div className="flex items-center gap-2">
             <span 
               className={cn(

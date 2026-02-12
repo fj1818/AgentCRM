@@ -8,7 +8,7 @@ import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 
 // Webhook URL para el agente de oportunidades (placeholder)
-const WEBHOOK_OPORTUNIDADES = 'https://abrahamnavarrete.app.n8n.cloud/webhook/oportunidades'
+const WEBHOOK_OPORTUNIDADES = 'https://fjrv1818.app.n8n.cloud/webhook/oportunidades'
 
 interface Mensaje {
   id: string

@@ -24,7 +24,7 @@ interface MensajeChat {
 }
 
 // Webhook URL para el agente de prospectos
-const WEBHOOK_PROSPECTOS = 'https://abrahamnavarrete.app.n8n.cloud/webhook/Register'
+const WEBHOOK_PROSPECTOS = 'https://fjrv1818.app.n8n.cloud/webhook/Register'
 
 // Definición de respuesta del agente
 interface AgenteResponse {

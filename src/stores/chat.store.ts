@@ -8,6 +8,9 @@ import { create } from 'zustand'
 import type { ChatMessage } from '@/types'
 import { chatService } from '@/services'
 import { procesarPregunta, type AIResponse } from '@/services/aiAssistantService'
+import { procesarPreguntaProcedimiento } from '@/services/procedimientosAgentService'
+
+export type ChatMode = 'datos' | 'procedimientos'
 
 interface GraficoData {
   tipo: 'pie' | 'bar' | 'line' | 'column' | 'polar'
@@ -29,6 +32,7 @@ interface ChatState {
   error: string | null
   ultimoGrafico: GraficoData | null
   ultimaTabla: TablaData | null
+  chatMode: ChatMode
   
   // Acciones
   sendMessage: (content: string) => Promise<void>
@@ -39,6 +43,7 @@ interface ChatState {
   startNewConversation: () => void
   setUltimoGrafico: (grafico: GraficoData | null) => void
   setUltimaTabla: (tabla: TablaData | null) => void
+  setChatMode: (mode: ChatMode) => void
 }
 
 export const useChatStore = create<ChatState>((set, get) => ({
@@ -49,6 +54,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   error: null,
   ultimoGrafico: null,
   ultimaTabla: null,
+  chatMode: 'datos',
 
   // Enviar mensaje al agente de IA
   sendMessage: async (content: string) => {
@@ -61,8 +67,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ isLoading: true, error: null })
     
     try {
-      // Procesar con el servicio de IA
-      const response: AIResponse = await procesarPregunta(content)
+      // Procesar con el servicio de IA según el modo activo
+      const { chatMode } = get()
+      const response: AIResponse = chatMode === 'procedimientos'
+        ? await procesarPreguntaProcedimiento(content)
+        : await procesarPregunta(content)
       
       // Marcar mensaje del usuario como enviado
       updateMessageStatus(userMessage.id, 'sent')
@@ -156,5 +165,10 @@ export const useChatStore = create<ChatState>((set, get) => ({
   // Establecer última tabla
   setUltimaTabla: (tabla) => {
     set({ ultimaTabla: tabla })
+  },
+
+  // Cambiar modo del chat
+  setChatMode: (mode) => {
+    set({ chatMode: mode })
   },
 }))
