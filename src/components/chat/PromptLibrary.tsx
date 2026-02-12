@@ -42,12 +42,23 @@ const PROMPT_CATEGORIES: PromptCategory[] = [
       {
         id: 'variaciones',
         label: 'Variaciones Relevantes del Mes',
-        query: 'Muestrame el Top 10 de variaciones positivas y el Top 10 de variaciones negativas del mes'
+        query: 'Muestrame las 15 variaciones más grandes del último mes (ingresos y egresos) ordenadas por magnitud'
       },
       {
-        id: 'portafolio',
-        label: 'Resumen de Portafolio',
-        query: 'Consultar mi portafolio'
+        id: 'cumplimiento_objetivos',
+        label: 'Cumplimiento de Objetivos',
+        query: 'Genera un tablero de metas SIN consultar la base de datos. Crea una tabla con estos indicadores: Captación, Colocación, Facturación TPV, Seguros, Créditos. Columnas: Meta Mensual, Avance Actual, % Cumplimiento, Delta. Usa valores de ejemplo donde el Avance sea entre 50% y 120% de la Meta. En la columna Delta agrega un indicador: si el avance supera la meta usa \"🟢 ↑\" y si falta para llegar usa \"🔴 ↓\". Delta = Avance - Meta.'
+      },
+      {
+        id: 'portafolio_clientes',
+        label: 'Tenencia de Productos por Cliente',
+        query: 'Muestra una tabla con cada cliente (IDE, Nombre) y si tiene o no cada producto (TDC, Cheques, Nóminas, Créditos, TPV, Seguros). Usa "Sí" o "No" para indicar si tiene el producto'
+      },
+
+      {
+        id: 'estrategia_ventas',
+        label: 'Estrategia de Ventas',
+        query: 'Redacta una estrategia de ventas completa y bien estructurada (NO tabla). Incluye: 1) Estrategia de Venta Cruzada: cómo ofrecer productos complementarios a clientes actuales. 2) Colocación de Créditos: tácticas para incrementar la colocación. 3) Incremento de Facturación: acciones para aumentar montos TPV. Para cada estrategia incluye: objetivo, público meta, acciones específicas, métricas de éxito y plazos estimados. Usa números de ejemplo realistas.'
       }
     ]
   },

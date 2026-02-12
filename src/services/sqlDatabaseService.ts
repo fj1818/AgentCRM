@@ -80,6 +80,7 @@ function crearEsquema(): void {
   db.run(`
     CREATE TABLE IF NOT EXISTS promotores (
       numeroPromotor TEXT PRIMARY KEY,
+      nombre TEXT,
       fechaAlta TEXT,
       fechaBaja TEXT,
       activo INTEGER,
@@ -272,6 +273,49 @@ function crearEsquema(): void {
     )
   `)
   
+  // Tabla Nóminas
+  db.run(`
+    CREATE TABLE IF NOT EXISTS nominas (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ide TEXT,
+      numeroLinea TEXT,
+      fechaAlta TEXT,
+      fechaBaja TEXT,
+      producto TEXT,
+      montoNomina REAL,
+      FOREIGN KEY (ide) REFERENCES clientes(ide)
+    )
+  `)
+  
+  // Tabla Créditos
+  db.run(`
+    CREATE TABLE IF NOT EXISTS creditos (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ide TEXT,
+      numeroLinea TEXT,
+      fechaAlta TEXT,
+      fechaBaja TEXT,
+      producto TEXT,
+      montoCredito REAL,
+      saldoActual REAL,
+      FOREIGN KEY (ide) REFERENCES clientes(ide)
+    )
+  `)
+  
+  // Tabla Seguros
+  db.run(`
+    CREATE TABLE IF NOT EXISTS seguros (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ide TEXT,
+      numeroPoliza TEXT,
+      fechaAlta TEXT,
+      fechaBaja TEXT,
+      producto TEXT,
+      primaAnual REAL,
+      FOREIGN KEY (ide) REFERENCES clientes(ide)
+    )
+  `)
+  
   console.log('Esquema de tablas creado')
 }
 
@@ -378,15 +422,77 @@ async function cargarDatos(): Promise<void> {
   stmtVar.free()
   console.log(`  - ${variacionescheques.length} variaciones de cheques cargadas`)
   
+  // Generar datos de ejemplo para Nóminas (usando algunos clientes existentes)
+  const clienteIdes = clientes.map((c: { ide: number }) => c.ide)
+  const nominasData = clienteIdes.slice(0, 30).map((ide: number, idx: number) => ({
+    ide,
+    numeroLinea: `NOM${String(idx + 1).padStart(6, '0')}`,
+    fechaAlta: '2023-01-15',
+    fechaBaja: '' as string,
+    producto: ['Nómina Básica', 'Nómina Plus', 'Nómina Empresarial'][idx % 3]!,
+    montoNomina: 15000 + Math.random() * 50000
+  }))
+  
+  const stmtNom = db.prepare(`
+    INSERT INTO nominas (ide, numeroLinea, fechaAlta, fechaBaja, producto, montoNomina)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `)
+  nominasData.forEach(n => {
+    stmtNom.run([n.ide, n.numeroLinea, n.fechaAlta, n.fechaBaja, n.producto, n.montoNomina])
+  })
+  stmtNom.free()
+  console.log(`  - ${nominasData.length} nóminas cargadas`)
+  
+  // Generar datos de ejemplo para Créditos
+  const creditosData = clienteIdes.slice(10, 40).map((ide: number, idx: number) => ({
+    ide,
+    numeroLinea: `CRE${String(idx + 1).padStart(6, '0')}`,
+    fechaAlta: '2022-06-01',
+    fechaBaja: '' as string,
+    producto: ['Crédito Personal', 'Crédito Hipotecario', 'Crédito Automotriz', 'Crédito PYME'][idx % 4]!,
+    montoCredito: 100000 + Math.random() * 500000,
+    saldoActual: 50000 + Math.random() * 300000
+  }))
+  
+  const stmtCred = db.prepare(`
+    INSERT INTO creditos (ide, numeroLinea, fechaAlta, fechaBaja, producto, montoCredito, saldoActual)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `)
+  creditosData.forEach(c => {
+    stmtCred.run([c.ide, c.numeroLinea, c.fechaAlta, c.fechaBaja, c.producto, c.montoCredito, c.saldoActual])
+  })
+  stmtCred.free()
+  console.log(`  - ${creditosData.length} créditos cargados`)
+  
+  // Generar datos de ejemplo para Seguros
+  const segurosData = clienteIdes.slice(5, 25).map((ide: number, idx: number) => ({
+    ide,
+    numeroPoliza: `POL${String(idx + 1).padStart(8, '0')}`,
+    fechaAlta: '2023-03-01',
+    fechaBaja: '' as string,
+    producto: ['Seguro de Vida', 'Seguro de Auto', 'Seguro de Gastos Médicos', 'Seguro de Hogar'][idx % 4]!,
+    primaAnual: 5000 + Math.random() * 20000
+  }))
+  
+  const stmtSeg = db.prepare(`
+    INSERT INTO seguros (ide, numeroPoliza, fechaAlta, fechaBaja, producto, primaAnual)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `)
+  segurosData.forEach(s => {
+    stmtSeg.run([s.ide, s.numeroPoliza, s.fechaAlta, s.fechaBaja, s.producto, s.primaAnual])
+  })
+  stmtSeg.free()
+  console.log(`  - ${segurosData.length} seguros cargados`)
+  
   // Insertar Promotores
   const { promotores } = await import('@/data')
   
   const stmtProm = db.prepare(`
-    INSERT INTO promotores (numeroPromotor, fechaAlta, fechaBaja, activo, banco, territorio, region, sucursalEquipo)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO promotores (numeroPromotor, nombre, fechaAlta, fechaBaja, activo, banco, territorio, region, sucursalEquipo)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
-  promotores.forEach((p: { numeroPromotor: string; fechaAlta: string; fechaBaja?: string; activo: boolean; banco: string; territorio: string; region: string; sucursalEquipo: string }) => {
-    stmtProm.run([p.numeroPromotor, p.fechaAlta, p.fechaBaja || null, p.activo ? 1 : 0, p.banco, p.territorio, p.region, p.sucursalEquipo])
+  promotores.forEach((p: { numeroPromotor: string; nombre: string; fechaAlta: string; fechaBaja?: string; activo: boolean; banco: string; territorio: string; region: string; sucursalEquipo: string }) => {
+    stmtProm.run([p.numeroPromotor, p.nombre, p.fechaAlta, p.fechaBaja || null, p.activo ? 1 : 0, p.banco, p.territorio, p.region, p.sucursalEquipo])
   })
   stmtProm.free()
   console.log(`  - ${promotores.length} promotores cargados`)
@@ -620,3 +726,67 @@ RELACIONES:
 `
 }
 
+
+/**
+ * Obtiene el detalle completo de un cliente por su IDE
+ */
+export async function obtenerDetalleCliente(ide: string): Promise<Record<string, unknown> | null> {
+  // Asegurar que la BD esté inicializada
+  await inicializarBaseDatos()
+  
+  if (!db) return null
+  
+  try {
+    // 1. Obtener datos básicos del cliente
+    const sqlCliente = `SELECT * FROM clientes WHERE ide = '${ide}'`
+    const resCliente = db.exec(sqlCliente)
+    
+    if (!resCliente.length || !resCliente[0]?.values.length) return null
+    
+    const clienteCols = resCliente[0].columns
+    const clienteVals = resCliente[0].values[0]
+    const cliente: Record<string, unknown> = {}
+    
+    if (clienteVals) {
+      clienteCols.forEach((col, i) => {
+        cliente[col] = clienteVals[i]
+      })
+    }
+    
+    // 2. Obtener teléfonos
+    const sqlTel = `SELECT telefono FROM telefonos WHERE ide = '${ide}'`
+    const resTel = db.exec(sqlTel)
+    const telefonos = (resTel.length && resTel[0]?.values) ? resTel[0].values.map(v => v[0]) : []
+    
+    // 3. Obtener correos
+    const sqlCorreo = `SELECT correo FROM correos WHERE ide = '${ide}'`
+    const resCorreo = db.exec(sqlCorreo)
+    const correos = (resCorreo.length && resCorreo[0]?.values) ? resCorreo[0].values.map(v => v[0]) : []
+    
+    // 4. Obtener direcciones
+    const sqlDir = `SELECT * FROM direcciones WHERE ide = '${ide}'`
+    const resDir = db.exec(sqlDir)
+    const direcciones: Record<string, unknown>[] = []
+    
+    if (resDir.length && resDir[0]?.values) {
+      const dirCols = resDir[0].columns
+      resDir[0].values.forEach(vals => {
+        const dir: Record<string, unknown> = {}
+        dirCols.forEach((col, i) => {
+          dir[col] = vals[i]
+        })
+        direcciones.push(dir)
+      })
+    }
+    
+    return {
+      ...cliente,
+      telefonos,
+      correos,
+      direcciones
+    }
+  } catch (error) {
+    console.error('Error obteniendo detalle cliente:', error)
+    return null
+  }
+}

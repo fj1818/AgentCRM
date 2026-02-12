@@ -86,3 +86,13 @@ export interface TableDefinition {
   primaryField: string
 }
 
+/** Parámetros de consulta para listar entidades */
+export interface QueryParams {
+  page?: number
+  pageSize?: number
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
+  filters?: Record<string, unknown>
+  search?: string
+}
+

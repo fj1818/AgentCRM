@@ -34,12 +34,16 @@ export function ProspectosTable({ filtros, data, onUpdateProspecto }: Prospectos
   const [ordenColumna, setOrdenColumna] = useState<string>('')
   const [ordenDireccion, setOrdenDireccion] = useState<'asc' | 'desc'>('asc')
   const [modalOpen, setModalOpen] = useState(false)
-  const [prospectoSeleccionado, setProspectoSeleccionado] = useState<ProspectoOferta | null>(null)
+  const [idProspectoSeleccionado, setIdProspectoSeleccionado] = useState<string | null>(null)
   
   const itemsPorPagina = 15
+
+  const prospectoParaModal = useMemo(() => {
+      return data.find(p => p.idProspecto === idProspectoSeleccionado)
+  }, [data, idProspectoSeleccionado])
   
   const handleVerDetalle = (prospecto: ProspectoOferta) => {
-    setProspectoSeleccionado(prospecto)
+    setIdProspectoSeleccionado(prospecto.idProspecto)
     setModalOpen(true)
   }
   
@@ -89,7 +93,7 @@ export function ProspectosTable({ filtros, data, onUpdateProspecto }: Prospectos
   const totalPaginas = Math.ceil(datosOrdenados.length / itemsPorPagina)
   const datosPaginados = datosOrdenados.slice(
     (paginaActual - 1) * itemsPorPagina,
-    paginaActual * itemsPorPagina
+    (paginaActual) * itemsPorPagina
   )
   
   // Reset página al cambiar filtros o data
@@ -152,7 +156,6 @@ export function ProspectosTable({ filtros, data, onUpdateProspecto }: Prospectos
               isHey ? "bg-white/5" : "bg-orange-50"
             )}>
               <tr>
-                <ColumnHeader columna="nombrePromotor" label="Promotor" />
                 <ColumnHeader columna="familiaProducto" label="Familia" />
                 <ColumnHeader columna="etapa" label="Etapa" />
                 <ColumnHeader columna="campaña" label="Campaña" />
@@ -181,9 +184,6 @@ export function ProspectosTable({ filtros, data, onUpdateProspecto }: Prospectos
                       isHey ? "hover:bg-white/5" : "hover:bg-orange-50/50"
                     )}
                   >
-                    <td className={cn("px-3 py-2 text-sm font-medium", isHey ? "text-gray-300" : "text-gray-700")}>
-                      {item.nombrePromotor}
-                    </td>
                     <td className={cn("px-3 py-2 text-sm font-medium", 
                       isHey ? "text-cyan-400" : "text-orange-600"
                     )}>
@@ -291,9 +291,9 @@ export function ProspectosTable({ filtros, data, onUpdateProspecto }: Prospectos
         </div>
       </div>
 
-      {modalOpen && prospectoSeleccionado && (
+      {modalOpen && prospectoParaModal && (
         <DetalleProspectoModal 
-          prospecto={prospectoSeleccionado} 
+          prospecto={prospectoParaModal} 
           onClose={() => setModalOpen(false)}
           onUpdateProspecto={onUpdateProspecto} 
         />

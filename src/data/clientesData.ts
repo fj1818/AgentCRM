@@ -204,6 +204,18 @@ export function generarClientesSimulados(cantidad: number = 1000): Cliente[] {
 // Generar 1000 clientes al cargar el módulo
 export const clientesData: Cliente[] = generarClientesSimulados(1000)
 
+// Agregar cliente específico solicitado
+clientesData.unshift({
+  ide: 99999999,
+  rfc: 'ROVF9107314B3',
+  nombreRazonSocial: 'Francisco Javier Rodríguez Valenzuela',
+  fechaAlta: '16/12/2025',
+  tipoPersona: 'Persona Fisica',
+  idProspecto: 'Pr' + generarAlfanumerico(16),
+  idCliente: 'Cl' + generarAlfanumerico(16),
+  numeroPromotor: '017577'
+})
+
 // Funciones de acceso
 export function obtenerTodosLosClientes(): Cliente[] {
   return clientesData

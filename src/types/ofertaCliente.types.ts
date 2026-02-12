@@ -2,7 +2,7 @@
  * Tipos para la entidad OfertaCliente
  */
 
-export type FamiliaProductoCliente = 'TDC' | 'TPV' | 'Cheques'
+export type FamiliaProductoCliente = 'TDC' | 'TPV' | 'Cheques' | 'Crédito' | 'Seguros' | 'Nómina'
 
 export type EtapaOfertaCliente = 
   | 'No contactado'

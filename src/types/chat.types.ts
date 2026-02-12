@@ -20,6 +20,12 @@ export interface ChatMessage {
   status: MessageStatus
   /** Contenido estructurado opcional (tablas, gráficos, etc.) */
   structuredContent?: StructuredContent
+  /** Tablas múltiples para estrategias de venta */
+  tablas?: {
+    titulo: string
+    columnas: string[]
+    datos: Record<string, unknown>[]
+  }[]
 }
 
 /** Contenido estructurado que puede acompañar un mensaje */

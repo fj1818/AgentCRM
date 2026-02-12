@@ -12,6 +12,7 @@ import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 import { ProspectosFilters } from './ProspectosFilters'
 import { ProspectosTable } from './ProspectosTable'
+import { enviarAlAgente } from '@/services'
 
 import { generarDatosEjemplo, ProspectoOferta, PROMOTORES } from '@/data/prospectosData'
 
@@ -23,6 +24,7 @@ interface MensajeChat {
   timestamp: Date
 }
 
+<<<<<<< HEAD
 // Webhook URL para el agente de prospectos
 const WEBHOOK_PROSPECTOS = 'https://fjrv1818.app.n8n.cloud/webhook/Register'
 
@@ -106,9 +108,11 @@ async function enviarAlAgente(mensaje: string, sessionId: string): Promise<Agent
   }
 }
 
+=======
+>>>>>>> c43a063a305d1af8be5585d01d9d9a069f81739d
 // Sugerencias rápidas para el chat
 const SUGERENCIAS = [
-  { texto: '➕ Crear oferta', valor: 'Quiero agregar un nuevo prospecto' },
+  { texto: '➕ Crear prospecto', valor: 'Quiero agregar un nuevo prospecto' },
 ]
 
 interface ProspectosChatSidebarProps {
@@ -125,7 +129,7 @@ function ProspectosChatSidebar({ onNuevoProspecto, onActualizarProspecto }: Pros
     {
       id: '1',
       tipo: 'asistente',
-      contenido: '¡Hola! Soy tu asistente de prospectos. Puedo ayudarte a:\n\n➕ Crear ofertas de prospectos con AI\n\nEjemplo: "Quiero agregar a Juan Pérez RFC... para TDC"',
+      contenido: '¡Hola! Soy tu asistente de prospectos. Puedo ayudarte a:\n\n➕ Crear prospectos con AI\n\nEjemplo: "Quiero agregar a Juan Pérez RFC... para TDC"',
       timestamp: new Date()
     }
   ])
@@ -157,16 +161,32 @@ function ProspectosChatSidebar({ onNuevoProspecto, onActualizarProspecto }: Pros
     
     try {
       // Enviar todo al agente (backend n8n)
-      const respuesta = await enviarAlAgente(texto.trim(), sessionId)
+      const respuesta = await enviarAlAgente(texto.trim(), sessionId, 'prospectos')
       
       // Procesar respuesta
       if (typeof respuesta === 'object' && respuesta !== null) {
           // Es un JSON Estructurado
           if (respuesta.intent === 'CREAR_PROSPECTO' && respuesta.data) {
+              // Mapear producto a familia
+              const productoRecibido = respuesta.data.producto || 'TDC'
+              const familiaMap: Record<string, string> = {
+                'TDC': 'TDC', 'TDC Clásica': 'TDC', 'TDC Oro': 'TDC', 'TDC Platinum': 'TDC', 'TDC Empresarial': 'TDC',
+                'TPV': 'TPV', 'TPV Básica': 'TPV', 'TPV Plus': 'TPV', 'TPV Móvil': 'TPV', 'TPV eCommerce': 'TPV',
+                'Cheques': 'Cheques', 'Cuenta Básica': 'Cheques', 'Cuenta Plus': 'Cheques', 'Cuenta Empresarial': 'Cheques',
+                'Crédito': 'Crédito', 'Crédito Personal': 'Crédito', 'Crédito Auto': 'Crédito', 'Crédito Negocios': 'Crédito', 'Crédito Hipotecario': 'Crédito', 'Crédito PYME': 'Crédito',
+                'Seguros': 'Seguros', 'Seguro de Vida': 'Seguros', 'Seguro Auto': 'Seguros', 'Seguro Hogar': 'Seguros', 'Seguro Gastos Médicos': 'Seguros', 'Seguro Empresarial': 'Seguros',
+                'Nómina': 'Nómina', 'Nómina Básica': 'Nómina', 'Nómina Plus': 'Nómina', 'Nómina Empresarial': 'Nómina', 'Dispersión de Nómina': 'Nómina',
+              }
+              const familiaProducto = familiaMap[productoRecibido] || productoRecibido
+              // Si el producto es igual a la familia, usar producto por defecto de esa familia
+              const esSoloFamilia = ['TDC', 'TPV', 'Cheques', 'Crédito', 'Seguros', 'Nómina'].includes(productoRecibido)
+              const productoInteres = esSoloFamilia ? `${productoRecibido} Personal` : productoRecibido
+              
               onNuevoProspecto({
                   nombreProspecto: respuesta.data.nombre || 'Nuevo Prospecto',
                   rfc: respuesta.data.rfc,
-                  familiaProducto: respuesta.data.producto || 'TDC', 
+                  familiaProducto,
+                  productoInteres,
                   descripcion: `Prospecto creado por Agente IA. Contacto: ${respuesta.data.contacto}`,
               })
               agregarMensaje('asistente', respuesta.mensaje || `✅ Prospecto ${respuesta.data.nombre} creado exitosamente.`)
@@ -176,11 +196,18 @@ function ProspectosChatSidebar({ onNuevoProspecto, onActualizarProspecto }: Pros
               const identificador = nombre || rfc
               
               if (identificador && campo && valor) {
-                  const exito = onActualizarProspecto(identificador, campo, valor)
-                  if (exito) {
-                      agregarMensaje('asistente', respuesta.mensaje || `✅ Actualizado ${campo} de ${identificador} a ${valor}.`)
+                  // Lógica especial para productos: Si es una familia, pedir aclaración
+                  const familias = ['TDC', 'TPV', 'Cheques', 'Crédito', 'Seguros', 'Nómina']
+                  if (campo === 'producto' && familias.includes(valor)) {
+                      agregarMensaje('asistente', `Entendido, te interesa ${valor}. ¿Qué producto específico deseas asignar? (Ej. ${valor} Clásica, ${valor} Oro)`)
+                      // Aquí podríamos guardar un estado temporal para saber que esperamos un producto
                   } else {
-                      agregarMensaje('asistente', `⚠️ No encontré al prospecto "${identificador}" para actualizar.`)
+                      const exito = onActualizarProspecto(identificador, campo, valor)
+                      if (exito) {
+                          agregarMensaje('asistente', respuesta.mensaje || `✅ Actualizado ${campo} de ${identificador} a ${valor}.`)
+                      } else {
+                          agregarMensaje('asistente', `⚠️ No encontré al prospecto "${identificador}" para actualizar.`)
+                      }
                   }
               } else {
                    agregarMensaje('asistente', 'No pude entender qué dato actualizar.')
@@ -371,12 +398,13 @@ export function ProspectosContainer() {
   const handleUpdateProspecto = (nombreOrRfc: string, campo: string, valor: any): boolean => {
       const termino = nombreOrRfc.toLowerCase()
       // Buscar prospecto (puede ser por nombre o RFC)
-      // Priorizar match exacto de RFC, luego autocompletar nombre
       const index = prospectos.findIndex(p => 
           p.rfc.toLowerCase().includes(termino) || 
           p.nombreProspecto.toLowerCase().includes(termino)
       )
       
+      if (index === -1) return false
+
       // Modificar prospecto
       const nuevosProspectos = [...prospectos]
       const prospecto = nuevosProspectos[index]
@@ -384,13 +412,47 @@ export function ProspectosContainer() {
       if (!prospecto) return false
       
       // Mapear campos 'coloquiales' a reales
-      if (campo === 'etapa') prospecto.etapa = valor
-      else if (campo === 'monto') prospecto.montoInteres = typeof valor === 'string' ? parseFloat(valor.replace(/[^0-9.]/g, '')) : valor
-      else if (campo === 'producto') {
-          prospecto.familiaProducto = valor
-          prospecto.productoInteres = valor
+      if (campo === 'etapa') {
+          const etapasValidas = ['No contactado', 'En negociación', 'Interesado', 'Descartado', 'Convertido'];
+          if (etapasValidas.includes(valor)) {
+              prospecto.etapa = valor
+          } else {
+              return false;
+          }
       }
-      else if (campo === 'contacto') prospecto.descripcion += ` | Nuevo contacto: ${valor}`
+      else if (campo === 'monto') {
+          // Limpiar el valor de caracteres no numéricos si es string
+          const montoLimpio = typeof valor === 'string' ? parseFloat(valor.replace(/[^0-9.]/g, '')) : valor
+          if (montoLimpio > 0) {
+              prospecto.montoInteres = montoLimpio
+          } else {
+              return false;
+          }
+      }
+      else if (campo === 'producto') {
+          prospecto.productoInteres = valor
+          
+          // Inferir familia (siempre)
+          const prodUpper = String(valor).toUpperCase();
+          if (prodUpper.includes('TARJETA') || prodUpper.includes('TDC') || prodUpper.includes('CREDITO')) {
+              prospecto.familiaProducto = 'TDC';
+          } else if (prodUpper.includes('TPV') || prodUpper.includes('TERMINAL')) {
+              prospecto.familiaProducto = 'TPV';
+          } else if (prodUpper.includes('NOMINA') || prodUpper.includes('CHEQUE') || prodUpper.includes('CUENTA')) {
+              prospecto.familiaProducto = 'Cheques';
+          }
+      }
+      else if (campo === 'familiaProducto') {
+          const familiasValidas = ['TDC', 'TPV', 'Cheques'];
+          if (familiasValidas.includes(valor)) {
+              prospecto.familiaProducto = valor;
+          } else {
+              return false;
+          }
+      }
+      else if (campo === 'contacto') {
+          prospecto.descripcion += ` | Nuevo contacto: ${valor}`
+      }
       
       setProspectos(nuevosProspectos)
       return true

@@ -24,12 +24,15 @@ import type {
 import { prospectosData } from './prospectosData'
 import { promotoresData } from './promotoresData'
 
-const familias: FamiliaProducto[] = ['TDC', 'TPV', 'Cheques']
+const familias: FamiliaProducto[] = ['TDC', 'TPV', 'Cheques', 'Crédito', 'Seguros', 'Nómina']
 
 const productosPorFamilia: Record<FamiliaProducto, string[]> = {
-  'TDC': ['Tarjeta Clasica', 'Tarjeta Gold', 'Tarjeta Empresarial'],
-  'TPV': ['TPV Básico', 'TPV Plus', 'TPV Premium'],
-  'Cheques': ['NominaFlex', 'NominaTradicional', 'NominaBasica'],
+  'TDC': ['TDC Clásica', 'TDC Oro', 'TDC Platinum', 'TDC Empresarial'],
+  'TPV': ['TPV Básica', 'TPV Plus', 'TPV Móvil', 'TPV eCommerce'],
+  'Cheques': ['Cuenta Básica', 'Cuenta Plus', 'Cuenta Empresarial'],
+  'Crédito': ['Crédito Personal', 'Crédito Auto', 'Crédito Negocios', 'Crédito Hipotecario', 'Crédito PYME'],
+  'Seguros': ['Seguro de Vida', 'Seguro Auto', 'Seguro Hogar', 'Seguro Gastos Médicos', 'Seguro Empresarial'],
+  'Nómina': ['Nómina Básica', 'Nómina Plus', 'Nómina Empresarial', 'Dispersión de Nómina'],
 }
 
 const campañas: CampañaOrigen[] = [
@@ -44,7 +47,7 @@ const campañas: CampañaOrigen[] = [
 ]
 
 function generarScriptVenta(familia: FamiliaProducto, producto: string, monto: number): string {
-  const beneficios = {
+  const beneficios: Record<FamiliaProducto, string[]> = {
     'TDC': [
       'Sin anualidad de por vida',
       'Meses sin intereses en comercios participantes',
@@ -59,12 +62,34 @@ function generarScriptVenta(familia: FamiliaProducto, producto: string, monto: n
       'Dispersión de nómina gratuita',
       'Chequera ilimitada',
       'Banca en línea empresarial sin costo'
+    ],
+    'Crédito': [
+      'Tasa preferencial desde 12% anual',
+      'Sin penalización por pago anticipado',
+      'Plazos flexibles de 12 a 60 meses'
+    ],
+    'Seguros': [
+      'Cobertura amplia a nivel nacional',
+      'Sin deducibles en siniestros mayores',
+      'Asistencia 24/7 en línea y telefónica'
+    ],
+    'Nómina': [
+      'Dispersión de nómina sin costo',
+      'Tarjeta de débito para empleados',
+      'Portal de autoservicio para RRHH'
     ]
   }
 
-  const beneficiosList = beneficios[familia].map(b => `- ${b}`).join('\n')
-  const tasa = familia === 'TDC' ? 'Tasa de interés ordinaria anual fija del 45%' : 
-               familia === 'TPV' ? 'Tasa de descuento de 2.5% + IVA' : 'Rendimiento anual del 5%'
+  const beneficiosList = (beneficios[familia] || []).map(b => `- ${b}`).join('\n')
+  const tasas: Record<FamiliaProducto, string> = {
+    'TDC': 'Tasa de interés ordinaria anual fija del 45%',
+    'TPV': 'Tasa de descuento de 2.5% + IVA',
+    'Cheques': 'Rendimiento anual del 5%',
+    'Crédito': 'Tasa de interés anual desde el 12%',
+    'Seguros': 'Prima anual calculada según cobertura',
+    'Nómina': 'Servicio sin costo con mínimo de empleados'
+  }
+  const tasa = tasas[familia] || 'Consultar condiciones'
 
   return `Script de Venta Sugerido:
 
@@ -126,6 +151,12 @@ function generarMontoInteres(familia: FamiliaProducto): number {
       return Math.floor(Math.random() * 4950000) + 50000
     case 'Cheques':
       return Math.floor(Math.random() * 1980000) + 20000
+    case 'Crédito':
+      return Math.floor(Math.random() * 2000000) + 50000
+    case 'Seguros':
+      return Math.floor(Math.random() * 50000) + 5000
+    case 'Nómina':
+      return Math.floor(Math.random() * 500000) + 10000
     default:
       return 50000
   }

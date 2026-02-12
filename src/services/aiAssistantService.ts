@@ -26,7 +26,7 @@ interface SQLGeneratorResponse {
 
 /** Respuesta del Agente de Presentación */
 interface PresentationResponse {
-  formato: 'texto' | 'tabla' | 'grafico_bar' | 'grafico_pie' | 'grafico_line' | 'grafico_polar' | 'multi_grafico'
+  formato: 'texto' | 'tabla' | 'multi_tabla' | 'grafico_bar' | 'grafico_pie' | 'grafico_line' | 'grafico_polar' | 'multi_grafico'
   titulo: string
   subtitulo?: string
   ejeX?: string
@@ -43,12 +43,17 @@ interface PresentationResponse {
     }[]
   }
   mensaje_interpretacion: string
+  tablas?: {
+    titulo: string
+    columnas: string[]
+    datos: Record<string, unknown>[]
+  }[]
 }
 
 /** Respuesta procesada para el chat */
 export interface AIResponse {
   respuesta: string
-  tipo: 'texto' | 'tabla' | 'grafico_pie' | 'grafico_bar' | 'grafico_column' | 'grafico_line' | 'grafico_polar' | 'multi_tabla'
+  tipo: 'texto' | 'tabla' | 'multi_tabla' | 'grafico_pie' | 'grafico_bar' | 'grafico_column' | 'grafico_line' | 'grafico_polar' | 'multi_tabla'
   datos?: Record<string, unknown>[]
   columnas?: string[]
   grafico?: {
@@ -346,6 +351,28 @@ function formatearConPresentacion(
     }
   }
   
+  // Multi-Tabla
+  if (presentation.formato === 'multi_tabla' && presentation.tablas) {
+    console.log(`📊 [Multi-Tabla] Procesando ${presentation.tablas.length} tablas`)
+    
+    // Procesar cada tabla individualmente con reglas de privacidad
+    const tablasProcesadas = presentation.tablas.map(tabla => {
+      const privacyResult = aplicarReglasPrivacidad(tabla.datos, tabla.columnas)
+      return {
+        titulo: tabla.titulo,
+        datos: privacyResult.datos,
+        columnas: privacyResult.columnas
+      }
+    })
+
+    return {
+      respuesta: presentation.mensaje_interpretacion,
+      tipo: 'multi_tabla',
+      tablas: tablasProcesadas,
+      sql: resultado.sql,
+    }
+  }
+  
   // Gráfico - USA DATOS ORIGINALES (sin filtro de privacidad)
   if (presentation.formato.startsWith('grafico_')) {
     const tipoGrafico = presentation.formato.replace('grafico_', '') as 'pie' | 'bar' | 'line' | 'polar'
@@ -387,6 +414,114 @@ function formatearConPresentacion(
 export async function procesarPregunta(pregunta: string): Promise<AIResponse> {
   const sessionId = `session-${Date.now()}`
   
+  // Detectar consultas que NO requieren SQL (estrategias, metas, contenido generativo)
+  const preguntaLower = pregunta.toLowerCase()
+  const esConsultaGenerativa = 
+    preguntaLower.includes('estrategia') ||
+    preguntaLower.includes('planifica') ||
+    preguntaLower.includes('redacta') ||
+    preguntaLower.includes('tablero de metas') ||
+    preguntaLower.includes('cumplimiento de objetivos') ||
+    preguntaLower.includes('sin consultar') ||
+    preguntaLower.includes('valores de ejemplo') ||
+    preguntaLower.includes('genera un tablero')
+  
+  if (esConsultaGenerativa) {
+    console.log('📝 [Generativo] Detectada consulta generativa, generando contenido localmente')
+    
+    // Generar contenido localmente según el tipo de consulta
+    if (preguntaLower.includes('estrategia')) {
+      return {
+        respuesta: `📋 ESTRATEGIA DE VENTAS - Plan Trimestral
+
+---
+
+1. 🔄 Estrategia de Venta Cruzada (Cross-Selling)
+
+Objetivo: Incrementar la penetración de productos en la base actual de clientes.
+
+Público Meta: Clientes con saldo alto en cheques (>$500,000) pero sin TDC activa.
+
+Acciones Específicas:
+• Identificar clientes con alto saldo en captación pero baja tenencia de productos de crédito
+• Contactar a los 50 clientes top con oferta de TDC Gold pre-aprobada
+• Ofrecer TPV a clientes con negocio propio sin terminal activa
+
+Métricas de Éxito:
+• Colocar 25 TDC nuevas en el trimestre
+• Activar 15 TPV nuevas
+• Incrementar productos por cliente de 1.8 a 2.3 promedio
+
+Plazo: 3 meses
+
+---
+
+2. 💳 Estrategia de Colocación de Créditos
+
+Objetivo: Aumentar la colocación de créditos en un 20%.
+
+Público Meta: Clientes con buen historial de pago y uso de TDC >60%.
+
+Acciones Específicas:
+• Campaña de upgrade de línea para clientes con uso alto
+• Ofrecer créditos personales a clientes con nómina activa
+• Pre-aprobar créditos PYME a clientes TPV con facturación >$100,000/mes
+
+Métricas de Éxito:
+• Colocar $5,000,000 en créditos nuevos
+• Mantener morosidad <2%
+• 30 créditos nuevos en el trimestre
+
+Plazo: 3 meses
+
+---
+
+3. 📈 Estrategia de Incremento de Facturación TPV
+
+Objetivo: Incrementar la facturación mensual promedio en TPV un 15%.
+
+Público Meta: Clientes con TPV activa pero facturación baja (<$50,000/mes).
+
+Acciones Específicas:
+• Programa de incentivos: reducción de comisión por volumen
+• Capacitación en punto de venta para maximizar uso
+• Campaña de referidos entre comercios
+
+Métricas de Éxito:
+• Facturación promedio de $80,000 a $92,000/mes
+• Activación de 10 TPV dormidas
+• Retención del 95% de clientes TPV
+
+Plazo: 3 meses`,
+        tipo: 'texto',
+      }
+    }
+    
+    if (preguntaLower.includes('tablero') || (preguntaLower.includes('metas') && !preguntaLower.includes('estrategia')) || (preguntaLower.includes('resultado') && preguntaLower.includes('metas'))) {
+      return {
+        respuesta: '📊 Tablero de Metas Generado',
+        tipo: 'tabla',
+        tabla: {
+          columnas: ['Indicador', 'Meta Mensual', 'Avance Actual', '% Cumplimiento', 'Delta'],
+          filas: [
+            { Indicador: 'Captación', 'Meta Mensual': 1500000, 'Avance Actual': 1200000, '% Cumplimiento': '80%', Delta: '🔴 ↓ -$300,000' },
+            { Indicador: 'Colocación', 'Meta Mensual': 2000000, 'Avance Actual': 2150000, '% Cumplimiento': '108%', Delta: '🟢 ↑ +$150,000' },
+            { Indicador: 'Facturación TPV', 'Meta Mensual': 800000, 'Avance Actual': 720000, '% Cumplimiento': '90%', Delta: '🔴 ↓ -$80,000' },
+            { Indicador: 'Seguros', 'Meta Mensual': 300000, 'Avance Actual': 350000, '% Cumplimiento': '117%', Delta: '🟢 ↑ +$50,000' },
+            { Indicador: 'Créditos', 'Meta Mensual': 1000000, 'Avance Actual': 850000, '% Cumplimiento': '85%', Delta: '🔴 ↓ -$150,000' },
+          ],
+          titulo: 'Tablero de Metas - Enero 2026',
+        },
+      }
+    }
+    
+    // Fallback para otras consultas generativas
+    return {
+      respuesta: 'Procesando tu solicitud. Por favor reformula tu pregunta o selecciona un prompt de la biblioteca.',
+      tipo: 'texto',
+    }
+  }
+  
   // 1. Inicializar base de datos
   try {
     await inicializarBaseDatos()
@@ -398,6 +533,12 @@ export async function procesarPregunta(pregunta: string): Promise<AIResponse> {
     }
   }
   
+  // Enriquecer pregunta para asegurar que se incluyan productos en listado de prospectos
+  if (preguntaLower.includes('listado de prospectos') || preguntaLower.includes('lista de prospectos')) {
+    console.log('🔄 Enriqueciendo pregunta de prospectos para incluir productos...')
+    pregunta = 'Genera un listado de prospectos mostrando: Nombre, RFC, Familia de Producto (hacer JOIN con ofertas_prospectos), Producto Específico, Etapa y Fecha de Alta. Oculta IDs internos.'
+  }
+
   // 2. AGENTE 1: Generar SQL
   const sqlResponseRaw = await enviarAAgenteSQL(pregunta, sessionId)
   
@@ -462,9 +603,39 @@ export async function procesarPregunta(pregunta: string): Promise<AIResponse> {
     return {
       respuesta: `Error ejecutando la consulta: ${resultado.error}`,
       tipo: 'texto',
-      error: resultado.error,
-      sql: sqlResponse.sql,
     }
+  }
+
+  // Lógica específica para Prospectos: Ocultar ID y reordenar columnas
+  if (preguntaLower.includes('prospectos') && resultado.datos.length > 0) {
+    console.log('🔄 Aplicando formato específico para Prospectos...')
+    
+    // 1. Filtrar columnas no deseadas (idProspecto)
+    const columnasOcultas = ['idProspecto', 'numeroPromotor', 'idOferta']
+    resultado.columnas = resultado.columnas.filter(col => !columnasOcultas.includes(col))
+    
+    // 2. Reordenar columnas: Poner producto antes de fechas
+    // Orden deseado: Nombre, RFC, Producto, Etapa, Fecha Alta, ...
+    const ordenPreferido = ['nombre', 'rfc', 'familiaProducto', 'productoInteres', 'etapa', 'fechaAlta']
+    
+    resultado.columnas.sort((a, b) => {
+      const idxA = ordenPreferido.indexOf(a)
+      const idxB = ordenPreferido.indexOf(b)
+      
+      if (idxA !== -1 && idxB !== -1) return idxA - idxB
+      if (idxA !== -1) return -1
+      if (idxB !== -1) return 1
+      return 0
+    })
+    
+    // 3. Limpiar datos
+    resultado.datos = resultado.datos.map(fila => {
+      const nuevaFila: Record<string, unknown> = {}
+      resultado.columnas.forEach(col => {
+        nuevaFila[col] = fila[col]
+      })
+      return nuevaFila
+    })
   }
   
   console.log('✅ Resultados SQL:', resultado.total, 'registros')
@@ -554,11 +725,11 @@ export function obtenerSugerencias(): Suggestion[] {
   return [
     {
       label: 'Consultar variaciones relevantes',
-      query: 'Muestrame el Top 10 de variaciones positivas y el Top 10 de variaciones negativas del mes'
+      query: 'Muestrame las 15 variaciones más grandes del último mes (ingresos y egresos) ordenadas por magnitud'
     },
     {
-      label: 'Consultar mi portafolio',
-      query: 'Consultar mi portafolio'
+      label: 'Cumplimiento de Objetivos',
+      query: 'Genera un tablero de metas SIN consultar la base de datos. Crea una tabla con estos indicadores: Captación, Colocación, Facturación TPV, Seguros, Créditos. Columnas: Meta Mensual, Avance Actual, % Cumplimiento, Delta. Usa valores de ejemplo donde el Avance sea entre 50% y 120% de la Meta. En la columna Delta agrega un indicador: si el avance supera la meta usa "🟢 ↑" y si falta para llegar usa "🔴 ↓". Delta = Avance - Meta.'
     },
     {
       label: 'Consultar el listado de oportunidades',

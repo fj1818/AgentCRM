@@ -3,9 +3,10 @@ import { X, Send, Bot } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 import type { OfertaCliente } from '@/types/ofertaCliente.types'
+import { enviarAlAgente } from '@/services'
 
 interface DetalleOfertaModalProps {
-  oferta: OfertaCliente & { promotorNombre?: string, nombreRazonSocial?: string, tipoPersona?: string, familia?: string, producto?: string }
+  oferta: OfertaCliente & { promotorNombre?: string, nombreRazonSocial?: string, tipoPersona?: string, familia?: string, producto?: string, rfc?: string }
   onClose: () => void
   onUpdateOferta?: (idOferta: string, campo: string, valor: any) => boolean
 }
@@ -25,7 +26,7 @@ export function DetalleOfertaModal({ oferta, onClose, onUpdateOferta }: DetalleO
     {
       id: 'welcome',
       tipo: 'agente',
-      texto: `Hola, estoy aquí para ayudarte a gestionar la oferta de ${oferta.producto}. Puedes pedirme cosas como:\n\n• "Cambia la etapa a Negociación"\n• "Actualiza el monto a 2 millones"`,
+      texto: `Hola, estoy aquí para ayudarte a gestionar la oferta de ${oferta.productoInteres}. Puedes pedirme cosas como:\n\n• "Cambia la etapa a Negociación"\n• "Actualiza el monto a 2 millones"`,
       timestamp: new Date()
     }
   ])
@@ -46,10 +47,13 @@ export function DetalleOfertaModal({ oferta, onClose, onUpdateOferta }: DetalleO
     }).format(amount)
   }
 
-  const handleEnviar = () => {
-    if (!inputValue.trim()) return
+  const [isLoading, setIsLoading] = useState(false)
+
+  const handleEnviar = async () => {
+    if (!inputValue.trim() || isLoading) return
 
     const textoUsuario = inputValue.trim()
+    setInputValue('')
     
     // Agregar mensaje usuario
     setMensajes(prev => [...prev, {
@@ -58,102 +62,93 @@ export function DetalleOfertaModal({ oferta, onClose, onUpdateOferta }: DetalleO
       texto: textoUsuario,
       timestamp: new Date()
     }])
-    setInputValue('')
 
-    // Procesar comando (Agent Logic)
-    setTimeout(() => {
-      procesarComando(textoUsuario)
-    }, 500)
-  }
+    setIsLoading(true)
 
-  const procesarComando = (texto: string) => {
-    const textoLower = texto.toLowerCase()
-    let respuesta = ''
+    try {
+      // Enviar al agente
+      const sessionId = `oferta-${oferta.idOferta}-${Date.now()}`
+      // Inyectar contexto explícito para que el agente sepa qué registro actualizar sin preguntar
+      const contextoSistema = `\n\n[SISTEMA: El usuario está visualizando la oferta ID: ${oferta.idOferta} del cliente ${oferta.nombreRazonSocial} (RFC: ${oferta.rfc || 'No disponible'}). Si la intención es actualizar, aplica los cambios DIRECTAMENTE a este registro sin pedir confirmación de nombre o RFC.]`
+      const response = await enviarAlAgente(textoUsuario + contextoSistema, sessionId, 'oportunidades')
 
-    // 1. Intentar cambiar etapa
-    if (textoLower.includes('etapa') || textoLower.includes('estatus') || textoLower.includes('estado')) {
-      const etapasValidas = ['No contactado', 'Interesado', 'Negociación', 'Descartado', 'Fabrica', 'Entregado', 'Timbrado']
-      const stagesMap: Record<string, string> = {
-        'no contactado': 'No contactado',
-        'interesado': 'Interesado',
-        'negociacion': 'Negociación',
-        'negociación': 'Negociación',
-        'descartado': 'Descartado',
-        'fabrica': 'Fabrica',
-        'fábrica': 'Fabrica',
-        'entregado': 'Entregado',
-        'timbrado': 'Timbrado',
-        'cerrado': 'Timbrado',
-        'completado': 'Timbrado'
-      }
+      let respuestaTexto = 'Lo siento, no pude procesar tu solicitud.'
 
-      let nuevaEtapa = ''
-      
-      // Buscar coincidencia exacta o aproximada
-      for (const key in stagesMap) {
-        if (textoLower.includes(key)) {
-          nuevaEtapa = stagesMap[key] || ''
-          break
-        }
-      }
-
-      // Si no encontró en el mapa, buscar en el array original
-      if (!nuevaEtapa) {
-        etapasValidas.forEach(etapa => {
-          if (textoLower.includes(etapa.toLowerCase())) {
-            nuevaEtapa = etapa
-          }
-        })
-      }
-
-      if (nuevaEtapa) {
-        if (onUpdateOferta) {
-          onUpdateOferta(oferta.idOferta, 'etapa', nuevaEtapa)
-        }
-        respuesta = `✅ Listo. He actualizado la etapa a "${nuevaEtapa}".`
-      } else {
-        respuesta = `❌ No reconozco esa etapa. Las etapas válidas son:\n\n• ${etapasValidas.join('\n• ')}`
-      }
-    }
-    // 2. Intentar cambiar monto
-    else if (textoLower.includes('monto') || textoLower.includes('cantidad') || textoLower.includes('precio') || textoLower.includes('valor')) {
-      // Extraer número
-      const montoMatch = texto.match(/\$?\s*([0-9,]+(\.[0-9]+)?)\s*(mil(?:lones?)?|millones?|m)?/i)
-      
-      if (montoMatch) {
-         let monto = parseFloat(montoMatch[1]!.replace(/,/g, ''))
-         const unidad = (montoMatch[3] || '').toLowerCase()
-         
-         if (unidad.includes('mil') || unidad === 'm') {
-           if (unidad.includes('millon')) monto *= 1000000
-           else monto *= 1000
-         } else if (unidad.includes('millon')) {
-            monto *= 1000000
-         }
-
-         if (monto < 0) {
-           respuesta = `⚠️ No puedo asignar un monto negativo ($${monto}).`
-         } else {
-           if (onUpdateOferta) {
-             onUpdateOferta(oferta.idOferta, 'montoOferta', monto)
+      if (typeof response === 'object' && response !== null) {
+        // Aceptamos tanto ACTUALIZAR_OFERTA como ACTUALIZAR_PROSPECTO ya que el agente puede confundir contextos
+        const isUpdateIntent = response.intent === 'ACTUALIZAR_OFERTA' || response.intent === 'ACTUALIZAR_PROSPECTO';
+        
+        if (isUpdateIntent && response.data && onUpdateOferta) {
+           const data = response.data as any
+           // Intentar extraer campo/valor estándar
+           let campo = data.campo
+           let valor = data.valor
+           
+           // Si no vienen campo/valor, intentar inferir de otras propiedades comunes que el agente suele devolver
+           if (!campo || !valor) {
+             if (data.estado) {
+               campo = 'etapa'
+               valor = data.estado
+             } else if (data.etapa) {
+               campo = 'etapa'
+               valor = data.etapa
+             } else if (data.monto) {
+               campo = 'montoOferta'
+               valor = data.monto
+             } else if (data.montoOferta) {
+               campo = 'montoOferta'
+               valor = data.montoOferta
+             } else if (data.producto) {
+               campo = 'productoInteres' // Mapear 'producto' a 'productoInteres'
+               valor = data.producto
+             }
            }
-           respuesta = `✅ Entendido. He actualizado el monto de oferta a ${formatCurrency(monto)}.`
-         }
-      } else {
-        respuesta = '❓ No entendí el monto. Intenta escribirlo así: "2 millones" o "$500,000".'
-      }
-    }
-    // 3. Fallback
-    else {
-      respuesta = '🤔 No estoy seguro de qué hacer. Puedo ayudarte a cambiar la "etapa" o el "monto" de la oferta.'
-    }
 
-    setMensajes(prev => [...prev, {
-      id: Date.now().toString(),
-      tipo: 'agente',
-      texto: respuesta,
-      timestamp: new Date()
-    }])
+           // Normalizar nombre de campo si el agente devuelve 'producto' en lugar de 'productoInteres'
+           if (campo === 'producto') campo = 'productoInteres'
+           if (campo === 'monto') campo = 'montoOferta'
+
+           if (campo && valor) {
+               // Lógica especial para productos (igual que en prospectos)
+               const familias = ['TDC', 'TPV', 'Cheques']
+               if (campo === 'productoInteres' && familias.includes(valor)) {
+                   respuestaTexto = `Entendido, te interesa ${valor}. ¿Qué producto específico deseas asignar? (Ej. ${valor} Clásica, ${valor} Oro)`
+               } else {
+                   const exito = onUpdateOferta(oferta.idOferta, campo, valor)
+                   if (exito) {
+                       respuestaTexto = response.mensaje || `✅ Actualizado ${campo} a ${valor}.`
+                   } else {
+                       respuestaTexto = `⚠️ No pude actualizar la oferta.`
+                   }
+               }
+           } else {
+             respuestaTexto = response.mensaje || 'No entendí qué actualizar.'
+           }
+        } else {
+           respuestaTexto = response.mensaje || response.output || response.text || response.message || JSON.stringify(response)
+        }
+      } else {
+        respuestaTexto = String(response)
+      }
+
+      setMensajes(prev => [...prev, {
+        id: Date.now().toString(),
+        tipo: 'agente',
+        texto: respuestaTexto,
+        timestamp: new Date()
+      }])
+
+    } catch (error) {
+      console.error('Error enviando mensaje:', error)
+      setMensajes(prev => [...prev, {
+        id: Date.now().toString(),
+        tipo: 'agente',
+        texto: 'Error de conexión con el agente.',
+        timestamp: new Date()
+      }])
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -191,10 +186,10 @@ export function DetalleOfertaModal({ oferta, onClose, onUpdateOferta }: DetalleO
                   Producto Interés
                 </span>
                 <div className={cn("font-semibold text-lg", isHey ? "text-cyan-400" : "text-gray-900")}>
-                  {oferta.producto}
+                  {oferta.productoInteres}
                 </div>
                 <div className={cn("text-xs", isHey ? "text-gray-500" : "text-gray-500")}>
-                  {oferta.familia}
+                  {oferta.familiaProducto}
                 </div>
               </div>
 
@@ -303,6 +298,20 @@ export function DetalleOfertaModal({ oferta, onClose, onUpdateOferta }: DetalleO
                 </div>
               </div>
             ))}
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className={cn(
+                  "rounded-2xl px-4 py-3 text-sm",
+                  isHey ? "bg-white/10 text-gray-400" : "bg-gray-100 text-gray-500"
+                )}>
+                  <div className="flex gap-1">
+                    <span className="animate-bounce">●</span>
+                    <span className="animate-bounce delay-100">●</span>
+                    <span className="animate-bounce delay-200">●</span>
+                  </div>
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
