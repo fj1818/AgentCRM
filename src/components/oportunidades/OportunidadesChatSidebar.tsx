@@ -6,13 +6,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Send, Bot, User, Sparkles, Loader2 } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
-<<<<<<< HEAD
-
-// Webhook URL para el agente de oportunidades (placeholder)
-const WEBHOOK_OPORTUNIDADES = 'https://fjrv1818.app.n8n.cloud/webhook/oportunidades'
-=======
 import { enviarAlAgente } from '@/services'
->>>>>>> c43a063a305d1af8be5585d01d9d9a069f81739d
 
 interface Mensaje {
   id: string
