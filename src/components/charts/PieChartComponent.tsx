@@ -73,3 +73,4 @@ export function PieChartComponent({ config, data, series }: ChartProps) {
   )
 }
 
+

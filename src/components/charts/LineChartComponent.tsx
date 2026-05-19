@@ -66,3 +66,4 @@ export function LineChartComponent({ config, data, series }: ChartProps) {
   )
 }
 
+

@@ -33,3 +33,4 @@ export const ENV_VARS = {
   VITE_API_KEY: 'API Key para autenticación (opcional)',
 } as const
 
+

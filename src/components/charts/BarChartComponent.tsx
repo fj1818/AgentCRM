@@ -63,3 +63,4 @@ export function BarChartComponent({ config, data, series }: ChartProps) {
   )
 }
 
+

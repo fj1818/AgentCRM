@@ -110,3 +110,4 @@ El agente se conecta a través de un webhook de n8n:
 3. Agregar renderizado de contenido estructurado
 4. Conectar con datos reales del CRM
 
+

@@ -102,3 +102,4 @@ export const TABLES_CONFIG: Record<string, TableDefinition> = {
 
 export type TablesConfig = typeof TABLES_CONFIG
 
+

@@ -132,3 +132,4 @@ VITE_WEBHOOK_URL=https://tu-n8n.com/webhook/agent-crm
 3. Iniciar el frontend con `npm run dev`
 4. Enviar un mensaje en el chat
 
+
