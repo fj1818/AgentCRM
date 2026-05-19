@@ -2,13 +2,25 @@
  * Componente principal de la aplicación
  */
 
+import { useState } from 'react'
 import { AppLayout } from '@/components/layout'
 import { ChatContainer } from '@/components/chat'
+// import { ClientesTable } from '@/components/clientes' 
+import { OportunidadesContainer } from '@/components/oportunidades'
+import { CotizadorContainer } from '@/components/cotizador'
+import { TareasContainer } from '@/components/tareas'
+import { ProspectosContainer } from '@/components/prospectos'
 
 function App() {
+  const [currentView, setCurrentView] = useState('chat')
+
   return (
-    <AppLayout>
-      <ChatContainer />
+    <AppLayout currentView={currentView} onNavigate={setCurrentView}>
+      {currentView === 'chat' && <ChatContainer />}
+      {currentView === 'oportunidades' && <OportunidadesContainer />}
+      {currentView === 'prospectos' && <ProspectosContainer />}
+      {currentView === 'cotizador' && <CotizadorContainer />}
+      {currentView === 'tareas' && <TareasContainer />}
     </AppLayout>
   )
 }

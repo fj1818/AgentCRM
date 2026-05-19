@@ -1,12 +1,13 @@
 /**
  * Componente individual de mensaje
+ * Diseño premium con burbujas modernas
  */
 
-import { Bot, User, AlertCircle } from 'lucide-react'
+import { Bot, AlertCircle, User } from 'lucide-react'
 import type { ChatMessage as ChatMessageType } from '@/types'
 import { cn } from '@/utils'
 import { formatRelativeTime } from '@/utils/formatting'
-import { Avatar } from '@/components/common'
+import { useUIStore } from '@/stores'
 
 interface ChatMessageProps {
   message: ChatMessageType
@@ -15,21 +16,39 @@ interface ChatMessageProps {
 export function ChatMessage({ message }: ChatMessageProps) {
   const isUser = message.role === 'user'
   const isError = message.status === 'error'
+  const { theme } = useUIStore()
+  const isHey = theme === 'hey'
 
   return (
     <div
       className={cn(
-        'flex gap-3 animate-fade-in',
+        'flex gap-3 message-enter',
         isUser ? 'flex-row-reverse' : 'flex-row'
       )}
     >
       {/* Avatar */}
       <div className="flex-shrink-0">
         {isUser ? (
-          <Avatar name="Usuario" size="sm" />
+          <div 
+            className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center shadow-lg",
+              isHey 
+                ? "bg-gradient-to-br from-violet-400 to-purple-600 shadow-violet-500/25" 
+                : "bg-gradient-to-br from-blue-400 to-blue-600 shadow-blue-500/25"
+            )}
+          >
+            <User className="w-5 h-5 text-white" />
+          </div>
         ) : (
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
-            <Bot className="w-4 h-4 text-white" />
+          <div 
+            className={cn(
+              "w-10 h-10 rounded-xl flex items-center justify-center shadow-lg",
+              isHey 
+                ? "bg-gradient-to-br from-cyan-400 to-blue-600 shadow-cyan-500/25" 
+                : "bg-gradient-to-br from-orange-400 to-orange-600 shadow-orange-500/25"
+            )}
+          >
+            <Bot className="w-5 h-5 text-white" />
           </div>
         )}
       </div>
@@ -43,11 +62,21 @@ export function ChatMessage({ message }: ChatMessageProps) {
       >
         <div
           className={cn(
-            'px-4 py-3 rounded-2xl',
+            'px-5 py-3.5 rounded-2xl shadow-sm',
             isUser
-              ? 'bg-primary-600 text-white rounded-tr-md'
-              : 'bg-surface-800 text-surface-100 rounded-tl-md',
-            isError && 'border border-red-500/50'
+              ? cn(
+                  'rounded-tr-md',
+                  isHey 
+                    ? 'bg-gradient-to-br from-violet-500 to-purple-600 text-white' 
+                    : 'bg-gradient-to-br from-orange-400 to-orange-500 text-white'
+                )
+              : cn(
+                  'rounded-tl-md',
+                  isHey 
+                    ? 'bg-white/10 text-white border border-white/10 backdrop-blur-sm' 
+                    : 'bg-white text-gray-800 border border-orange-100'
+                ),
+            isError && 'border-2 border-red-500/50'
           )}
         >
           <p className="text-sm leading-relaxed whitespace-pre-wrap">
@@ -58,11 +87,16 @@ export function ChatMessage({ message }: ChatMessageProps) {
         {/* Metadata */}
         <div
           className={cn(
-            'flex items-center gap-2 mt-1 px-1',
+            'flex items-center gap-2 mt-1.5 px-1',
             isUser ? 'flex-row-reverse' : 'flex-row'
           )}
         >
-          <span className="text-xs text-surface-500">
+          <span 
+            className={cn(
+              "text-xs",
+              isHey ? "text-white/40" : "text-gray-400"
+            )}
+          >
             {formatRelativeTime(message.timestamp)}
           </span>
           {isError && (
