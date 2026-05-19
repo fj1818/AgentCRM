@@ -4,7 +4,7 @@
  */
 
 // Webhook del cotizador en n8n
-const WEBHOOK_COTIZADOR = 'https://fjrv1818.app.n8n.cloud/webhook/cotizador-IA'
+const WEBHOOK_COTIZADOR = 'https://abrahamnavarrete.app.n8n.cloud/webhook/cotizador-IA'
 
 // Tipos de crédito disponibles
 export type TipoCredito = 'hipotecario' | 'personal' | 'auto'

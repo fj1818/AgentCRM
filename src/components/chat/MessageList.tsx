@@ -371,9 +371,7 @@ export function MessageList({
       ) : (
         <>
           {messages.map((message) => {
-            // @ts-expect-error - Datos extendidos del mensaje
             const grafico = message.grafico as GraficoData | null
-            // @ts-expect-error - Datos extendidos del mensaje
             const tabla = message.tabla as TablaData | null
 
             return (

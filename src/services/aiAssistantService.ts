@@ -12,8 +12,8 @@
 import { ejecutarSQL, inicializarBaseDatos, type SQLResult } from './sqlDatabaseService'
 
 // Webhooks de n8n para arquitectura dual-agent
-const WEBHOOK_SQL_GENERATOR = 'https://fjrv1818.app.n8n.cloud/webhook/regio-ia-assistant'
-const WEBHOOK_PRESENTATION = 'https://fjrv1818.app.n8n.cloud/webhook/presenter'
+const WEBHOOK_SQL_GENERATOR = 'https://abrahamnavarrete.app.n8n.cloud/webhook/regio-ia-assistant'
+const WEBHOOK_PRESENTATION = 'https://abrahamnavarrete.app.n8n.cloud/webhook/presenter'
 
 /** Respuesta del Agente SQL Generator */
 interface SQLGeneratorResponse {

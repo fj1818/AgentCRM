@@ -9,7 +9,7 @@ import { generarTextoProcedimientos } from '@/data/procedimientosData'
 import type { AIResponse } from './aiAssistantService'
 
 // Webhook dedicado para el agente de procedimientos
-const WEBHOOK_PROCEDIMIENTOS = 'https://fjrv1818.app.n8n.cloud/webhook/procedimientos'
+const WEBHOOK_PROCEDIMIENTOS = 'https://abrahamnavarrete.app.n8n.cloud/webhook/procedimientos'
 
 /** Respuesta esperada del agente de procedimientos */
 interface ProcedimientosAgentResponse {

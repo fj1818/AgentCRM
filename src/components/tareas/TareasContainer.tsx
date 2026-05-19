@@ -109,7 +109,7 @@ interface EstadoConversacion {
 }
 
 // Webhook URL para el scheduler
-const WEBHOOK_SCHEDULER = 'https://fjrv1818.app.n8n.cloud/webhook/scheduler'
+const WEBHOOK_SCHEDULER = 'https://abrahamnavarrete.app.n8n.cloud/webhook/scheduler'
 
 // Enviar mensaje a n8n y recibir respuesta estructurada
 async function enviarAlScheduler(mensaje: string, sessionId: string): Promise<RespuestaIA> {
