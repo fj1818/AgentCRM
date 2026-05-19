@@ -26,6 +26,20 @@ export interface ChatMessage {
     columnas: string[]
     datos: Record<string, unknown>[]
   }[]
+  /** Gráfico simple generado por el agente */
+  grafico?: {
+    tipo: 'pie' | 'bar' | 'line' | 'column' | 'polar'
+    titulo: string
+    datos: { x: string; value: number }[]
+  } | null
+  /** Tabla simple generada por el agente */
+  tabla?: {
+    columnas: string[]
+    filas: Record<string, unknown>[]
+    titulo?: string
+    paginate?: boolean
+    pageSize?: number
+  } | null
 }
 
 /** Contenido estructurado que puede acompañar un mensaje */
