@@ -161,4 +161,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
     })
   },
 
-
+  // Setters adicionales
+  setUltimoGrafico: (grafico) => set({ ultimoGrafico: grafico }),
+  setUltimaTabla: (tabla) => set({ ultimaTabla: tabla }),
+  setChatMode: (mode) => set({ chatMode: mode }),
+}))
