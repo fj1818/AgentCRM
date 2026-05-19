@@ -84,9 +84,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         )
         
         // Adjuntar datos de gráfico o tabla al mensaje
-        // @ts-expect-error - Extendemos el mensaje con datos adicionales
         assistantMessage.grafico = response.grafico || null
-        // @ts-expect-error - Extendemos el mensaje con datos adicionales
         assistantMessage.tabla = response.tabla ? {
           ...response.tabla,
           titulo: response.respuesta,

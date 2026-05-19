@@ -3,7 +3,15 @@
  * Mantiene las importaciones limpias en toda la aplicación
  */
 
+export * from './api.types'
+export * from './chart.types'
 export * from './chat.types'
+export * from './cliente.types'
+export * from './contactabilidad.types'
+export * from './contactabilidadProspecto.types'
 export * from './crm.types'
-
-
+export * from './ofertaCliente.types'
+export * from './ofertaProspecto.types'
+export * from './productoTDC.types'
+export * from './promotor.types'
+export * from './prospecto.types'
