@@ -12,7 +12,7 @@ Traduce preguntas en lenguaje natural a consultas SQL `SELECT` sobre el esquema 
 
 ## Webhook
 
-`https://abrahamnavarrete.app.n8n.cloud/webhook/regio-ia-assistant`
+`https://abrahamnavarrete.app.n8n.cloud/webhook/AgentCRMKPI`
 
 ## Request
 

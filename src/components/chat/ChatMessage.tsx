@@ -3,6 +3,7 @@
  * Diseño premium con burbujas modernas
  */
 
+import ReactMarkdown from 'react-markdown'
 import { Bot, AlertCircle, User } from 'lucide-react'
 import type { ChatMessage as ChatMessageType } from '@/types'
 import { cn } from '@/utils'
@@ -79,9 +80,29 @@ export function ChatMessage({ message }: ChatMessageProps) {
             isError && 'border-2 border-red-500/50'
           )}
         >
-          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-            {message.content}
-          </p>
+          {isUser ? (
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
+          ) : (
+            <div className="text-sm leading-relaxed space-y-2">
+              <ReactMarkdown
+                components={{
+                  p: ({ children }) => <p className="whitespace-pre-wrap">{children}</p>,
+                  strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                  ul: ({ children }) => <ul className="list-disc pl-5 space-y-1">{children}</ul>,
+                  ol: ({ children }) => <ol className="list-decimal pl-5 space-y-1">{children}</ol>,
+                  li: ({ children }) => <li>{children}</li>,
+                  h1: ({ children }) => <h1 className="text-base font-bold">{children}</h1>,
+                  h2: ({ children }) => <h2 className="text-sm font-bold">{children}</h2>,
+                  h3: ({ children }) => <h3 className="text-sm font-semibold">{children}</h3>,
+                  code: ({ children }) => (
+                    <code className="px-1 py-0.5 rounded bg-black/10 text-xs font-mono">{children}</code>
+                  ),
+                }}
+              >
+                {message.content}
+              </ReactMarkdown>
+            </div>
+          )}
         </div>
 
         {/* Metadata */}

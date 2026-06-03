@@ -10,10 +10,17 @@
  */
 
 import { ejecutarSQL, inicializarBaseDatos, type SQLResult } from './sqlDatabaseService'
-import { construirFuncion, existeFuncion } from './agentFunctions'
+import { construirFuncion, existeFuncion, type KpiHint } from './agentFunctions'
+
+/** Tarjeta KPI ya calculada y formateada para el chat */
+export interface KpiCard {
+  etiqueta: string
+  valor: string
+  tono?: 'positivo' | 'negativo' | 'neutro'
+}
 
 // Webhooks de n8n para arquitectura dual-agent
-const WEBHOOK_SQL_GENERATOR = 'https://abrahamnavarrete.app.n8n.cloud/webhook/regio-ia-assistant'
+const WEBHOOK_SQL_GENERATOR = 'https://abrahamnavarrete.app.n8n.cloud/webhook/AgentCRMKPI'
 const WEBHOOK_PRESENTATION = 'https://abrahamnavarrete.app.n8n.cloud/webhook/presenter'
 
 // Si es true, el Agente 2 refina la heurística local (gasta tokens, recibe solo 3 filas de muestra).
@@ -36,17 +43,21 @@ interface SQLGeneratorResponse {
     titulo?: string
     ejeX?: string
     ejeY?: string
+    kpis?: KpiHint[]
+    insight?: string
   }
   error?: string
 }
 
 /** Respuesta del Agente de Presentación */
 interface PresentationResponse {
-  formato: 'texto' | 'tabla' | 'multi_tabla' | 'grafico_bar' | 'grafico_pie' | 'grafico_line' | 'grafico_polar' | 'multi_grafico'
+  formato: 'texto' | 'tabla' | 'multi_tabla' | 'kpi' | 'grafico_bar' | 'grafico_pie' | 'grafico_line' | 'grafico_polar' | 'multi_grafico'
   titulo: string
   subtitulo?: string
   ejeX?: string
   ejeY?: string
+  kpis?: KpiHint[]
+  insight?: string
   configuracion_adicional?: {
     mostrar_totales?: boolean
     ordenar_por?: string
@@ -69,9 +80,13 @@ interface PresentationResponse {
 /** Respuesta procesada para el chat */
 export interface AIResponse {
   respuesta: string
-  tipo: 'texto' | 'tabla' | 'multi_tabla' | 'grafico_pie' | 'grafico_bar' | 'grafico_column' | 'grafico_line' | 'grafico_polar' | 'multi_tabla'
+  tipo: 'texto' | 'tabla' | 'multi_tabla' | 'kpi' | 'grafico_pie' | 'grafico_bar' | 'grafico_column' | 'grafico_line' | 'grafico_polar' | 'multi_tabla'
   datos?: Record<string, unknown>[]
   columnas?: string[]
+  /** Tarjetas KPI calculadas a partir del resultado */
+  kpis?: KpiCard[]
+  /** Texto analítico ("el porqué") en markdown */
+  insight?: string
   grafico?: {
     tipo: 'pie' | 'bar' | 'line' | 'column' | 'polar'
     titulo: string
@@ -320,6 +335,57 @@ function aplicarReglasPrivacidad(
   }
 }
 
+/** Formatea un número según el tipo de KPI */
+function formatearKpi(valor: number, formato?: KpiHint['formato']): string {
+  if (formato === 'porcentaje') {
+    return `${valor.toLocaleString('es-MX', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%`
+  }
+  if (formato === 'numero') {
+    return valor.toLocaleString('es-MX')
+  }
+  // moneda por defecto para números
+  return `$${valor.toLocaleString('es-MX', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+}
+
+/**
+ * Calcula las tarjetas KPI a partir del resultado SQL (0 tokens, sin fuga de datos:
+ * el agente solo declara qué columnas resumir).
+ */
+function calcularKpis(datos: Record<string, unknown>[], hints?: KpiHint[]): KpiCard[] | undefined {
+  if (!hints?.length || !datos.length) return undefined
+
+  return hints.map((h) => {
+    const valores = datos.map((d) => d[h.columna])
+    const agregado = h.agregado || 'first'
+
+    // KPI de texto: tomar el primer valor tal cual
+    if (h.formato === 'texto' || agregado === 'first') {
+      const primero = valores[0]
+      if (h.formato === 'texto' || typeof primero !== 'number') {
+        return { etiqueta: h.etiqueta, valor: String(primero ?? '—') }
+      }
+      return { etiqueta: h.etiqueta, valor: formatearKpi(primero, h.formato) }
+    }
+
+    if (agregado === 'count') {
+      return { etiqueta: h.etiqueta, valor: datos.length.toLocaleString('es-MX') }
+    }
+
+    const numeros = valores.map((v) => Number(v)).filter((n) => Number.isFinite(n))
+    if (!numeros.length) return { etiqueta: h.etiqueta, valor: '—' }
+
+    let resultado: number
+    switch (agregado) {
+      case 'sum': resultado = numeros.reduce((a, b) => a + b, 0); break
+      case 'avg': resultado = numeros.reduce((a, b) => a + b, 0) / numeros.length; break
+      case 'max': resultado = Math.max(...numeros); break
+      case 'min': resultado = Math.min(...numeros); break
+      default: resultado = numeros[0]!
+    }
+    return { etiqueta: h.etiqueta, valor: formatearKpi(resultado, h.formato) }
+  })
+}
+
 /**
  * Formatea el resultado según decisión del Agente de Presentación
  */
@@ -328,12 +394,35 @@ function formatearConPresentacion(
   presentation: PresentationResponse
 ): AIResponse {
   let { datos, columnas } = resultado
-  
+
+  // KPIs e insight se calculan sobre los datos ORIGINALES (sin filtro de privacidad)
+  const kpis = calcularKpis(datos, presentation.kpis)
+  const insight = presentation.insight
+
   // Aplicar reglas de privacidad SOLO para tablas
   // Los gráficos usan datos originales porque ya muestran categorías, no detalles individuales
   const privacyResult = aplicarReglasPrivacidad(datos, columnas)
   const datosTablaPrivados = privacyResult.datos
   const columnasTablaPrivadas = privacyResult.columnas
+
+  // Formato KPI: tarjetas + tabla de desglose
+  if (presentation.formato === 'kpi') {
+    return {
+      respuesta: presentation.mensaje_interpretacion,
+      tipo: 'kpi',
+      kpis,
+      insight,
+      datos: datosTablaPrivados,
+      tabla: {
+        columnas: columnasTablaPrivadas,
+        filas: datosTablaPrivados,
+        titulo: presentation.titulo,
+        paginate: datosTablaPrivados.length > 20,
+        pageSize: datosTablaPrivados.length > 20 ? 20 : undefined,
+      },
+      sql: resultado.sql,
+    }
+  }
   
   // Texto simple
   if (presentation.formato === 'texto') {
@@ -355,6 +444,8 @@ function formatearConPresentacion(
     return {
       respuesta: presentation.mensaje_interpretacion,
       tipo: 'tabla',
+      kpis,
+      insight,
       datos: datosTablaPrivados,
       tabla: {
         columnas: columnasTablaPrivadas,
@@ -405,6 +496,8 @@ function formatearConPresentacion(
     return {
       respuesta: presentation.mensaje_interpretacion,
       tipo: presentation.formato as AIResponse['tipo'],
+      kpis,
+      insight,
       datos,
       grafico: {
         tipo: tipoGrafico,
@@ -701,6 +794,8 @@ Plazo: 3 meses`,
           titulo: sqlResponse.presentacion.titulo || pregunta,
           ejeX: sqlResponse.presentacion.ejeX,
           ejeY: sqlResponse.presentacion.ejeY,
+          kpis: sqlResponse.presentacion.kpis,
+          insight: sqlResponse.presentacion.insight,
           mensaje_interpretacion: mensaje,
         }
       : decidirPresentacionLocal(resultado, pregunta, sqlResponse.tipo_consulta)
@@ -776,20 +871,20 @@ export interface Suggestion {
 export function obtenerSugerencias(): Suggestion[] {
   return [
     {
-      label: 'Consultar variaciones relevantes',
-      query: 'Muestrame las 15 variaciones más grandes del último mes (ingresos y egresos) ordenadas por magnitud'
+      label: '¿Quién es mi cliente más rentable y por qué?',
+      query: '¿Quién es mi cliente más rentable y por qué? Muestra el top 10 por rentabilidad anual estimada con el desglose de margen por producto.'
     },
     {
-      label: 'Cumplimiento de Objetivos',
-      query: 'Genera un tablero de metas SIN consultar la base de datos. Crea una tabla con estos indicadores: Captación, Colocación, Facturación TPV, Seguros, Créditos. Columnas: Meta Mensual, Avance Actual, % Cumplimiento, Delta. Usa valores de ejemplo donde el Avance sea entre 50% y 120% de la Meta. En la columna Delta agrega un indicador: si el avance supera la meta usa "🟢 ↑" y si falta para llegar usa "🔴 ↓". Delta = Avance - Meta.'
+      label: 'Top 5 con TDC pero sin nómina (con líneas y vencimientos)',
+      query: 'Dame el top 5 de clientes que tienen TDC pero NO tienen nómina, mostrando su línea total y la fecha de vencimiento más próxima, ordenados por monto.'
     },
     {
-      label: 'Consultar el listado de oportunidades',
-      query: 'Consultar el listado de oportunidades'
+      label: 'Contratos y líneas por vencer (90 días)',
+      query: 'Muéstrame los contratos y líneas que vencen en los próximos 90 días (TDC, créditos y seguros) con el monto en riesgo.'
     },
     {
-      label: 'Consultar el listado de prospectos',
-      query: 'Consultar el listado de prospectos'
+      label: 'Oportunidades de venta cruzada',
+      query: 'Detecta oportunidades de venta cruzada: clientes con alto saldo en cheques pero sin TDC ni crédito, ordenados por saldo.'
     },
   ]
 }

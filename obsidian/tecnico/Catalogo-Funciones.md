@@ -1,7 +1,7 @@
 ---
 tags: [tecnico, agente, funciones, optimizacion]
 created: 2026-06-02
-updated: 2026-06-02
+updated: 2026-06-03
 ---
 
 # Catálogo de Funciones del Agente
@@ -40,8 +40,29 @@ graph LR
 | `listadoOportunidades` | etapa, familia, limite | tabla |
 | `conteoPorEtapa` | entidad (oportunidades/prospectos) | gráfico pie |
 | `montoPorFamilia` | — | gráfico bar |
+| `clientesMasRentables` | limite | **kpi** (tarjetas + tabla + insight) |
+| `crossSellGap` | tiene*, noTiene*, limite | tabla + KPIs + insight |
+| `contratosPorVencer` | producto (tdc/credito/seguros), dias, limite | tabla + KPIs + insight |
+| `resumen360Cliente` | ide* | **kpi** + insight |
 
 \* requerido. Todos los `limite` están acotados (clamp) y los enums en whitelist.
+
+## Analítica de banca (nuevas)
+
+- **`clientesMasRentables`** — ranking por **rentabilidad anual estimada** con desglose de margen por producto. Responde "¿quién es mi cliente más rentable y por qué?".
+- **`crossSellGap`** — clientes que tienen un producto pero NO otro (ej. *TDC sin nómina*), con monto y vencimiento próximo. Venta cruzada.
+- **`contratosPorVencer`** — TDC/créditos/seguros que vencen en N días, con monto en riesgo y días restantes.
+- **`resumen360Cliente`** — foto 360° de rentabilidad de un cliente.
+
+### Fórmula de rentabilidad (margen anual)
+`TDC lineaUso·0.30 + crédito saldoActual·0.18 + cheques saldoLinea·0.04 + TPV facturación·0.012 + seguros prima·0.20 + nómina monto·0.02` (solo activos). Ver `SQL_RENTABILIDAD` en `agentFunctions.ts`.
+
+## KPIs e insight (sin fuga de datos)
+
+`PresentacionHint` ahora admite:
+- `kpis: { etiqueta, columna, agregado(sum|avg|first|count|max|min), formato(moneda|numero|porcentaje|texto) }[]` — el frontend **calcula** las tarjetas a partir del resultado SQL (0 tokens, el agente solo declara qué columna resumir).
+- `insight: string` — texto markdown con el "porqué"; lo escribe el agente sin ver datos.
+- `formato: 'kpi'` — render de tarjetas + tabla de desglose + insight.
 
 ## API del módulo
 

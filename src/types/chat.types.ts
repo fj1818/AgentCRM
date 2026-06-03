@@ -40,6 +40,14 @@ export interface ChatMessage {
     paginate?: boolean
     pageSize?: number
   } | null
+  /** Tarjetas KPI calculadas a partir del resultado */
+  kpis?: {
+    etiqueta: string
+    valor: string
+    tono?: 'positivo' | 'negativo' | 'neutro'
+  }[] | null
+  /** Texto analítico ("el porqué") en markdown */
+  insight?: string | null
 }
 
 /** Contenido estructurado que puede acompañar un mensaje */

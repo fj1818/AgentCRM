@@ -87,9 +87,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
         assistantMessage.grafico = response.grafico || null
         assistantMessage.tabla = response.tabla ? {
           ...response.tabla,
-          titulo: response.respuesta,
+          titulo: response.tabla.titulo || response.respuesta,
         } : null
-        
+        assistantMessage.kpis = response.kpis || null
+        assistantMessage.insight = response.insight || null
+
         if (response.tablas) {
           assistantMessage.tablas = response.tablas
         }

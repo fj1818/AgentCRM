@@ -99,6 +99,7 @@ function crearEsquema(): void {
       numeroLinea TEXT,
       fechaAlta TEXT,
       fechaBaja TEXT,
+      fechaVencimiento TEXT,
       producto TEXT,
       lineaTotal REAL,
       lineaDisponible REAL,
@@ -295,6 +296,7 @@ function crearEsquema(): void {
       numeroLinea TEXT,
       fechaAlta TEXT,
       fechaBaja TEXT,
+      fechaVencimiento TEXT,
       producto TEXT,
       montoCredito REAL,
       saldoActual REAL,
@@ -310,6 +312,7 @@ function crearEsquema(): void {
       numeroPoliza TEXT,
       fechaAlta TEXT,
       fechaBaja TEXT,
+      fechaVencimiento TEXT,
       producto TEXT,
       primaAnual REAL,
       FOREIGN KEY (ide) REFERENCES clientes(ide)
@@ -322,6 +325,28 @@ function crearEsquema(): void {
 /**
  * Carga los datos desde los data stores existentes
  */
+/**
+ * Fecha base de la aplicación. Se usa la fecha REAL del sistema para que los
+ * vencimientos generados sean coherentes con `date('now')` en las consultas SQL.
+ * Devuelve una fecha ISO (YYYY-MM-DD) desplazada N días respecto a esta base.
+ */
+const FECHA_BASE = new Date()
+function fechaRelativaDias(dias: number): string {
+  const d = new Date(FECHA_BASE)
+  d.setDate(d.getDate() + dias)
+  return d.toISOString().slice(0, 10)
+}
+
+/**
+ * Genera una fecha de vencimiento "interesante" para el demo: distribuye los
+ * registros de forma que una parte venza en los próximos 30/60/90 días y el
+ * resto más adelante. Determinista por índice para resultados estables.
+ */
+function vencimientoDemo(idx: number): string {
+  const buckets = [12, 25, 45, 75, 120, 200, 320, 540]
+  return fechaRelativaDias(buckets[idx % buckets.length]!)
+}
+
 async function cargarDatos(): Promise<void> {
   if (!db) throw new Error('Base de datos no inicializada')
   
@@ -344,18 +369,19 @@ async function cargarDatos(): Promise<void> {
   
   // Insertar TDC - mapear campos de ProductoTDC a estructura SQL
   const stmtTdc = db.prepare(`
-    INSERT INTO tdc (ide, numeroLinea, fechaAlta, fechaBaja, producto, lineaTotal, lineaDisponible, lineaUso)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO tdc (ide, numeroLinea, fechaAlta, fechaBaja, fechaVencimiento, producto, lineaTotal, lineaDisponible, lineaUso)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
-  
-  tdc.forEach((t) => {
+
+  tdc.forEach((t, idx) => {
     // Mapear nombres de ProductoTDC a nombres de tabla SQL
     const producto = (t as { nombreProducto?: string }).nombreProducto || 'Tarjeta Clasica'
     const lineaTotal = (t as { montoLineaTotal?: number }).montoLineaTotal || 0
     const lineaDisponible = (t as { montoLineaDisponible?: number }).montoLineaDisponible || 0
     const lineaUso = (t as { montoLineaUso?: number }).montoLineaUso || 0
-    
-    stmtTdc.run([t.ide, t.numeroLinea, t.fechaAlta, t.fechaBaja || null, producto, lineaTotal, lineaDisponible, lineaUso])
+    const fechaVencimiento = t.fechaBaja ? null : vencimientoDemo(idx)
+
+    stmtTdc.run([t.ide, t.numeroLinea, t.fechaAlta, t.fechaBaja || null, fechaVencimiento, producto, lineaTotal, lineaDisponible, lineaUso])
   })
   stmtTdc.free()
   console.log(`  - ${tdc.length} TDC cargadas`)
@@ -451,15 +477,16 @@ async function cargarDatos(): Promise<void> {
     fechaBaja: '' as string,
     producto: ['Crédito Personal', 'Crédito Hipotecario', 'Crédito Automotriz', 'Crédito PYME'][idx % 4]!,
     montoCredito: 100000 + Math.random() * 500000,
-    saldoActual: 50000 + Math.random() * 300000
+    saldoActual: 50000 + Math.random() * 300000,
+    fechaVencimiento: vencimientoDemo(idx + 2)
   }))
-  
+
   const stmtCred = db.prepare(`
-    INSERT INTO creditos (ide, numeroLinea, fechaAlta, fechaBaja, producto, montoCredito, saldoActual)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    INSERT INTO creditos (ide, numeroLinea, fechaAlta, fechaBaja, fechaVencimiento, producto, montoCredito, saldoActual)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
   `)
   creditosData.forEach(c => {
-    stmtCred.run([c.ide, c.numeroLinea, c.fechaAlta, c.fechaBaja, c.producto, c.montoCredito, c.saldoActual])
+    stmtCred.run([c.ide, c.numeroLinea, c.fechaAlta, c.fechaBaja, c.fechaVencimiento, c.producto, c.montoCredito, c.saldoActual])
   })
   stmtCred.free()
   console.log(`  - ${creditosData.length} créditos cargados`)
@@ -471,15 +498,16 @@ async function cargarDatos(): Promise<void> {
     fechaAlta: '2023-03-01',
     fechaBaja: '' as string,
     producto: ['Seguro de Vida', 'Seguro de Auto', 'Seguro de Gastos Médicos', 'Seguro de Hogar'][idx % 4]!,
-    primaAnual: 5000 + Math.random() * 20000
+    primaAnual: 5000 + Math.random() * 20000,
+    fechaVencimiento: vencimientoDemo(idx + 4)
   }))
-  
+
   const stmtSeg = db.prepare(`
-    INSERT INTO seguros (ide, numeroPoliza, fechaAlta, fechaBaja, producto, primaAnual)
-    VALUES (?, ?, ?, ?, ?, ?)
+    INSERT INTO seguros (ide, numeroPoliza, fechaAlta, fechaBaja, fechaVencimiento, producto, primaAnual)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
   `)
   segurosData.forEach(s => {
-    stmtSeg.run([s.ide, s.numeroPoliza, s.fechaAlta, s.fechaBaja, s.producto, s.primaAnual])
+    stmtSeg.run([s.ide, s.numeroPoliza, s.fechaAlta, s.fechaBaja, s.fechaVencimiento, s.producto, s.primaAnual])
   })
   stmtSeg.free()
   console.log(`  - ${segurosData.length} seguros cargados`)
@@ -687,42 +715,36 @@ export async function ejecutarSQL(sql: string): Promise<SQLResult> {
  */
 export function obtenerEsquemaSQL(): string {
   return `
-TABLAS DISPONIBLES:
+ESQUEMA (SQLite). fechaBaja IS NULL = registro ACTIVO. Fechas en formato 'YYYY-MM-DD'.
 
-clientes (ide PK, rfc, nombre, fechaAlta, fechaBaja, tipoPersona)
+clientes(ide PK, rfc, nombre, fechaAlta, fechaBaja, tipoPersona, numeroPromotor)
   - tipoPersona: "Persona Fisica" | "Persona Moral" | "Persona Fisica con Actividad Empresarial"
-  - fechaBaja NULL = cliente activo
-
-tdc (id, ide FK, numeroLinea, fechaAlta, fechaBaja, producto, lineaTotal, lineaDisponible, lineaUso)
-  - producto: "Tarjeta Clasica" | "Tarjeta Gold" | "Tarjeta Empresarial"
-  - lineaTotal, lineaDisponible, lineaUso son montos en pesos
-  - fechaBaja NULL = TDC activa
-
-cheques (id, ide FK, numeroLinea, fechaAlta, fechaBaja, producto, saldoLinea)
-  - producto: "NominaFlex" | "NominaTradicional" | "NominaBasica"
-  - saldoLinea es el monto actual de la cuenta en pesos
-  - fechaBaja NULL = cuenta activa, si tiene fechaBaja saldoLinea = 0
-
-tpv (id, ide FK, numeroLinea, fechaAlta, fechaBaja, producto, saldoFacturacion)
-  - producto: "TPV Básico" | "TPV Plus" | "TPV Premium"
-  - saldoFacturacion es el monto de facturación en pesos
-  - fechaBaja NULL = TPV activa
-
-variacionescheques (id, ide FK, numeroLinea FK->cheques, fechaMovimiento, montoAnterior, montoActual, montoMovimiento)
-  - Registra movimientos de entrada/salida en cuentas de cheques
+promotores(numeroPromotor PK, nombre, fechaAlta, fechaBaja, activo, banco, territorio, region, sucursalEquipo)
+tdc(id, ide FK, numeroLinea, fechaAlta, fechaBaja, fechaVencimiento, producto, lineaTotal, lineaDisponible, lineaUso)
+  - lineaUso = saldo dispuesto (genera intereses). fechaVencimiento = vencimiento de la línea/plástico.
+cheques(id, ide FK, numeroLinea, fechaAlta, fechaBaja, producto, saldoLinea)  -- captación a la vista
+tpv(id, ide FK, numeroLinea, fechaAlta, fechaBaja, producto, saldoFacturacion)  -- facturación con terminal
+nominas(id, ide FK, numeroLinea, fechaAlta, fechaBaja, producto, montoNomina)
+creditos(id, ide FK, numeroLinea, fechaAlta, fechaBaja, fechaVencimiento, producto, montoCredito, saldoActual)
+seguros(id, ide FK, numeroPoliza, fechaAlta, fechaBaja, fechaVencimiento, producto, primaAnual)
+variacionescheques(id, ide FK, numeroLinea FK->cheques, fechaMovimiento, montoAnterior, montoActual, montoMovimiento)
   - montoMovimiento > 0 = ingreso, < 0 = egreso
-  - Útil para análisis: "clientes con ingresos > 2M", "egresos > 50K esta semana"
+direcciones(ide PK/FK, calle, numero, cp, colonia, municipio, estado)
+telefonos(id, ide FK, telefono) · correos(id, ide FK, correo)
+prospectos(idProspecto PK, rfc, tipoPersona, fechaAlta, fechaConversion, ide FK)
+ofertasclientes(idOferta PK, ide FK, numeroPromotor FK, familiaProducto, productoInteres, fechaAlta, fechaBaja, etapa, campaña, montoOferta, idOportunidad, montoTimbrado, fechaTimbrado)
+ofertasprospectos(idOferta PK, idProspecto FK, numeroPromotor FK, familiaProducto, productoInteres, fechaAlta, fechaBaja, etapa, campaña, montoInteres, idOportunidad)
 
-telefonos (id, ide FK, telefono)
+RELACIONES: casi todo une por "ide" con clientes. variacionescheques.numeroLinea -> cheques.numeroLinea. prospectos por idProspecto.
 
-correos (id, ide FK, correo)
-
-direcciones (ide PK/FK, calle, numero, cp, colonia, municipio, estado)
-
-RELACIONES:
-- Todas las tablas se relacionan por el campo "ide" con clientes
-- Un cliente puede tener múltiples TDC, cheques, TPV, teléfonos y correos
-- variacionescheques se relaciona con cheques por numeroLinea
+RENTABILIDAD ANUAL ESTIMADA (margen) por cliente — usar estos coeficientes en SQL:
+  TDC:       SUM(tdc.lineaUso)        * 0.30
+  Créditos:  SUM(creditos.saldoActual)* 0.18
+  Cheques:   SUM(cheques.saldoLinea)  * 0.04
+  TPV:       SUM(tpv.saldoFacturacion)* 0.012
+  Seguros:   SUM(seguros.primaAnual)  * 0.20
+  Nóminas:   SUM(nominas.montoNomina) * 0.02
+  Rentabilidad total = suma de los anteriores (solo registros activos, fechaBaja IS NULL).
 `
 }
 

@@ -6,7 +6,7 @@ updated: 2026-06-02
 
 # Flujo n8n — Cerebro de Datos
 
-Diseño del workflow del webhook `/regio-ia-assistant`. El agente OpenAI hace **una sola pasada** que devuelve **SQL libre (cruzas entre tablas) + la presentación elegida**. El SQL se ejecuta en el **frontend** (sql.js), no en n8n → 0 filas viajan al LLM.
+Diseño del workflow del webhook `/AgentCRMKPI`. El agente OpenAI hace **una sola pasada** que devuelve **SQL libre (cruzas entre tablas) + la presentación elegida**. El SQL se ejecuta en el **frontend** (sql.js), no en n8n → 0 filas viajan al LLM.
 
 > [!important] Principio
 > n8n es solo el **cerebro** (decide qué consultar y cómo mostrarlo). El frontend es las **manos** (ejecuta SQL local, aplica privacidad, renderiza). El LLM nunca ve los datos crudos.
@@ -25,7 +25,7 @@ graph LR
 ## Nodos
 
 ### 1. Webhook
-- Método: `POST` · Path: `regio-ia-assistant`
+- Método: `POST` · Path: `AgentCRMKPI`
 - Response Mode: **Using 'Respond to Webhook' node**
 - Recibe: `{ chatInput, sessionId, timestamp }`
 
@@ -39,10 +39,11 @@ Homogeneiza el JSON sin importar el origen:
 | `fecha` | `{{ $json.body.timestamp || $now }}` |
 
 ### 3. AI Agent (OpenAI)
-- Chat Model: **OpenAI Chat Model** — `gpt-4o` (o `gpt-4o-mini` para abaratar) · **temperature 0**
+- Chat Model: **OpenAI Chat Model** — `gpt-5.1-mini` · **temperature 0**
 - Memory: **Window Buffer Memory**, key = `{{ $json.sessionId }}`, ventana 6-10 mensajes (da contexto multi-turno: "ahora agrúpalo por estado").
 - User message: `{{ $json.pregunta }}`
-- System message: ver [[Pre-Prompt-Cerebro]] (esquema completo + contrato `{sql, presentacion}`).
+- System message: ver [[Pre-Prompt-Cerebro]] (esquema completo + contrato `{sql, presentacion}` con `kpis`/`insight`).
+- Configuración detallada paso a paso: [[Configuracion-Nodo-n8n]].
 
 ### 4. Code — "Extraer y validar JSON"
 Limpia el markdown, parsea y valida que sea solo lectura:

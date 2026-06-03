@@ -22,7 +22,7 @@ graph LR
 
 | Agente | Webhook | Nota |
 |--------|---------|------|
-| SQL Generator | `/regio-ia-assistant` | [[Agente-SQL-Generator]] |
+| SQL Generator | `/AgentCRMKPI` | [[Agente-SQL-Generator]] |
 | Presentación | `/presenter` | [[Agente-Presentacion]] |
 
 ## Agentes Independientes

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search, ChevronRight, MessageSquare, PieChart, TrendingUp, Users, Package, MapPin, AlertTriangle, BarChart3, Briefcase } from 'lucide-react'
+import { Search, ChevronRight, MessageSquare, PieChart, TrendingUp, Users, Package, MapPin, AlertTriangle, BarChart3, Briefcase, Sparkles } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 
@@ -19,6 +19,38 @@ interface PromptCategory {
 }
 
 const PROMPT_CATEGORIES: PromptCategory[] = [
+  {
+    id: 'inteligencia',
+    title: 'Inteligencia Comercial',
+    icon: Sparkles,
+    prompts: [
+      {
+        id: 'cliente_mas_rentable',
+        label: '¿Cliente más rentable y por qué?',
+        query: '¿Quién es mi cliente más rentable y por qué? Muestra el top 10 por rentabilidad anual estimada con el desglose de margen por producto (TDC, crédito, cheques, TPV, seguros, nómina).'
+      },
+      {
+        id: 'tdc_sin_nomina',
+        label: 'Top 5 con TDC pero sin nómina',
+        query: 'Dame el top 5 de clientes que tienen TDC pero NO tienen nómina, mostrando su línea total y la fecha de vencimiento más próxima, ordenados por monto.'
+      },
+      {
+        id: 'contratos_por_vencer',
+        label: 'Contratos y líneas por vencer (90 días)',
+        query: 'Muéstrame los contratos y líneas que vencen en los próximos 90 días (TDC, créditos y seguros) con el monto en riesgo y los días restantes.'
+      },
+      {
+        id: 'cross_sell_cheques',
+        label: 'Venta cruzada: saldo alto sin crédito',
+        query: 'Detecta oportunidades de venta cruzada: clientes con alto saldo en cheques pero sin TDC ni crédito, ordenados por saldo, con KPIs e insight.'
+      },
+      {
+        id: 'rentabilidad_por_tipo',
+        label: 'Rentabilidad por tipo de cliente',
+        query: 'Compara la rentabilidad anual estimada total agrupada por tipo de persona, en gráfica de barras.'
+      }
+    ]
+  },
   {
     id: 'analisis',
     title: 'Análisis y Métricas',
@@ -240,7 +272,7 @@ export function PromptLibrary({ onSelectPrompt }: PromptLibraryProps) {
   const isHey = theme === 'hey'
   const [searchTerm, setSearchTerm] = useState('')
   const [expandedCategories, setExpandedCategories] = useState<string[]>([
-    'analisis', 'productos', 'financiero', 'comercial', 'promotores', 'geografico', 'tendencias', 'riesgo', 'ejecutivo'
+    'inteligencia', 'analisis', 'productos', 'financiero', 'comercial', 'promotores', 'geografico', 'tendencias', 'riesgo', 'ejecutivo'
   ])
 
   const toggleCategory = (id: string) => {
