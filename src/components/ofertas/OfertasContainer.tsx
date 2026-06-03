@@ -16,6 +16,7 @@ import { OfertasFiltros } from './OfertasFiltros'
 import { OfertaDetalle } from './OfertaDetalle'
 import { NuevaOfertaModal } from './NuevaOfertaModal'
 import { ReasignarModal } from './ReasignarModal'
+import { AsistenteOfertasPanel } from './AsistenteOfertasPanel'
 
 const PAGE_SIZE = 10
 
@@ -29,6 +30,7 @@ export function OfertasContainer() {
   const [pagina, setPagina] = useState(1)
   const [detalle, setDetalle] = useState<Offer | null>(null)
   const [nuevaOpen, setNuevaOpen] = useState(false)
+  const [nuevaTipo, setNuevaTipo] = useState<'' | 'Cliente' | 'Prospecto'>('')
   const [reasignarOpen, setReasignarOpen] = useState(false)
   const [seleccion, setSeleccion] = useState<Record<string, boolean>>({})
 
@@ -63,7 +65,8 @@ export function OfertasContainer() {
   const tdCls = cn('px-3 py-2 text-sm', isHey ? 'text-gray-300' : 'text-gray-700')
 
   return (
-    <div className={cn('flex flex-col h-full overflow-hidden', isHey ? 'bg-[#0f1219]' : 'bg-gray-50')}>
+    <div className={cn('flex h-full overflow-hidden', isHey ? 'bg-[#0f1219]' : 'bg-gray-50')}>
+      <div className="flex-1 flex flex-col min-w-0">
       {/* Header */}
       <div className={cn('px-6 py-4 border-b shrink-0 flex items-center gap-3', isHey ? 'border-white/10 bg-[#1a1f2e]' : 'border-orange-100 bg-white')}>
         <div className={cn('p-2 rounded-lg', isHey ? 'bg-cyan-500/10 text-cyan-400' : 'bg-orange-100 text-orange-600')}><Briefcase className="w-6 h-6" /></div>
@@ -92,7 +95,7 @@ export function OfertasContainer() {
               Mostrando <b>{conBusqueda.length}</b> de <b>{offers.length}</b> ofertas
             </span>
             <div className="flex gap-2">
-              <button onClick={() => setNuevaOpen(true)} className={cn('px-3 py-1.5 text-sm rounded-lg font-medium', isHey ? 'bg-cyan-500 text-white hover:bg-cyan-600' : 'bg-orange-500 text-white hover:bg-orange-600')}>+ Nueva oferta</button>
+              <button onClick={() => { setNuevaTipo(''); setNuevaOpen(true) }} className={cn('px-3 py-1.5 text-sm rounded-lg font-medium', isHey ? 'bg-cyan-500 text-white hover:bg-cyan-600' : 'bg-orange-500 text-white hover:bg-orange-600')}>+ Nueva oferta</button>
               <button onClick={() => setReasignarOpen(true)} disabled={idsSeleccionados.length === 0}
                 className={cn('px-3 py-1.5 text-sm rounded-lg font-medium border',
                   idsSeleccionados.length === 0
@@ -164,8 +167,14 @@ export function OfertasContainer() {
         </div>
       </div>
 
+      </div>{/* /columna principal */}
+
+      <div className="w-[380px] shrink-0 h-full">
+        <AsistenteOfertasPanel onCrearOferta={(tipo) => { setNuevaTipo(tipo); setNuevaOpen(true) }} />
+      </div>
+
       {detalle && <OfertaDetalle offer={detalle} onClose={() => setDetalle(null)} />}
-      {nuevaOpen && <NuevaOfertaModal onClose={() => setNuevaOpen(false)} />}
+      {nuevaOpen && <NuevaOfertaModal tipoInicial={nuevaTipo} onClose={() => { setNuevaOpen(false); setNuevaTipo('') }} />}
       {reasignarOpen && <ReasignarModal ids={idsSeleccionados} onClose={() => { setReasignarOpen(false); setSeleccion({}) }} />}
     </div>
   )

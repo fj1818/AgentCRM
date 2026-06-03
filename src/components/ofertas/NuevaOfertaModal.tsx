@@ -12,13 +12,13 @@ import type { Client } from '@/data/ofertas-seed'
 
 const RFC_LEN: Record<string, number> = { PF: 13, PFAE: 13, PM: 12 }
 
-export function NuevaOfertaModal({ onClose }: { onClose: () => void }) {
+export function NuevaOfertaModal({ onClose, tipoInicial = '' }: { onClose: () => void; tipoInicial?: '' | 'Cliente' | 'Prospecto' }) {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
   const { catalogs, searchClients, createClientOffer, createProspectOffer } = useOfertasStore()
   const familias = Object.keys(catalogs.families).map((id) => ({ id, nombre: catalogs.families[id]! }))
 
-  const [tipo, setTipo] = useState<'' | 'Cliente' | 'Prospecto'>('')
+  const [tipo, setTipo] = useState<'' | 'Cliente' | 'Prospecto'>(tipoInicial)
   const [err, setErr] = useState('')
 
   // Cliente

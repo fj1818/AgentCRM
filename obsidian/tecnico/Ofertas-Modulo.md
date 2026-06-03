@@ -32,7 +32,9 @@ CSV originales copiados a `src/data/ofertas-seed/` e importados con `?raw`:
 | `OfertasContainer` | Buscador + filtros + tabla + paginación (10) + acciones + selección reasignar |
 | `OfertasFiltros` | Filtros multiselect en **cascada** (Tipo de persona, Tipo de oferta, Familia, Tipo de producto, Etapa) con niveles L1..Ln |
 | `OfertaDetalle` | Overlay (max-w-7xl) con 4 secciones + panel de agente lateral |
-| `OfertaAgentePanel` | Chat de agente dentro del detalle; contexto según tipo (Cliente→oportunidades, Prospecto→prospectos); inyecta el ID de oferta como contexto de sistema |
+| `AsistenteOfertasPanel` | Asistente en la tabla: crea ofertas (cliente/prospecto), localiza por **RFC o número de cliente**, responde "qué ofertas tiene" / "en qué campañas está". Chips + texto libre, local sobre el store. |
+| `OfertaAgentePanel` | Asistente en el detalle: **actualiza campos** (etapa con valores permitidos, monto) vía solicitudes, y responde dudas del cliente (campañas, otras ofertas). Local sobre el store (`updateOffer`). |
+| `asistente.ts` | Lógica compartida: `resolverRfc` (RFC/número), `resumenOfertas`, `campanasDe`, `etapasPermitidas`, `parseEtapa`, `extractMonto`. Respuestas comerciales **sin montos/finanzas**. |
 | `NuevaOfertaModal` | Asistente 2 pasos (Cliente: búsqueda + familia / Prospecto: alta + validación RFC) |
 | `ReasignarModal` | Reasignación masiva de ejecutivo |
 | `ofertasFormat` | money, distinct, conversión de fechas |
