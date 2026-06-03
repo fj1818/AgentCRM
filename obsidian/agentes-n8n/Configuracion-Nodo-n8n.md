@@ -35,9 +35,12 @@ Agrega un nodo **Edit Fields (Set)** después del Webhook con 3 campos (modo *Ma
 
 | Nombre | Valor (expresión) |
 |--------|-------------------|
-| `pregunta` | `{{ $json.body.chatInput || $json.body.mensaje || $json.body.pregunta }}` |
-| `sessionId` | `{{ $json.body.sessionId || $json.body.conversationId || 'anon' }}` |
-| `fecha` | `{{ $json.body.timestamp || $now }}` |
+| `pregunta` | `{{ $json.body?.chatInput ?? $json.chatInput ?? $json.body?.pregunta ?? $json.pregunta ?? '' }}` |
+| `sessionId` | `{{ $json.body?.sessionId ?? $json.sessionId ?? $json.body?.conversationId ?? 'anon' }}` |
+| `fecha` | `{{ $json.body?.timestamp ?? $json.timestamp ?? $now }}` |
+
+> [!note]
+> Según la versión del Webhook, los datos llegan en `$json.body.*` o directo en `$json.*`. Las expresiones de arriba cubren ambos casos con `?.` y `??`. Cada celda debe empezar con `{{` y cerrar con `}}` (modo *Expression*, no *Fixed*). Tipo de los 3 campos: **String**.
 
 ---
 

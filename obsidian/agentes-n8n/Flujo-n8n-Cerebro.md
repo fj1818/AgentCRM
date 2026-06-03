@@ -34,9 +34,9 @@ Homogeneiza el JSON sin importar el origen:
 
 | Campo | Valor (expresión) |
 |-------|-------------------|
-| `pregunta` | `{{ $json.body.chatInput || $json.body.mensaje || $json.body.pregunta }}` |
-| `sessionId` | `{{ $json.body.sessionId || $json.body.conversationId || 'anon' }}` |
-| `fecha` | `{{ $json.body.timestamp || $now }}` |
+| `pregunta` | `{{ $json.body?.chatInput ?? $json.chatInput ?? $json.body?.pregunta ?? $json.pregunta ?? '' }}` |
+| `sessionId` | `{{ $json.body?.sessionId ?? $json.sessionId ?? $json.body?.conversationId ?? 'anon' }}` |
+| `fecha` | `{{ $json.body?.timestamp ?? $json.timestamp ?? $now }}` |
 
 ### 3. AI Agent (OpenAI)
 - Chat Model: **OpenAI Chat Model** — `gpt-5.1-mini` · **temperature 0**
