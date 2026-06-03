@@ -56,7 +56,8 @@ Agrega un nodo **Edit Fields (Set)** después del Webhook con 3 campos (modo *Ma
 
 ### 3.2 Nodo AI Agent
 1. **Agent type:** *Tools Agent* (o *Conversational*). No necesita herramientas; solo razonará.
-2. **Prompt / User Message:** `{{ $json.pregunta }}`.
+2. **Source for Prompt (User Message):** `Define below` (NO dejar "Take from previous node automatically", da el error *"No prompt specified / guardrailsInput"*).
+3. **Prompt (User Message):** `{{ $json.pregunta }}`.
 3. **System Message:** pega COMPLETO el bloque "System Prompt" de [[Pre-Prompt-Cerebro]] (incluye esquema, fórmula de rentabilidad, reglas de KPIs/insight y ejemplos).
 4. **Memory:** conecta **Window Buffer Memory**.
    - **Session Key:** `{{ $json.sessionId }}`.

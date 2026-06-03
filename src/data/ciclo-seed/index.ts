@@ -86,8 +86,8 @@ export interface Contrato {
 export interface Variacion { rfc: string; idContrato: string; tipo: 'Cheques' | 'Crédito'; fecha: string; montoAnterior: number; montoActual: number; montoMovimiento: number }
 export interface IngresoNoFinanciero { rfc: string; concepto: string; monto: number; operaciones: number; fecha: string }
 export interface TimbradoEvento { rfc: string; idContrato: string; familia: string; tipo: TipoProd; evento: string; criterio: string; cumplido: boolean; fecha: string; monto: number }
-export interface AclaracionQueja { rfc: string; folio: string; tipo: 'Aclaración' | 'Queja' | 'Comentario'; canal: string; motivo: string; estatus: 'Abierta' | 'En proceso' | 'Cerrada'; fechaApertura: string; fechaCierre: string }
-export interface Comunicacion { rfc: string; canal: 'WhatsApp' | 'SMS' | 'Correo' | 'Email' | 'Llamada'; asunto: string; fecha: string; estatus: 'Enviado' | 'Entregado' | 'Leído' | 'Fallido' }
+export interface AclaracionQueja { rfc: string; folio: string; tipo: 'Aclaración' | 'Queja' | 'Comentario'; canal: string; motivo: string; detalle: string; estatus: 'Abierta' | 'En proceso' | 'Cerrada'; fechaApertura: string; fechaCierre: string }
+export interface Comunicacion { rfc: string; canal: 'WhatsApp' | 'SMS' | 'Correo' | 'Email' | 'Llamada'; asunto: string; contenido: string; fecha: string; estatus: 'Enviado' | 'Entregado' | 'Leído' | 'Fallido' }
 export interface Denuncia { rfc: string; folio: string; tipo: string; autoridad: string; estatus: string; fecha: string }
 export interface TpvAfiliacion { rfc: string; idContrato: string; numeroAfiliacion: string; terminalId: string; modelo: string; estatus: 'Activa' | 'Inactiva'; facturacionMensual: number }
 export interface Recomendacion { rfc: string; productoRecomendado: string; familia: string; score: number; motivo: string }
@@ -250,13 +250,26 @@ function generarPersona(rfc: string, cli: Client | undefined, ofertasCli: Return
   NPS_TBL.push({ rfc, score, categoria: score <= 6 ? 'Detractor' : score <= 8 ? 'Pasivo' : 'Promotor', fecha: randDate(r, 2025, 2026), canal: pick(r, ['Email', 'SMS', 'App', 'Llamada']), comentario: score <= 6 ? pick(r, ['Mala atención', 'Comisiones altas', 'Tiempos de espera']) : score <= 8 ? 'Servicio aceptable' : 'Muy satisfecho con el servicio' })
 }
 
+const CUERPO_COM: Record<string, string> = {
+  'Bienvenida': 'Te damos la bienvenida. Tu ejecutivo está disponible para ayudarte con tus productos.',
+  'Recordatorio de pago': 'Te recordamos que tu próximo pago está por vencer. Evita recargos pagando a tiempo.',
+  'Oferta preaprobada': 'Tienes una oferta preaprobada esperándote. Consulta con tu ejecutivo los detalles.',
+  'Encuesta de satisfacción': '¿Cómo calificarías tu experiencia? Tu opinión nos ayuda a mejorar.',
+  'Aviso de vencimiento': 'Uno de tus contratos/líneas está próximo a vencer. Revisa las condiciones de renovación.',
+  'Promoción cross-sell': 'Por tu buen historial, puedes acceder a productos con condiciones preferentes.',
+}
 function generarComunicaciones(r: RNG, rfc: string) {
-  for (let i = 0; i < int(r, 2, 6); i++) COMUNICACIONES.push({ rfc, canal: pick(r, CANALES_COM), asunto: pick(r, ASUNTOS_COM), fecha: randDate(r, 2025, 2026), estatus: pick(r, ['Enviado', 'Entregado', 'Leído', 'Fallido']) })
+  for (let i = 0; i < int(r, 2, 6); i++) {
+    const asunto = pick(r, ASUNTOS_COM)
+    COMUNICACIONES.push({ rfc, canal: pick(r, CANALES_COM), asunto, contenido: CUERPO_COM[asunto] || asunto, fecha: randDate(r, 2025, 2026), estatus: pick(r, ['Enviado', 'Entregado', 'Leído', 'Fallido']) })
+  }
 }
 function generarAclaraciones(r: RNG, rfc: string) {
   for (let i = 0; i < int(r, 0, 3); i++) {
     const cerrada = chance(r, 0.6)
-    ACLARACIONES.push({ rfc, folio: `ACL${int(r, 100000, 999999)}`, tipo: pick(r, ['Aclaración', 'Queja', 'Comentario']), canal: pick(r, ['Sucursal', 'Call center', 'App', 'CONDUSEF']), motivo: pick(r, MOTIVOS_QUEJA), estatus: cerrada ? 'Cerrada' : pick(r, ['Abierta', 'En proceso']), fechaApertura: randDate(r, 2025, 2026), fechaCierre: cerrada ? randDate(r, 2026, 2026) : '' })
+    const motivo = pick(r, MOTIVOS_QUEJA)
+    const tipo = pick(r, ['Aclaración', 'Queja', 'Comentario'] as const)
+    ACLARACIONES.push({ rfc, folio: `ACL${int(r, 100000, 999999)}`, tipo, canal: pick(r, ['Sucursal', 'Call center', 'App', 'CONDUSEF']), motivo, detalle: `${tipo} por "${motivo.toLowerCase()}". El cliente solicita revisión y seguimiento del caso.`, estatus: cerrada ? 'Cerrada' : pick(r, ['Abierta', 'En proceso']), fechaApertura: randDate(r, 2025, 2026), fechaCierre: cerrada ? randDate(r, 2026, 2026) : '' })
   }
 }
 function generarNBA(r: RNG, rfc: string, tiposCliente: Set<TipoProd>) {

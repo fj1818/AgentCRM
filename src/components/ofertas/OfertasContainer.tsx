@@ -4,10 +4,11 @@
  * paginación + selección para reasignar + Nueva oferta + detalle.
  */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Eye, ChevronLeft, ChevronRight, Briefcase } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { useOfertasStore } from '@/stores/ofertas.store'
+import { useNavStore } from '@/stores/nav.store'
 import { cn } from '@/utils'
 import type { Offer } from '@/data/ofertas-seed'
 import { money } from './ofertasFormat'
@@ -30,6 +31,16 @@ export function OfertasContainer() {
   const [nuevaOpen, setNuevaOpen] = useState(false)
   const [reasignarOpen, setReasignarOpen] = useState(false)
   const [seleccion, setSeleccion] = useState<Record<string, boolean>>({})
+
+  // Abrir oferta cuando se navega desde Ciclo de vida (cruce con módulo Ofertas)
+  const ofertaPendiente = useNavStore((s) => s.ofertaPendiente)
+  const limpiarOfertaPendiente = useNavStore((s) => s.limpiarOfertaPendiente)
+  useEffect(() => {
+    if (!ofertaPendiente) return
+    const o = offers.find((x) => (x.raw['ID de la oferta'] || '') === ofertaPendiente)
+    if (o) setDetalle(o)
+    limpiarOfertaPendiente()
+  }, [ofertaPendiente, offers, limpiarOfertaPendiente])
 
   const onApply = useMemo(() => (f: Offer[]) => { setFiltradas(f); setPagina(1) }, [])
 
