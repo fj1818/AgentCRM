@@ -10,17 +10,33 @@
  */
 
 import { ejecutarSQL, inicializarBaseDatos, type SQLResult } from './sqlDatabaseService'
+import { construirFuncion, existeFuncion } from './agentFunctions'
 
 // Webhooks de n8n para arquitectura dual-agent
 const WEBHOOK_SQL_GENERATOR = 'https://abrahamnavarrete.app.n8n.cloud/webhook/regio-ia-assistant'
 const WEBHOOK_PRESENTATION = 'https://abrahamnavarrete.app.n8n.cloud/webhook/presenter'
 
+// Si es true, el Agente 2 refina la heurística local (gasta tokens, recibe solo 3 filas de muestra).
+// Por defecto false: la presentación se decide 100% en código.
+const USAR_AGENTE_PRESENTACION = false
+
 /** Respuesta del Agente SQL Generator */
 interface SQLGeneratorResponse {
-  sql: string
-  explicacion: string
-  tablas_usadas: string[]
-  tipo_consulta: 'agregacion' | 'listado' | 'cruce' | 'tendencia'
+  // Modo preferido: el agente elige una función del catálogo (menos tokens, más preciso)
+  funcion?: string
+  params?: Record<string, unknown>
+  // Modo SQL libre (cruzas entre tablas). El agente decide también la presentación.
+  sql?: string
+  explicacion?: string
+  tablas_usadas?: string[]
+  tipo_consulta?: 'agregacion' | 'listado' | 'cruce' | 'tendencia'
+  // Presentación elegida por la IA en la MISMA respuesta (evita el Agente 2)
+  presentacion?: {
+    formato?: PresentationResponse['formato']
+    titulo?: string
+    ejeX?: string
+    ejeY?: string
+  }
   error?: string
 }
 
@@ -581,7 +597,34 @@ Plazo: 3 meses`,
   
   console.log('🔍 [DEBUG] sqlResponse final:', sqlResponse)
   console.log('🔍 [DEBUG] sqlResponse.sql:', sqlResponse?.sql)
-  
+
+  // ── RUTA PREFERIDA: function calling ────────────────────────────────────
+  // El agente eligió una función del catálogo. Construimos el SQL en código,
+  // ejecutamos local y formateamos con la pista de presentación de la función.
+  // No se llama al Agente de Presentación => ahorro de tokens.
+  if (sqlResponse?.funcion && existeFuncion(sqlResponse.funcion)) {
+    console.log('🧩 [Función] Catálogo:', sqlResponse.funcion, 'params:', sqlResponse.params)
+    const construido = construirFuncion(sqlResponse.funcion, sqlResponse.params || {})
+
+    if ('error' in construido) {
+      return { respuesta: construido.error, tipo: 'texto', error: construido.error }
+    }
+
+    const resultadoFn = await ejecutarSQL(construido.sql)
+    if (!resultadoFn.exito) {
+      return { respuesta: `Error ejecutando la consulta: ${resultadoFn.error}`, tipo: 'texto' }
+    }
+
+    const mensaje = resultadoFn.total === 0
+      ? 'No se encontraron resultados para tu consulta.'
+      : construido.presentacion.mensaje_interpretacion
+
+    return formatearConPresentacion(resultadoFn, {
+      ...construido.presentacion,
+      mensaje_interpretacion: mensaje,
+    })
+  }
+
   if (!sqlResponse || !sqlResponse.sql) {
     console.error('❌ No se pudo obtener SQL válido')
     console.error('❌ sqlResponse:', JSON.stringify(sqlResponse, null, 2))
@@ -592,12 +635,14 @@ Plazo: 3 meses`,
     }
   }
   
-  console.log('🔍 SQL generado:', sqlResponse.sql)
+  // Capturar en const para mantener el tipo string tras el guard
+  const sqlQuery: string = sqlResponse.sql
+  console.log('🔍 SQL generado:', sqlQuery)
   console.log('📊 Tipo:', sqlResponse.tipo_consulta)
   console.log('📄 Explicación:', sqlResponse.explicacion)
-  
+
   // 3. Ejecutar SQL localmente
-  const resultado = await ejecutarSQL(sqlResponse.sql)
+  const resultado = await ejecutarSQL(sqlQuery)
   
   if (!resultado.exito) {
     return {
@@ -642,77 +687,84 @@ Plazo: 3 meses`,
   console.log('📦 Datos obtenidos (muestra):', resultado.datos.slice(0, 3))
   console.log('📋 Columnas:', resultado.columnas)
   
-  // 4. AGENTE 2: Determinar presentación óptima
-  console.log('🎨 [PASO 4] Llamando al Agente de Presentación...')
-  console.log('📤 Enviando:', {
-    pregunta,
-    totalRegistros: resultado.datos.length,
-    columnas: resultado.columnas,
-    sessionId
-  })
-  
-  let presentationResponse: PresentationResponse | null = null
-  
-  try {
-    const presentationResponseRaw = await enviarAAgentePresentation(
-      pregunta,
-      resultado.datos,
-      resultado.columnas,
-      sessionId
-    )
-    
-    console.log('🎯 [PASO 4] Respuesta del Agente de Presentación RAW:', presentationResponseRaw)
-    
-    // Aplicar misma lógica que con SQL Generator: manejar array y campo "output"
-    if (Array.isArray(presentationResponseRaw)) {
-      console.log('⚠️ Presentation Agent devolvió array, extrayendo primer elemento')
-      const firstElement = presentationResponseRaw[0]
-      
-      // Si tiene campo "output" con JSON string
-      if (firstElement && typeof firstElement === 'object' && 'output' in firstElement) {
-        console.log('🔄 Detectado campo "output" en Presentation Agent, parseando...')
-        const outputContent = (firstElement as any).output
-        presentationResponse = parsearJSON<PresentationResponse>(outputContent)
-        console.log('✅ Presentation JSON parseado:', presentationResponse)
-      } else {
-        presentationResponse = firstElement || null
-      }
-    } else if (presentationResponseRaw && typeof presentationResponseRaw === 'object' && 'output' in presentationResponseRaw) {
-      console.log('🔄 Detectado campo "output" en respuesta única de Presentation')
-      const outputContent = (presentationResponseRaw as any).output
-      presentationResponse = parsearJSON<PresentationResponse>(outputContent)
-    } else {
-      presentationResponse = presentationResponseRaw
-    }
-    
-    console.log('🎯 [PASO 4] Respuesta procesada:', presentationResponse)
-  } catch (error) {
-    console.error('💥 [PASO 4] Error crítico llamando al Agente de Presentación:', error)
-    console.error('💥 Stack trace:', error instanceof Error ? error.stack : 'No stack available')
-  }
-  
-  // Si el Agente 2 falla, usar heurísticas simples
-  if (!presentationResponse) {
-    console.warn('⚠️ Agente de presentación no disponible, usando formato tabla por defecto')
-    console.warn('⚠️ Razón: presentationResponse es null o undefined')
-    
-    return {
-      respuesta: `Encontré ${resultado.total} resultados`,
-      tipo: 'tabla',
-      datos: resultado.datos,
-      tabla: {
-        columnas: resultado.columnas,
-        filas: resultado.datos,
-        titulo: pregunta,
-      },
-      sql: sqlResponse.sql,
+  // 4. Presentación: la decide la MISMA respuesta de la IA (sql + presentacion).
+  // Si la IA no la incluyó, heurística local (0 tokens). El Agente 2 queda
+  // como refinamiento opcional (recibe solo 3 filas de muestra).
+  const mensaje = resultado.total === 0
+    ? 'No se encontraron resultados.'
+    : `Encontré ${resultado.total} resultado(s).`
+
+  let presentationResponse: PresentationResponse =
+    sqlResponse.presentacion?.formato
+      ? {
+          formato: sqlResponse.presentacion.formato,
+          titulo: sqlResponse.presentacion.titulo || pregunta,
+          ejeX: sqlResponse.presentacion.ejeX,
+          ejeY: sqlResponse.presentacion.ejeY,
+          mensaje_interpretacion: mensaje,
+        }
+      : decidirPresentacionLocal(resultado, pregunta, sqlResponse.tipo_consulta)
+
+  if (USAR_AGENTE_PRESENTACION) {
+    try {
+      const raw = await enviarAAgentePresentation(pregunta, resultado.datos.slice(0, 3), resultado.columnas, sessionId)
+      const refinada = Array.isArray(raw) ? raw[0] : raw
+      const parsed = refinada && typeof refinada === 'object' && 'output' in refinada
+        ? parsearJSON<PresentationResponse>((refinada as any).output)
+        : (refinada as PresentationResponse | null)
+      if (parsed) presentationResponse = parsed
+    } catch (error) {
+      console.warn('⚠️ Agente de presentación no disponible, se mantiene heurística local:', error)
     }
   }
-  
+
   console.log('🎨 Formato elegido:', presentationResponse.formato)
-  
-  // 5. Formatear según decisión del Agente 2
   return formatearConPresentacion(resultado, presentationResponse)
+}
+
+/**
+ * Heurística LOCAL para elegir formato de presentación sin gastar tokens.
+ * Se basa en la forma del resultado, no en su contenido.
+ */
+function decidirPresentacionLocal(
+  resultado: SQLResult,
+  pregunta: string,
+  tipoConsulta?: 'agregacion' | 'listado' | 'cruce' | 'tendencia'
+): PresentationResponse {
+  const { datos, columnas, total } = resultado
+  const base = (formato: PresentationResponse['formato'], extra: Partial<PresentationResponse> = {}): PresentationResponse => ({
+    formato,
+    titulo: pregunta,
+    mensaje_interpretacion: total === 0 ? 'No se encontraron resultados.' : `Encontré ${total} resultado(s).`,
+    ...extra,
+  })
+
+  if (total === 0) return base('texto')
+
+  // 1 fila × 1 columna -> valor único como texto
+  if (total === 1 && columnas.length === 1) {
+    const valor = datos[0]?.[columnas[0]!]
+    return base('texto', { mensaje_interpretacion: `${columnas[0]}: ${String(valor)}` })
+  }
+
+  // Clasificar columnas por tipo (según primera fila)
+  const primera = datos[0] || {}
+  const numericas = columnas.filter((c) => typeof primera[c] === 'number')
+  const textuales = columnas.filter((c) => typeof primera[c] !== 'number')
+  const hayFecha = columnas.some((c) => /fecha|periodo|mes|dia|año|anio/i.test(c))
+
+  // 2 columnas (1 etiqueta + 1 número) y pocas filas -> gráfico
+  if (columnas.length === 2 && numericas.length === 1 && textuales.length === 1 && total <= 12) {
+    const ejeX = textuales[0]!
+    const ejeY = numericas[0]!
+    // Tendencia o eje temporal -> línea; si no, barras (pie si parece distribución)
+    if (tipoConsulta === 'tendencia' || hayFecha) return base('grafico_line', { ejeX, ejeY })
+    const esDistribucion = /etapa|tipo|categoria|familia|estado/i.test(ejeX)
+    return base(esDistribucion ? 'grafico_pie' : 'grafico_bar', { ejeX, ejeY })
+  }
+
+  // Por defecto: tabla
+  return base('tabla')
 }
 
 export interface Suggestion {

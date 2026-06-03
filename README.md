@@ -53,7 +53,7 @@ npm run dev
 
 ### Configurar n8n
 
-Ver [docs/N8N_SETUP.md](docs/N8N_SETUP.md) para instrucciones detalladas.
+Ver el vault de documentación en [obsidian/](obsidian/INDEX.md) → `agentes-n8n/`.
 
 ## 📁 Estructura de Carpetas
 
@@ -83,9 +83,10 @@ npm run lint     # Linter
 
 ## 📚 Documentación
 
-- [Arquitectura](docs/ARCHITECTURE.md)
-- [Componentes](docs/COMPONENTS.md)
-- [Configuración n8n](docs/N8N_SETUP.md)
+Documentación completa en el vault Obsidian [obsidian/](obsidian/INDEX.md):
+- Técnica: arquitectura, servicios, catálogo de funciones, base de datos SQL
+- Negocio: prospectos, oportunidades, productos, privacidad
+- Agentes n8n: agentes y pre-prompts
 
 ## 🔧 Tecnologías
 
