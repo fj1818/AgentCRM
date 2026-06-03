@@ -5,11 +5,9 @@
 import { useState } from 'react'
 import { AppLayout } from '@/components/layout'
 import { ChatContainer } from '@/components/chat'
-// import { ClientesTable } from '@/components/clientes' 
-import { OportunidadesContainer } from '@/components/oportunidades'
+import { OfertasContainer } from '@/components/ofertas'
 import { CotizadorContainer } from '@/components/cotizador'
 import { TareasContainer } from '@/components/tareas'
-import { ProspectosContainer } from '@/components/prospectos'
 
 function App() {
   const [currentView, setCurrentView] = useState('chat')
@@ -17,8 +15,7 @@ function App() {
   return (
     <AppLayout currentView={currentView} onNavigate={setCurrentView}>
       {currentView === 'chat' && <ChatContainer />}
-      {currentView === 'oportunidades' && <OportunidadesContainer />}
-      {currentView === 'prospectos' && <ProspectosContainer />}
+      {currentView === 'ofertas' && <OfertasContainer />}
       {currentView === 'cotizador' && <CotizadorContainer />}
       {currentView === 'tareas' && <TareasContainer />}
     </AppLayout>

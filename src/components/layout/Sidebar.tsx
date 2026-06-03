@@ -7,8 +7,7 @@ import {
   MessageSquare,
   ChevronLeft,
   ChevronRight,
-  Users,
-  UserPlus,
+  Briefcase,
   CheckSquare,
   Calculator,
 } from 'lucide-react'
@@ -19,8 +18,7 @@ import { cn } from '@/utils'
 const navItems = [
   { icon: MessageSquare, label: 'Chat', path: 'chat' },
   { icon: CheckSquare, label: 'Tareas', path: 'tareas' },
-  { icon: Users, label: 'Oportunidades', path: 'oportunidades' },
-  { icon: UserPlus, label: 'Prospectos', path: 'prospectos' },
+  { icon: Briefcase, label: 'Ofertas', path: 'ofertas' },
   { icon: Calculator, label: 'Cotizador', path: 'cotizador' },
 ]
 
