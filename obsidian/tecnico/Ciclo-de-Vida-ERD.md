@@ -111,15 +111,28 @@ erDiagram
 - `listPersonas()` → catálogo para el selector cliente/prospecto.
 - Tablas exportadas: `PERSONAS, NUMEROS_CLIENTE, CONTRATOS, VARIACIONES, INGRESOS_NF, TIMBRADO, ACLARACIONES, COMUNICACIONES, DENUNCIAS, TPV, RECOMENDACIONES, NPS_TBL`.
 
+## Privacidad: identidad ≠ finanzas
+
+> [!danger] Regla
+> En **ninguna pantalla** se muestran juntas la **identidad** del cliente (nombre, RFC, contacto) y sus **finanzas**. Aplica también a prospectos.
+
+- `InfoClienteView` — SOLO identidad/contacto + números de cliente. Sin finanzas.
+- `Ciclo360View` — finanzas/actividad SIN nombre ni RFC (encabezado neutro: estatus, perfil, NPS, línea de vida).
+
 ## Vistas (implementadas)
 
 `src/components/ciclo/`:
-- **`Ciclo360View`** — renderizador 360° reutilizable (props `rfc`); consume `getCiclo360`. Prospecto oculta bloques de productos.
-- **`CicloVidaContainer`** — módulo de barra lateral: lista de clientes/prospectos carterizados (buscador + filtro todos/clientes/prospectos) + detalle 360° del seleccionado. Nav: `ciclo` (App.tsx + Sidebar).
+- **`CicloVidaContainer`** — módulo de barra lateral. **Vista 1: tabla** (como Ofertas) de clientes/prospectos (Nombre, RFC, Tipo, Estatus, Segmento — sin finanzas) con buscador, filtro (todos/clientes/prospectos) y paginación + botón **Ver detalle**. **Vista 2: detalle** con 2 secciones separadas en nav: **Info del cliente** (`InfoClienteView`) y **Ciclo de vida** (`Ciclo360View`).
+- **`Ciclo360View`** — renderizador 360° reutilizable (props `rfc`). Prospecto oculta bloques de productos.
+- **`InfoClienteView`** — sección de identidad.
 
 Doble entrada:
-1. Barra lateral **Ciclo de vida** → revisar todos los clientes uno por uno.
-2. Detalle de oferta → sección **Ciclo de vida** → `Ciclo360View` filtrado por `RFC` de la oferta (cruce con la tabla de ofertas).
+1. Barra lateral **Ciclo de vida** → tabla → detalle (2 secciones).
+2. Detalle de oferta → sección **Ciclo de vida** → `Ciclo360View` filtrado por `RFC` (la identidad va en la pestaña "Info del cliente" de la oferta).
+
+## Marcas
+
+Sin marcas de banco en ninguna pantalla. Sidebar muestra "CRM" y el toggle de tema es neutro ("Tema claro/oscuro"). Datos: `banco` neutralizado a "Banco A/B" y no se muestra en las vistas del ciclo.
 
 ## Referencias
 

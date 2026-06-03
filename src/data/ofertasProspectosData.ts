@@ -43,7 +43,7 @@ const campañas: CampañaOrigen[] = [
   'Campaña Prospectos Perfilados 2026',
   'Campaña Navidad 2025',
   'Campaña PyMEs Digital',
-  'Campaña Empresarios Hey',
+  'Campaña Empresarios Premium',
 ]
 
 function generarScriptVenta(familia: FamiliaProducto, producto: string, monto: number): string {

@@ -46,7 +46,7 @@ const campañas: CampañaOrigenCliente[] = [
   'Campaña Clientes Preferentes 2026',
   'Campaña Upgrade TDC',
   'Campaña Cross-Sell PyMEs',
-  'Campaña Fidelización Hey',
+  'Campaña Fidelización Premium',
 ]
 
 function generarAlfanumerico(length: number): string {

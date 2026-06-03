@@ -2,7 +2,7 @@
  * Tipos para la entidad Promotor
  */
 
-export type BancoPromotor = 'Banregio' | 'Hey'
+export type BancoPromotor = 'Banco A' | 'Banco B'
 
 export type TerritorioPromotor = 
   | 'Noroeste'
@@ -12,7 +12,7 @@ export type TerritorioPromotor =
   | 'Centro Occidente'
 
 export type SucursalBanregio = 'Sucursal 1' | 'Sucursal 2' | 'Sucursal 3'
-export type EquipoHey = 'Hey Brokers' | 'Hey Negocios' | 'Hey Pago'
+export type EquipoHey = 'Equipo 1' | 'Equipo 2' | 'Equipo 3'
 export type SucursalEquipo = SucursalBanregio | EquipoHey
 
 export interface Promotor {

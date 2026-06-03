@@ -21,7 +21,7 @@ export type CampañaOrigenCliente =
   | 'Campaña Clientes Preferentes 2026'
   | 'Campaña Upgrade TDC'
   | 'Campaña Cross-Sell PyMEs'
-  | 'Campaña Fidelización Hey'
+  | 'Campaña Fidelización Premium'
 
 export interface OfertaCliente {
   /** ID de la oferta: 18 caracteres que inician con "OC" */

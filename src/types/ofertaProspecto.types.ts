@@ -19,7 +19,7 @@ export type CampañaOrigen =
   | 'Campaña Prospectos Perfilados 2026'
   | 'Campaña Navidad 2025'
   | 'Campaña PyMEs Digital'
-  | 'Campaña Empresarios Hey'
+  | 'Campaña Empresarios Premium'
 
 export interface OfertaProspecto {
   /** ID de la oferta: 18 caracteres que inician con "OP" */

@@ -8,7 +8,7 @@
 import type { ReactNode } from 'react'
 import {
   User, Sparkles, CreditCard, Activity, BadgeCheck, AlertTriangle,
-  Wallet, Megaphone, MessageSquareWarning, Gavel, Store, Star, IdCard,
+  Wallet, Megaphone, MessageSquareWarning, Gavel, Store, Star, IdCard, RefreshCw,
 } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
@@ -58,14 +58,14 @@ export function Ciclo360View({ rfc }: { rfc: string }) {
 
   return (
     <div className="space-y-4">
-      {/* Encabezado / línea de vida */}
+      {/* Encabezado SIN identidad (solo estatus, perfil no identificable, línea de vida) */}
       <section className={cardCls}>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-3">
-            <div className={cn('p-2 rounded-lg', isHey ? 'bg-cyan-500/10 text-cyan-400' : 'bg-orange-100 text-orange-600')}><User className="w-6 h-6" /></div>
+            <div className={cn('p-2 rounded-lg', isHey ? 'bg-cyan-500/10 text-cyan-400' : 'bg-orange-100 text-orange-600')}><RefreshCw className="w-6 h-6" /></div>
             <div>
-              <h2 className={cn('text-lg font-bold', isHey ? 'text-white' : 'text-gray-900')}>{persona.nombre}</h2>
-              <p className={cn('text-xs', subtle)}>{persona.rfc} · {persona.tipoPersona} · {persona.segmento} · {persona.banco}</p>
+              <h2 className={cn('text-lg font-bold', isHey ? 'text-white' : 'text-gray-900')}>Ciclo de vida</h2>
+              <p className={cn('text-xs', subtle)}>Perfil: {persona.tipoPersona} · {persona.segmento}</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -120,7 +120,7 @@ export function Ciclo360View({ rfc }: { rfc: string }) {
           <Section icon={IdCard} title="Números de cliente" count={numerosCliente.length}>
             {numerosCliente.length === 0 ? <Empty t="Sin números de cliente." /> : (
               <div className="flex flex-wrap gap-2">
-                {numerosCliente.map((n) => <Pill key={n.numeroCliente} cls={isHey ? 'bg-white/10 text-gray-200' : 'bg-gray-100 text-gray-700'}>{n.numeroCliente} · {n.banco}</Pill>)}
+                {numerosCliente.map((n) => <Pill key={n.numeroCliente} cls={isHey ? 'bg-white/10 text-gray-200' : 'bg-gray-100 text-gray-700'}>{n.numeroCliente}</Pill>)}
               </div>
             )}
           </Section>

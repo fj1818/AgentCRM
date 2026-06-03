@@ -51,7 +51,7 @@ const regiones: string[] = [
 ]
 
 const sucursalesBanregio: SucursalBanregio[] = ['Sucursal 1', 'Sucursal 2', 'Sucursal 3']
-const equiposHey: EquipoHey[] = ['Hey Brokers', 'Hey Negocios', 'Hey Pago']
+const equiposHey: EquipoHey[] = ['Equipo 1', 'Equipo 2', 'Equipo 3']
 
 function generarFecha(añoInicio: number = 2015, añoFin: number = 2024): string {
   const año = Math.floor(Math.random() * (añoFin - añoInicio + 1)) + añoInicio
@@ -89,7 +89,7 @@ export function generarPromotoresSimulados(cantidad: number = 50): Promotor[] {
     nombre: 'Roberto Hernández', // Nombre fijo para el principal
     fechaAlta: '15/03/2018',
     activo: true,
-    banco: 'Banregio',
+    banco: 'Banco A',
     territorio: 'Noreste',
     region: 'Monterrey, N.L.',
     sucursalEquipo: 'Sucursal 1',
@@ -106,7 +106,7 @@ export function generarPromotoresSimulados(cantidad: number = 50): Promotor[] {
     // Asignar nombre consistente basado en el número
     const nombre = NOMBRES_PROMOTORES[numero % NOMBRES_PROMOTORES.length]!
 
-    const banco: BancoPromotor = Math.random() > 0.4 ? 'Banregio' : 'Hey'
+    const banco: BancoPromotor = Math.random() > 0.4 ? 'Banco A' : 'Banco B'
     const tieneFechaBaja = Math.random() < 0.10
     const fechaBaja = tieneFechaBaja ? generarFecha(2023, 2024) : undefined
     
@@ -114,7 +114,7 @@ export function generarPromotoresSimulados(cantidad: number = 50): Promotor[] {
     const regionIdx = Math.floor(Math.random() * regiones.length)
     
     // Asignar sucursal o equipo según banco
-    const sucursalEquipo = banco === 'Banregio' 
+    const sucursalEquipo = banco === 'Banco A'
       ? sucursalesBanregio[Math.floor(Math.random() * sucursalesBanregio.length)]!
       : equiposHey[Math.floor(Math.random() * equiposHey.length)]!
     

@@ -32,7 +32,6 @@ interface SidebarProps {
 export function Sidebar({ currentView, onNavigate }: SidebarProps) {
   const { sidebarState, toggleSidebar, theme, toggleTheme } = useUIStore()
   const isCollapsed = sidebarState === 'collapsed'
-  const isBanregio = theme === 'banregio'
   const isHey = theme === 'hey'
 
   return (
@@ -53,15 +52,15 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
         )}
       >
         {!isCollapsed && (
-          <span 
+          <span
             className={cn(
               "text-xl font-bold",
-              isHey 
-                ? "text-white" 
+              isHey
+                ? "text-white"
                 : "text-orange-500"
             )}
           >
-            {isBanregio ? 'Banregio' : 'Hey'}
+            CRM
           </span>
         )}
         <button
@@ -123,21 +122,16 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
             'transition-all duration-300 transform hover:scale-[1.02]',
             'font-bold text-white shadow-lg',
             isCollapsed ? 'px-2 py-3' : 'px-4 py-3',
-            // El botón muestra la opción contraria (a qué cambiar)
-            isBanregio
-              ? 'bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 shadow-gray-800/30'
-              : 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 shadow-orange-500/30'
+            isHey
+              ? 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-400 hover:to-orange-500 shadow-orange-500/30'
+              : 'bg-gradient-to-r from-gray-800 to-gray-900 hover:from-gray-700 hover:to-gray-800 shadow-gray-800/30'
           )}
-          title={isCollapsed ? (isBanregio ? 'Cambiar a Hey' : 'Cambiar a Banregio') : undefined}
+          title={isCollapsed ? 'Cambiar tema' : undefined}
         >
           {isCollapsed ? (
-            <span className="text-base font-bold">
-              {isBanregio ? 'H' : 'B'}
-            </span>
+            <span className="text-base font-bold">◐</span>
           ) : (
-            <span className="text-sm font-semibold">
-              {isBanregio ? 'Hey' : 'Banregio'}
-            </span>
+            <span className="text-sm font-semibold">{isHey ? 'Tema claro' : 'Tema oscuro'}</span>
           )}
         </button>
       </div>
