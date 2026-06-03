@@ -2,15 +2,12 @@
  * Tabla de Ofertas con columnas dinámicas según el perfil (UserAccessContext).
  */
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Eye } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 import type { CampoCompilado, Oferta, UserAccessContext } from '@/types/ofertas.types'
 import { formatValue } from './ofertasFormat'
-
-/** Campos que se muestran como columnas en el listado (si el perfil los ve) */
-const COLUMNAS_LISTA: (keyof Oferta)[] = ['nombre', 'origen', 'familiaProducto', 'productoInteres', 'monto', 'etapa', 'fechaAlta']
 
 interface Props {
   ofertas: Oferta[]
@@ -24,11 +21,8 @@ export function OfertasTable({ ofertas, ctx, onVerDetalle }: Props) {
   const [pagina, setPagina] = useState(1)
   const porPagina = 15
 
-  // Columnas visibles para este perfil, en el orden del layout
-  const columnas: CampoCompilado[] = useMemo(
-    () => ctx.campos.filter((c) => COLUMNAS_LISTA.includes(c.key)),
-    [ctx]
-  )
+  // Columnas = campos visibles para este perfil, en el orden del layout
+  const columnas: CampoCompilado[] = ctx.campos
 
   const totalPaginas = Math.max(1, Math.ceil(ofertas.length / porPagina))
   const datos = ofertas.slice((pagina - 1) * porPagina, pagina * porPagina)
@@ -65,18 +59,7 @@ export function OfertasTable({ ofertas, ctx, onVerDetalle }: Props) {
               <tr key={oferta.idOferta} className={isHey ? 'hover:bg-white/5' : 'hover:bg-orange-50/50'}>
                 {columnas.map((c) => (
                   <td key={String(c.key)} className={cn('px-3 py-2 text-sm', isHey ? 'text-gray-300' : 'text-gray-700')}>
-                    {c.key === 'origen' ? (
-                      <span
-                        className={cn(
-                          'inline-flex px-2 py-0.5 text-xs font-medium rounded-full',
-                          oferta.origen === 'cliente' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'
-                        )}
-                      >
-                        {oferta.origen === 'cliente' ? 'Cliente' : 'Prospecto'}
-                      </span>
-                    ) : (
-                      formatValue(c, oferta)
-                    )}
+                    {formatValue(c, oferta)}
                   </td>
                 ))}
                 <td className="px-3 py-2 text-center">

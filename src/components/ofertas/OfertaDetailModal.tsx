@@ -13,10 +13,6 @@ import { agruparPorSeccion } from '@/config/ofertas.layout.config'
 import { formatValue } from './ofertasFormat'
 import { CicloDeVidaSection } from './CicloDeVidaSection'
 
-const ETAPAS_CLIENTE = ['No contactado', 'Interesado', 'Negociación', 'Descartado', 'Fabrica', 'Entregado', 'Timbrado']
-const ETAPAS_PROSPECTO = ['No contactado', 'En negociación', 'Interesado', 'Descartado', 'Convertido']
-const FAMILIAS = ['TDC', 'TPV', 'Cheques', 'Crédito', 'Seguros', 'Nómina']
-
 interface Props {
   oferta: Oferta
   ctx: UserAccessContext
@@ -37,12 +33,6 @@ export function OfertaDetailModal({ oferta, ctx, onClose, onUpdateCampo }: Props
 
   const valorActual = (campo: CampoCompilado): unknown =>
     edits[campo.key] !== undefined ? edits[campo.key] : oferta[campo.key]
-
-  const opcionesSelect = (key: keyof Oferta): string[] => {
-    if (key === 'familiaProducto') return FAMILIAS
-    if (key === 'etapa') return oferta.origen === 'cliente' ? ETAPAS_CLIENTE : ETAPAS_PROSPECTO
-    return []
-  }
 
   const handleGuardar = () => {
     let aplicados = 0
@@ -125,18 +115,6 @@ export function OfertaDetailModal({ oferta, ctx, onClose, onUpdateCampo }: Props
                       >
                         {formatValue(campo, oferta)}
                       </div>
-                    ) : campo.tipoDato === 'Select' ? (
-                      <select
-                        className={inputClass}
-                        value={String(valorActual(campo) ?? '')}
-                        onChange={(e) => setEdits((p) => ({ ...p, [campo.key]: e.target.value }))}
-                      >
-                        {opcionesSelect(campo.key).map((op) => (
-                          <option key={op} value={op}>
-                            {op}
-                          </option>
-                        ))}
-                      </select>
                     ) : (
                       <input
                         type={campo.tipoDato === 'Moneda' ? 'number' : 'text'}

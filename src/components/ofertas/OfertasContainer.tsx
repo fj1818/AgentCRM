@@ -16,6 +16,11 @@ import { OfertaDetailModal } from './OfertaDetailModal'
 import { OfertasChatSidebar } from './OfertasChatSidebar'
 
 const FAMILIAS = ['', 'TDC', 'TPV', 'Cheques', 'Crédito', 'Seguros', 'Nómina']
+// Etapas de ambos orígenes (ciclo de vida)
+const ETAPAS = [
+  '', 'No contactado', 'Interesado', 'En negociación', 'Negociación',
+  'Descartado', 'Convertido', 'Fabrica', 'Entregado', 'Timbrado',
+]
 
 export function OfertasContainer() {
   const { theme } = useUIStore()
@@ -26,6 +31,7 @@ export function OfertasContainer() {
   const [seleccionada, setSeleccionada] = useState<Oferta | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [familia, setFamilia] = useState('')
+  const [etapa, setEtapa] = useState('')
   const [origen, setOrigen] = useState<'' | 'cliente' | 'prospecto'>('')
 
   const ctx = useMemo(() => buildAccessContext(perfil), [perfil])
@@ -35,10 +41,11 @@ export function OfertasContainer() {
     return ofertas.filter((o) => {
       if (q && !o.nombre.toLowerCase().includes(q) && !o.productoInteres.toLowerCase().includes(q) && !o.promotor.toLowerCase().includes(q)) return false
       if (familia && o.familiaProducto !== familia) return false
+      if (etapa && o.etapa !== etapa) return false
       if (origen && o.origen !== origen) return false
       return true
     })
-  }, [ofertas, busqueda, familia, origen])
+  }, [ofertas, busqueda, familia, etapa, origen])
 
   /** Revalida el permiso de edición del campo según el contexto antes de mutar */
   const onUpdateCampo = (idOferta: string, key: keyof Oferta, valor: unknown): boolean => {
@@ -98,6 +105,13 @@ export function OfertasContainer() {
               {FAMILIAS.map((f) => (
                 <option key={f} value={f}>
                   {f || 'Todas las familias'}
+                </option>
+              ))}
+            </select>
+            <select value={etapa} onChange={(e) => setEtapa(e.target.value)} className={selectClass}>
+              {ETAPAS.map((e) => (
+                <option key={e} value={e}>
+                  {e || 'Todas las etapas'}
                 </option>
               ))}
             </select>

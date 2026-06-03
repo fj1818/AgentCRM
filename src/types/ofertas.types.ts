@@ -26,6 +26,8 @@ export interface Oferta {
   productoInteres: string
   monto: number
   etapa: string
+  /** Fecha de cierre (equivale a fecha_cierre del AppScript) */
+  fechaCierre: string
   campaña: string
   promotor: string
   fechaAlta: string
