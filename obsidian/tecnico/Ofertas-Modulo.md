@@ -31,7 +31,8 @@ CSV originales copiados a `src/data/ofertas-seed/` e importados con `?raw`:
 |---------|-----|
 | `OfertasContainer` | Buscador + filtros + tabla + paginación (10) + acciones + selección reasignar |
 | `OfertasFiltros` | Filtros multiselect en **cascada** (Tipo de persona, Tipo de oferta, Familia, Tipo de producto, Etapa) con niveles L1..Ln |
-| `OfertaDetalle` | Overlay con 4 secciones: Info del cliente · Ciclo de vida (placeholder) · Info de la oferta (5 subsecciones editables) · Notas |
+| `OfertaDetalle` | Overlay (max-w-7xl) con 4 secciones + panel de agente lateral |
+| `OfertaAgentePanel` | Chat de agente dentro del detalle; contexto según tipo (Cliente→oportunidades, Prospecto→prospectos); inyecta el ID de oferta como contexto de sistema |
 | `NuevaOfertaModal` | Asistente 2 pasos (Cliente: búsqueda + familia / Prospecto: alta + validación RFC) |
 | `ReasignarModal` | Reasignación masiva de ejecutivo |
 | `ofertasFormat` | money, distinct, conversión de fechas |

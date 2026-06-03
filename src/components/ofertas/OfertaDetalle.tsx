@@ -11,6 +11,8 @@ import { useOfertasStore } from '@/stores/ofertas.store'
 import { cn } from '@/utils'
 import type { Offer } from '@/data/ofertas-seed'
 import { money, dmyToYmd, ymdToDmy } from './ofertasFormat'
+import { OfertaAgentePanel } from './OfertaAgentePanel'
+import { Ciclo360View } from '@/components/ciclo/Ciclo360View'
 
 type Src = 'campaigns' | 'families' | 'products' | 'promoters' | 'origins' | 'stages' | 'substages'
 interface FieldSpec {
@@ -174,7 +176,7 @@ export function OfertaDetalle({ offer, onClose }: { offer: Offer; onClose: () =>
 
   return (
     <div className="fixed inset-0 z-50 flex bg-black/40">
-      <div className={cn('m-auto w-full max-w-5xl h-[92vh] rounded-2xl border overflow-hidden flex flex-col', isHey ? 'bg-[#0f1219] border-white/10' : 'bg-gray-50 border-orange-200')}>
+      <div className={cn('m-auto w-full max-w-7xl h-[92vh] rounded-2xl border overflow-hidden flex flex-col', isHey ? 'bg-[#0f1219] border-white/10' : 'bg-gray-50 border-orange-200')}>
         {/* Header */}
         <div className={cn('flex items-center justify-between px-5 py-3 border-b', isHey ? 'border-white/10 bg-[#1a1f2e]' : 'border-orange-100 bg-white')}>
           <div>
@@ -211,11 +213,7 @@ export function OfertaDetalle({ offer, onClose }: { offer: Offer; onClose: () =>
               </div>
             )}
 
-            {sec === 'ciclo' && (
-              <div className={cn('rounded-xl border border-dashed p-8 text-center', isHey ? 'border-white/15 text-gray-400' : 'border-orange-200 text-gray-500')}>
-                Esqueleto · Ciclo de vida de la oferta (etapas y transiciones). Contenido por definir.
-              </div>
-            )}
+            {sec === 'ciclo' && <Ciclo360View rfc={raw['RFC'] || ''} />}
 
             {sec === 'oferta' && (
               <div className="space-y-6">
@@ -284,6 +282,9 @@ export function OfertaDetalle({ offer, onClose }: { offer: Offer; onClose: () =>
               </div>
             )}
           </div>
+
+          {/* Agente de chat de la oferta */}
+          <OfertaAgentePanel offer={offer} />
         </div>
       </div>
     </div>

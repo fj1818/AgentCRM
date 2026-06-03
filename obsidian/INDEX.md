@@ -17,11 +17,13 @@ CRM conversacional bancario. Chat → SQL local (sql.js) → presentación. Ver 
 - [[tecnico/Stores]] — Estado global (Zustand)
 - [[tecnico/Componentes]] — Componentes React por dominio
 - [[tecnico/Ofertas-Modulo]] — Módulo Ofertas (réplica DiseñoNuevoCRM)
+- [[tecnico/Ciclo-de-Vida-ERD]] — Modelo de datos 360° (ERD + tablas)
 - [[tecnico/Tipos]] — Interfaces TypeScript
 - [[tecnico/Configuracion]] — app/api/tables config
 
 ## Reglas de Negocio
 - [[negocio/Ofertas]] — Módulo unificado (prospectos + oportunidades)
+- [[negocio/Ciclo-de-Vida-360]] — Vista 360° del cliente (diseño + datos)
 - [[negocio/Prospectos]] — Ciclo de vida del prospecto
 - [[negocio/Clientes]] — Gestión de clientes
 - [[negocio/Oportunidades]] — Pipeline de oportunidades

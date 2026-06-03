@@ -8,6 +8,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Briefcase,
+  RefreshCw,
   CheckSquare,
   Calculator,
 } from 'lucide-react'
@@ -19,6 +20,7 @@ const navItems = [
   { icon: MessageSquare, label: 'Chat', path: 'chat' },
   { icon: CheckSquare, label: 'Tareas', path: 'tareas' },
   { icon: Briefcase, label: 'Ofertas', path: 'ofertas' },
+  { icon: RefreshCw, label: 'Ciclo de vida', path: 'ciclo' },
   { icon: Calculator, label: 'Cotizador', path: 'cotizador' },
 ]
 
