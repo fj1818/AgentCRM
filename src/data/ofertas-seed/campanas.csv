@@ -1,0 +1,16 @@
+Id de la campaña,Nombre de la campaña,Id de la familia de producto,Fecha de inicio,Fecha de finalización,Banca,Banco,Pauta,Tipo de campaña,Activa,Fecha de creación,Trimestre
+CMP001,Captación PyME 2025,FAM001,01/01/2025,31/03/2025,PyME,Banco A,TRUE,Captación,TRUE,15/12/2024,1
+CMP002,Nómina Total,FAM011,01/01/2025,31/03/2025,Personal,Banco A,FALSE,Cross-sell,TRUE,15/12/2024,1
+CMP003,Hipoteca Primavera,FAM005,01/04/2025,30/06/2025,Personal,Banco A,TRUE,Captación,TRUE,17/03/2025,2
+CMP004,Tarjeta Sin Anualidad,FAM004,01/01/2025,31/03/2025,Personal,Banco A,TRUE,Captación,TRUE,15/12/2024,1
+CMP005,Inversión Plus,FAM002,01/04/2025,30/06/2025,Personal,Banco A,FALSE,Cross-sell,TRUE,17/03/2025,2
+CMP006,Auto Estrena,FAM007,01/04/2025,30/06/2025,Personal,Banco A,TRUE,Captación,TRUE,17/03/2025,2
+CMP007,Crédito Express,FAM008,01/07/2025,30/09/2025,Personal,Banco A,FALSE,Reactivación,TRUE,16/06/2025,3
+CMP008,Seguros Protege,FAM010,01/07/2025,30/09/2025,Personal,Banco A,TRUE,Cross-sell,TRUE,16/06/2025,3
+CMP009,Banca Digital,FAM003,01/01/2025,31/03/2025,Digital,Banco B,TRUE,Captación,TRUE,15/12/2024,1
+CMP010,Comercios Conecta,FAM009,01/07/2025,30/09/2025,PyME,Banco A,FALSE,Captación,TRUE,16/06/2025,3
+CMP011,Renovación Cartera,FAM006,01/10/2025,31/12/2025,Empresarial,Banco A,FALSE,Retención,TRUE,15/09/2025,4
+CMP012,Empresarial 360,FAM013,01/04/2025,30/06/2025,Empresarial,Banco A,TRUE,Cross-sell,TRUE,17/03/2025,2
+CMP013,Promo Verano,FAM001,01/07/2025,30/09/2025,Personal,Banco A,TRUE,Captación,FALSE,16/06/2025,3
+CMP014,Fin de Año,FAM004,01/10/2025,31/12/2025,Personal,Banco A,TRUE,Captación,TRUE,15/09/2025,4
+CMP015,Referidos Premia,FAM012,01/10/2025,31/12/2025,Personal,Banco A,FALSE,Reactivación,TRUE,15/09/2025,4

@@ -1,0 +1,26 @@
+ID etapa,Ruta,Etapa,Orden,Es cierre,Resultado
+ETP001,R1,No contactado,1,FALSE,
+ETP002,R1,No localizado aún,2,FALSE,
+ETP003,R1,Interesado,3,FALSE,
+ETP004,R1,En consideración,4,FALSE,
+ETP005,R1,Análisis de crédito,5,FALSE,
+ETP006,R1,Propuesta,6,FALSE,
+ETP007,R1,Autorización,7,FALSE,
+ETP008,R1,Timbrado,8,TRUE,Ganado
+ETP009,R1,Descartado,9,TRUE,Perdido
+ETP010,R2,No contactado,1,FALSE,
+ETP011,R2,No localizado aún,2,FALSE,
+ETP012,R2,Interesado,3,FALSE,
+ETP013,R2,En consideración,4,FALSE,
+ETP014,R2,Propuesta,5,FALSE,
+ETP015,R2,Contratación,6,FALSE,
+ETP016,R2,Timbrado,7,TRUE,Ganado
+ETP017,R2,Descartado,8,TRUE,Perdido
+ETP018,R3,No contactado,1,FALSE,
+ETP019,R3,No localizado aún,2,FALSE,
+ETP020,R3,Interesado,3,FALSE,
+ETP021,R3,En consideración,4,FALSE,
+ETP022,R3,Demostración,5,FALSE,
+ETP023,R3,Instalación,6,FALSE,
+ETP024,R3,Timbrado,7,TRUE,Ganado
+ETP025,R3,Descartado,8,TRUE,Perdido

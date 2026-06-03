@@ -1,48 +1,39 @@
 ---
 tags: [negocio, ofertas, modulo]
-created: 2026-06-03
+created: 2026-06-02
 updated: 2026-06-03
 ---
 
 # Ofertas (módulo unificado)
 
-Fusiona [[Prospectos]] + [[Oportunidades]] en un solo módulo, con **layout dinámico y permisos por perfil** (recreado de la demo AppScript de DEMOCRM).
+Réplica del módulo Ofertas del prototipo **DiseñoNuevoCRM** (AppScript). Unifica clientes y prospectos en una sola "Cartera de Ofertas".
 
-## Origen del registro
+## Tipo de oferta
 
-Cada oferta tiene `origen`:
-- `cliente` → proviene de `ofertasclientes` (antes Oportunidades)
-- `prospecto` → proviene de `ofertasprospectos` (antes Prospectos)
+Cada oferta es de tipo **Cliente** o **Prospecto** (`Tipo de oferta`). El alta se hace con el asistente Nueva oferta.
 
-Unificadas en el tipo `Oferta` por `src/data/ofertasData.ts`.
+## Lista
 
-## Layout dinámico + permisos por perfil
+Columnas: Ejecutivo, Tipo de oferta, Familia de producto, Producto, Etapa, Monto de la oferta, Fecha de cierre. Con buscador global, filtros multiselect en cascada y paginación. Selección múltiple para **reasignar** ejecutivo.
 
-Recrea las hojas del AppScript (CamposSistema, LayoutCampos, PermisosCampoPerfil) como configuración TS. Ver [[../tecnico/Ofertas-Layout-Dinamico]].
+## Detalle (4 secciones)
 
-**Perfiles:** EJECUTIVO, GERENTE, STAFF (selector en el header, sin login).
+1. **Información del cliente** — nombre, teléfonos, correo, dirección, número, RFC (por RFC).
+2. **Ciclo de vida** — placeholder (también lo es en el prototipo).
+3. **Información de la oferta** — editable en 5 subsecciones; etapas/subetapas dependen de la **ruta** de la familia de producto.
+4. **Notas** — comentarios de la oferta + alta de comentario.
 
-Reglas de render:
-```
-visible  = campo.activo && layout.visibleLayout && permiso.puedeLeer
-editable = visible && permiso.puedeEditar
-masked   = permiso.mascarar
-orden    = layout.orden
-```
+## Reglas de negocio (del prototipo)
 
-> [!important]
-> Igual que en la demo: el frontend bloquea/oculta, pero al guardar se **revalida el permiso** (`onUpdateCampo` rechaza campos no editables).
+- Cambio de etapa a **Timbrado** → resultado Ganado (fija Fecha de ganado).
+- Cambio a **Descartado** → resultado Perdido; **Motivo de descarte obligatorio (≥20 caracteres)**; fija Fecha de descarte.
+- Alta de prospecto: RFC válido por tipo de persona (PF/PFAE 13, PM 12) y al menos un correo o teléfono.
 
-## Ciclo de vida
+## Fuera de alcance
 
-Sección presente como **placeholder** en el detalle (`CicloDeVidaSection`). Contenido por definir.
-
-## Fuera de alcance (no migrado de la demo)
-
-Login/SSO, correo admin, pantallas de administración de configuración.
+Perfiles/permisos, Configuración/admin, login.
 
 ## Referencias
 
-- [[../tecnico/Ofertas-Layout-Dinamico]]
-- [[Prospectos]] · [[Oportunidades]] (entidades base)
+- [[../tecnico/Ofertas-Modulo]]
 - [[Productos]]

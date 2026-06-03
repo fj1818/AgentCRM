@@ -1,0 +1,22 @@
+ID familia producto,Nombre,Ruta
+FAM001,Cuenta de Cheques,R1
+FAM002,Inversión,R2
+FAM003,Banca Electrónica,R3
+FAM004,Tarjeta de Crédito,R1
+FAM005,Crédito Hipotecario,R2
+FAM006,Crédito Comercial,R3
+FAM007,Crédito Auto,R1
+FAM008,Crédito Personal,R2
+FAM009,Pagos en Comunidad,R3
+FAM010,Seguros,R1
+FAM011,Nómina,R2
+FAM012,Servicios,R3
+FAM013,TDC Empresarial,R1
+FAM014,Crédito comercial empresarial,R2
+FAM015,TPV,R3
+FAM016,TDCE,R1
+FAM017,Arrendamiento,R2
+FAM018,Factoraje,R3
+FAM019,Banca Digital,R1
+FAM020,Productos Estructurales,R2
+FAM021,Arrendamiento Negocio,R3

@@ -1,0 +1,15 @@
+ID subetapa,Ruta,Etapa,SubEtapa,Orden
+SUB001,R1,Análisis de crédito,Documentación recibida,1
+SUB002,R1,Análisis de crédito,Buró consultado,2
+SUB003,R1,Propuesta,Propuesta enviada,1
+SUB004,R1,Propuesta,En revisión del cliente,2
+SUB005,R1,Autorización,Comité de crédito,1
+SUB006,R1,Autorización,Autorizado,2
+SUB007,R2,Propuesta,Propuesta enviada,1
+SUB008,R2,Propuesta,Comparativo de tasas,2
+SUB009,R2,Contratación,Apertura de cuenta,1
+SUB010,R2,Contratación,Fondeo,2
+SUB011,R3,Demostración,Demo agendada,1
+SUB012,R3,Demostración,Demo realizada,2
+SUB013,R3,Instalación,Afiliación,1
+SUB014,R3,Instalación,Activación,2

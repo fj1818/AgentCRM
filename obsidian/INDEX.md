@@ -16,7 +16,7 @@ CRM conversacional bancario. Chat → SQL local (sql.js) → presentación. Ver 
 - [[tecnico/Catalogo-Funciones]] — Function calling (optimización de tokens)
 - [[tecnico/Stores]] — Estado global (Zustand)
 - [[tecnico/Componentes]] — Componentes React por dominio
-- [[tecnico/Ofertas-Layout-Dinamico]] — Layout dinámico + permisos por perfil
+- [[tecnico/Ofertas-Modulo]] — Módulo Ofertas (réplica DiseñoNuevoCRM)
 - [[tecnico/Tipos]] — Interfaces TypeScript
 - [[tecnico/Configuracion]] — app/api/tables config
 

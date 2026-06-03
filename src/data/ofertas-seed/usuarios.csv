@@ -1,0 +1,11 @@
+Id del usuario,Nombre,Número de promotor,Sucursal/Equipo,Región,Territorio,Banco,Fecha de creación,Fecha de baja,Activo,Id del supervisor,Perfil,Función,CR
+USR0001,Ana López,1001,San Pedro,Occidente,Territorio 2,Banco B,18/01/2023,,TRUE,,Ejecutivo,Promotor,5001
+USR0002,Carlos Ruiz,1002,Guadalajara Sur,Centro,Territorio 3,Banco A,04/02/2023,,TRUE,USR0001,Ejecutivo,Promotor,5002
+USR0003,María García,1003,CDMX Reforma,Sureste,Territorio 1,Banco B,21/02/2023,,TRUE,USR0001,Ejecutivo,Promotor,5003
+USR0004,Jorge Pérez,1004,Mérida,Norte,Territorio 2,Banco A,10/03/2023,,TRUE,USR0001,Ejecutivo,Promotor,5004
+USR0005,Laura Méndez,1005,Valle Oriente,Occidente,Territorio 3,Banco B,27/03/2023,,TRUE,USR0001,Ejecutivo,Promotor,5005
+USR0006,Diego Torres,1006,Monterrey Centro,Centro,Territorio 1,Banco A,13/04/2023,,TRUE,USR0001,Ejecutivo,Promotor,5006
+USR0007,Sofía Ramírez,1007,San Pedro,Sureste,Territorio 2,Banco B,30/04/2023,,TRUE,USR0001,Ejecutivo,Promotor,5007
+USR0008,Luis Hernández,1008,Guadalajara Sur,Norte,Territorio 3,Banco A,17/05/2023,,TRUE,USR0001,Ejecutivo,Promotor,5008
+USR0009,Paola Castro,1009,CDMX Reforma,Occidente,Territorio 1,Banco B,03/06/2023,,TRUE,USR0001,Ejecutivo,Promotor,5009
+USR0010,Miguel Díaz,1010,Mérida,Centro,Territorio 2,Banco A,20/06/2023,,TRUE,USR0001,Ejecutivo,Promotor,5010
