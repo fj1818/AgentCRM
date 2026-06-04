@@ -10,7 +10,8 @@ import { useUIStore } from '@/stores'
 import { useOfertasStore } from '@/stores/ofertas.store'
 import { cn } from '@/utils'
 import type { Offer } from '@/data/ofertas-seed'
-import { etapasPermitidas, parseEtapa, extractMonto, campanasDe, resumenOfertas } from './asistente'
+import { etapasPermitidas, parseEtapa, extractMonto, campanasDe, resumenOfertas, mapGestionChanges } from './asistente'
+import { consultarAgente } from '@/services/asistenteN8n'
 
 interface Msg { id: string; tipo: 'user' | 'bot'; texto: string }
 
@@ -25,6 +26,8 @@ export function OfertaAgentePanel({ offer }: { offer: Offer }) {
 
   const [input, setInput] = useState('')
   const [modoEtapa, setModoEtapa] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [sessionId] = useState(() => `oferta_${idOferta}_${Date.now()}`)
   const [msgs, setMsgs] = useState<Msg[]>([
     { id: '0', tipo: 'bot', texto: 'Puedo actualizar esta oferta (etapa, monto) y responder dudas del cliente: "¿en qué campañas está?" o "¿qué otras ofertas tiene?".' },
   ])
@@ -47,34 +50,47 @@ export function OfertaAgentePanel({ offer }: { offer: Offer }) {
     })())
   }
 
-  function responder(texto: string) {
+  /** Devuelve true si lo resolvió localmente; false → fallback a n8n. */
+  function responder(texto: string): boolean {
     const t = texto.toLowerCase()
     if (t.includes('campaña') || t.includes('campana')) {
       const c = campanasDe(rfc, offers, catalogs)
       add('bot', c.length ? `Este cliente está en:\n${c.map((x) => `• ${x}`).join('\n')}` : 'No tiene otras campañas registradas.')
-      return
+      return true
     }
     if (t.includes('oferta') && (t.includes('otra') || t.includes('tiene') || t.includes('qué') || t.includes('que'))) {
       add('bot', `Ofertas del cliente:\n${resumenOfertas(rfc, offers)}`)
-      return
+      return true
     }
     if (t.includes('etapa')) {
       const e = parseEtapa(texto, etapas)
-      if (e) { aplicarEtapa(e); return }
-      setModoEtapa(true)
-      add('bot', `¿A qué etapa? Opciones: ${etapas.join(', ')}.`)
-      return
+      if (e) { aplicarEtapa(e); return true }
+      setModoEtapa(true); add('bot', `¿A qué etapa? Opciones: ${etapas.join(', ')}.`); return true
     }
     if (t.includes('monto')) {
       const m = extractMonto(texto)
-      if (m) { aplicarMonto(m); return }
-      add('bot', 'Indica el monto, ej. "actualiza el monto a 50000".')
-      return
+      if (m) { aplicarMonto(m); return true }
+      add('bot', 'Indica el monto, ej. "actualiza el monto a 50000".'); return true
     }
-    add('bot', 'Puedo: cambiar etapa, actualizar monto, o decirte sus campañas y otras ofertas.')
+    return false // → n8n
   }
 
-  function enviar(texto: string) { if (!texto.trim()) return; add('user', texto.trim()); setInput(''); responder(texto.trim()) }
+  async function enviar(texto: string) {
+    if (!texto.trim() || loading) return
+    add('user', texto.trim()); setInput('')
+    if (responder(texto.trim())) return
+    setLoading(true)
+    const resp = await consultarAgente('ofertasGestion', texto.trim(), sessionId, { idOferta, etapa: offer.etapa, tipoOferta: offer.tipoOferta })
+    setLoading(false)
+    if (resp.intent === 'ACTUALIZAR_OFERTA' && resp.data) {
+      const changes = mapGestionChanges(resp.data)
+      if (Object.keys(changes).length === 0) { add('bot', resp.mensaje || 'No identifiqué qué actualizar.'); return }
+      const res = updateOffer(idOferta, changes)
+      add('bot', res.ok ? (resp.mensaje || `✅ Actualizado: ${Object.keys(changes).join(', ')}.`) : `⚠ ${res.error}`)
+      return
+    }
+    add('bot', resp.mensaje || 'No pude procesar la solicitud.')
+  }
 
   const chips = [
     { l: 'Cambiar etapa', a: () => { setModoEtapa(true); add('bot', `Selecciona la etapa (${offer.tipoOferta}):`) } },

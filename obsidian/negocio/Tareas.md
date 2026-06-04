@@ -24,7 +24,7 @@ Estado en [[../tecnico/Stores#eventos-store]] (`eventos.store`).
 `AsistenteTareasPanel` reemplaza el chat n8n anterior. Chips + texto libre sobre `eventos.store`:
 - Crea **tareas/reuniones** con captura guiada por pasos (nombre → fecha → hora → duración). Parser local de fecha (hoy/mañana/día de semana/dd-mm/ISO), hora y duración.
 - Consulta: "qué tengo hoy", "pendientes", "reuniones".
-- Sin tokens, determinista. El módulo Chat sigue usando n8n para lenguaje libre.
+- Acciones locales (deterministas); lo que no entiende → **fallback a n8n** (`asistenteN8n.preguntarN8n('tareas', …)`, webhook `/scheduler`).
 
 ## Referencias
 

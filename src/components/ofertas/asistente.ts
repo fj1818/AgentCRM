@@ -73,3 +73,41 @@ export function parseEtapa(texto: string, permitidas: string[]): string | null {
   const t = texto.toLowerCase()
   return permitidas.find((e) => t.includes(e.toLowerCase())) || null
 }
+
+// ── Ejecución de intents devueltos por n8n (cambios reales en el store) ───────
+
+/** Resuelve un nombre/familia/producto a un ID de familia de producto. */
+export function resolverFamiliaId(termino: string, catalogs: Catalogs): string | null {
+  const t = String(termino || '').toLowerCase().trim()
+  if (!t) return null
+  if (catalogs.families[termino]) return termino // ya es id
+  // Coincidencia por nombre de familia
+  for (const id of Object.keys(catalogs.families)) {
+    const n = catalogs.families[id]!.toLowerCase()
+    if (n.includes(t) || t.includes(n)) return id
+  }
+  // Atajos comunes
+  if (t.includes('tdc') || t.includes('tarjeta de cr')) return Object.keys(catalogs.families).find((id) => catalogs.families[id]!.toLowerCase().includes('tarjeta de cr')) || null
+  return null
+}
+
+/** Convierte el intent de gestión (campo/valor) a cambios de columnas del store. */
+export function mapGestionChanges(data: Record<string, unknown>): Record<string, string> {
+  const out: Record<string, string> = {}
+  const set = (col: string, v: unknown) => { if (v !== undefined && v !== null && v !== '') out[col] = String(v) }
+  if (data.campo) {
+    const c = String(data.campo).toLowerCase()
+    const v = data.valor
+    if (c.includes('etapa')) set('Etapa', v)
+    else if (c.includes('monto')) set('Monto de la oferta', v)
+    else if (c.includes('producto')) set('Producto', v)
+    else if (c.includes('motivo')) set('Motivo de descarte', v)
+    else out[String(data.campo)] = String(v ?? '')
+    return out
+  }
+  set('Etapa', data.etapa)
+  set('Monto de la oferta', data.monto ?? data.montoOferta)
+  set('Producto', data.producto ?? data.productoInteres)
+  set('Motivo de descarte', data.motivo ?? data.motivoDescarte)
+  return out
+}

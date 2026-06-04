@@ -38,6 +38,10 @@ CRM conversacional bancario. Chat → SQL local (sql.js) → presentación. Ver 
 - [[agentes-n8n/Agente-SQL-Generator]] — Genera SQL (Agente 1)
 - [[agentes-n8n/Flujo-n8n-Cerebro]] — Diseño del workflow n8n (nodos)
 - [[agentes-n8n/Pre-Prompt-Cerebro]] — Prompt experto banca/CRM (SQL + KPIs + insight)
+- [[agentes-n8n/Agentes-Gestion]] — Agentes de acción (resumen)
+- [[agentes-n8n/Agente-Crear-Ofertas]] — Config nodos: crear ofertas
+- [[agentes-n8n/Agente-Gestion-Ofertas]] — Config nodos: gestión/estatus
+- [[agentes-n8n/Agente-Tareas]] — Config nodos: tareas/agenda
 - [[agentes-n8n/Configuracion-Nodo-n8n]] — Config paso a paso del nodo (GPT 5.1 mini)
 - [[agentes-n8n/Agente-Presentacion]] — Decide formato (Agente 2)
 - [[agentes-n8n/Agente-Procedimientos]] — Guía paso a paso

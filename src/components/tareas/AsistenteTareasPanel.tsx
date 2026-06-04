@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Bot, Send } from 'lucide-react'
 import { useUIStore, useEventosStore } from '@/stores'
 import { cn } from '@/utils'
+import { consultarAgente } from '@/services/asistenteN8n'
 
 interface Msg { id: string; tipo: 'user' | 'bot'; texto: string }
 type Paso = 'nombre' | 'fecha' | 'hora' | 'duracion'
@@ -49,6 +50,8 @@ export function AsistenteTareasPanel({ onEventoCreado }: { onEventoCreado?: (fec
 
   const [input, setInput] = useState('')
   const [flujo, setFlujo] = useState<Flujo | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [sessionId] = useState(() => `tareas_${Date.now()}`)
   const [msgs, setMsgs] = useState<Msg[]>([
     { id: '0', tipo: 'bot', texto: 'Soy tu asistente de tareas y agenda. Puedo crear tareas o reuniones y decirte qué tienes hoy o pendiente.' },
   ])
@@ -91,32 +94,47 @@ export function AsistenteTareasPanel({ onEventoCreado }: { onEventoCreado?: (fec
     }
   }
 
-  function responderLibre(texto: string) {
+  /** Devuelve true si lo resolvió localmente; false → fallback a n8n. */
+  function responderLibre(texto: string): boolean {
     const t = texto.toLowerCase()
-    if (/(crea|crear|nueva|agenda|agendar).*(reuni)/.test(t)) { iniciar('reunion'); return }
-    if (/(crea|crear|nueva|alta).*(tarea)/.test(t)) { iniciar('tarea'); return }
+    if (/(crea|crear|nueva|agenda|agendar).*(reuni)/.test(t)) { iniciar('reunion'); return true }
+    if (/(crea|crear|nueva|alta).*(tarea)/.test(t)) { iniciar('tarea'); return true }
     if (t.includes('hoy')) {
       const list = getEventosPorFecha(hoyISO())
       add('bot', list.length ? `Hoy tienes:\n${list.map((e) => `• ${e.hora ? e.hora + ' ' : ''}${e.nombre} (${e.tipo})${e.completado ? ' ✓' : ''}`).join('\n')}` : 'No tienes nada agendado para hoy.')
-      return
+      return true
     }
     if (t.includes('pendiente')) {
       const list = eventos.filter((e) => !e.completado).sort((a, b) => a.fecha.localeCompare(b.fecha))
       add('bot', list.length ? `Pendientes:\n${list.slice(0, 15).map((e) => `• ${e.fecha} ${e.hora || ''} ${e.nombre} (${e.tipo})`).join('\n')}` : 'No tienes pendientes. 🎉')
-      return
+      return true
     }
     if (t.includes('reuni')) {
       const list = eventos.filter((e) => e.tipo === 'reunion')
       add('bot', list.length ? `Reuniones:\n${list.slice(0, 15).map((e) => `• ${e.fecha} ${e.hora || ''} ${e.nombre}`).join('\n')}` : 'No tienes reuniones agendadas.')
-      return
+      return true
     }
-    add('bot', 'Puedo: crear tarea/reunión, "qué tengo hoy", "pendientes" o "reuniones".')
+    return false // → n8n
   }
 
-  function enviar(texto: string) {
-    if (!texto.trim()) return
+  async function enviar(texto: string) {
+    if (!texto.trim() || loading) return
     add('user', texto.trim()); setInput('')
-    if (flujo) avanzar(flujo, texto.trim()); else responderLibre(texto.trim())
+    if (flujo) { avanzar(flujo, texto.trim()); return }
+    if (responderLibre(texto.trim())) return
+    setLoading(true)
+    const resp = await consultarAgente('tareas', texto.trim(), sessionId, { fechaActual: hoyISO() })
+    setLoading(false)
+    if ((resp.intent === 'CREAR_REUNION' || resp.intent === 'CREAR_TAREA') && resp.data) {
+      const d = resp.data as { nombre?: string; fecha?: string; hora?: string; duracion?: number }
+      const tipo = resp.intent === 'CREAR_REUNION' ? 'reunion' : 'tarea'
+      if (!d.nombre || !d.fecha) { add('bot', resp.mensaje || 'Faltan datos (nombre o fecha).'); return }
+      agregarEvento({ tipo, nombre: d.nombre, fecha: d.fecha, hora: d.hora, duracion: d.duracion || (tipo === 'reunion' ? 60 : 30), esPlaneada: false })
+      onEventoCreado?.(new Date(d.fecha + 'T12:00:00'))
+      add('bot', resp.mensaje || `✅ ${tipo === 'reunion' ? 'Reunión' : 'Tarea'} creada: ${d.nombre} (${fmtFecha(d.fecha)}).`)
+      return
+    }
+    add('bot', resp.mensaje || 'No pude procesar la solicitud.')
   }
 
   const chips = [
@@ -139,6 +157,11 @@ export function AsistenteTareasPanel({ onEventoCreado }: { onEventoCreado?: (fec
           <div key={m.id} className={cn('p-3 rounded-xl text-sm whitespace-pre-wrap',
             m.tipo === 'bot' ? (isHey ? 'bg-white/5 text-gray-300' : 'bg-orange-50 text-gray-600') : (isHey ? 'bg-cyan-500/20 text-cyan-100 ml-6' : 'bg-orange-100 text-gray-700 ml-6'))}>{m.texto}</div>
         ))}
+        {loading && (
+          <div className={cn('p-3 rounded-xl flex gap-1', isHey ? 'bg-white/5' : 'bg-orange-50')}>
+            {[0, 150, 300].map((d) => <div key={d} className={cn('w-2 h-2 rounded-full animate-bounce', isHey ? 'bg-cyan-400' : 'bg-orange-400')} style={{ animationDelay: `${d}ms` }} />)}
+          </div>
+        )}
         <div ref={endRef} />
       </div>
 
@@ -154,7 +177,7 @@ export function AsistenteTareasPanel({ onEventoCreado }: { onEventoCreado?: (fec
         <div className="flex gap-2">
           <input value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); enviar(input) } }}
             placeholder={flujo ? 'Responde aquí…' : 'Escribe una instrucción…'} className={cn('flex-1 px-3 py-2 text-sm rounded-lg border', isHey ? 'bg-white/5 border-white/10 text-white placeholder:text-gray-500' : 'bg-orange-50 border-orange-200 text-gray-800 placeholder:text-gray-400')} />
-          <button onClick={() => enviar(input)} disabled={!input.trim()} className={cn('px-3 py-2 rounded-lg', input.trim() ? (isHey ? 'bg-cyan-500 text-white hover:bg-cyan-600' : 'bg-orange-500 text-white hover:bg-orange-600') : (isHey ? 'bg-white/10 text-gray-500' : 'bg-gray-200 text-gray-400'))}><Send className="w-4 h-4" /></button>
+          <button onClick={() => enviar(input)} disabled={!input.trim() || loading} className={cn('px-3 py-2 rounded-lg', input.trim() && !loading ? (isHey ? 'bg-cyan-500 text-white hover:bg-cyan-600' : 'bg-orange-500 text-white hover:bg-orange-600') : (isHey ? 'bg-white/10 text-gray-500' : 'bg-gray-200 text-gray-400'))}><Send className="w-4 h-4" /></button>
         </div>
       </div>
     </div>

@@ -35,6 +35,9 @@ CSV originales copiados a `src/data/ofertas-seed/` e importados con `?raw`:
 | `AsistenteOfertasPanel` | Asistente en la tabla: crea ofertas (cliente/prospecto), localiza por **RFC o número de cliente**, responde "qué ofertas tiene" / "en qué campañas está". Chips + texto libre, local sobre el store. |
 | `OfertaAgentePanel` | Asistente en el detalle: **actualiza campos** (etapa con valores permitidos, monto) vía solicitudes, y responde dudas del cliente (campañas, otras ofertas). Local sobre el store (`updateOffer`). |
 | `asistente.ts` | Lógica compartida: `resolverRfc` (RFC/número), `resumenOfertas`, `campanasDe`, `etapasPermitidas`, `parseEtapa`, `extractMonto`. Respuestas comerciales **sin montos/finanzas**. |
+
+> [!note] Fallback n8n
+> Ambos asistentes resuelven acciones **localmente**; lo que el parser no entiende se envía a **n8n** vía `src/services/asistenteN8n.ts` (`preguntarN8n`), con indicador de carga. Webhooks: ofertas→`/Register`, tareas→`/scheduler` (configurables).
 | `NuevaOfertaModal` | Asistente 2 pasos (Cliente: búsqueda + familia / Prospecto: alta + validación RFC) |
 | `ReasignarModal` | Reasignación masiva de ejecutivo |
 | `ofertasFormat` | money, distinct, conversión de fechas |
