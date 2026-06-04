@@ -134,9 +134,9 @@ export const useUIStore = create<UIState>()(
     }),
     {
       name: 'agent-crm-ui',
+      // No persistimos sidebarState: la barra siempre inicia desplegada.
       partialize: (state) => ({
         theme: state.theme,
-        sidebarState: state.sidebarState,
       }),
       onRehydrateStorage: () => (state) => {
         // Aplicar tema cuando se rehidrate el estado
