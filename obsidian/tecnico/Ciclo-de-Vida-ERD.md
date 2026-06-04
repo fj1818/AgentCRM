@@ -124,7 +124,8 @@ erDiagram
 `src/components/ciclo/`:
 - **`CicloVidaContainer`** — módulo de barra lateral. **Vista 1: tabla** (como Ofertas) de clientes/prospectos (Nombre, RFC, Tipo, Estatus, Segmento — sin finanzas) con buscador, filtro (todos/clientes/prospectos) y paginación + botón **Ver detalle**. **Vista 2: detalle** con 2 secciones separadas en nav: **Info del cliente** (`InfoClienteView`) y **Ciclo de vida** (`Ciclo360View`).
 - **`Ciclo360View`** — renderizador 360° reutilizable (props `rfc`) por **pestañas**: Resumen (KPIs + donut distribución + barras de movimientos + NBA), Productos (tarjetas con uso de línea), Saldos y mora (KPIs + buckets + tabla), Líneas por vencer, Movimientos (timbrado + variaciones), Ingresos NF (+TPV), Ofertas (enlazan al módulo Ofertas), Comunicaciones (filtro por canal + ver contenido), Aclaraciones (filtros tipo/estatus + ver detalle), Denuncias. Prospecto solo ve Resumen/Ofertas/Comunicaciones/Aclaraciones.
-- **`InfoClienteView`** — identidad + **agregar método de contacto** (teléfono/correo/dirección) + **enviar comunicación** (Correo/WhatsApp/Llamada, seleccionable). Demo: estado local.
+- **`InfoClienteView`** — identidad + **agregar método de contacto** (teléfono/correo/dirección) + **`ContactoAcciones`**.
+- **`ContactoAcciones`** — botones **WhatsApp / Correo / Llamada**; al presionar permite elegir el teléfono/correo del cliente (o capturarlo) e **inicia el proceso real** (`wa.me` / `mailto:` / `tel:`). Reutilizado en Ciclo de vida y en la sección "Info del cliente" del **detalle de oferta**.
 
 ## Navegación entre módulos
 

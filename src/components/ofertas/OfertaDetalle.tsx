@@ -13,6 +13,7 @@ import type { Offer } from '@/data/ofertas-seed'
 import { money, dmyToYmd, ymdToDmy } from './ofertasFormat'
 import { OfertaAgentePanel } from './OfertaAgentePanel'
 import { Ciclo360View } from '@/components/ciclo/Ciclo360View'
+import { ContactoAcciones } from '@/components/ciclo/ContactoAcciones'
 
 type Src = 'campaigns' | 'families' | 'products' | 'promoters' | 'origins' | 'stages' | 'substages'
 interface FieldSpec {
@@ -210,10 +211,16 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-5">
             {sec === 'cliente' && (
-              <div className="grid grid-cols-2 gap-4">
-                {([['Nombre', cliente.nombre], ['Teléfonos', cliente.telefonos], ['Correo', cliente.correo], ['Dirección', cliente.direccion], ['Número de cliente', cliente.numero], ['RFC', cliente.rfc]] as [string, string][]).map(([l, v]) => (
-                  <div key={l}><div className={labelCls}>{l}</div><div className={valueBox}>{v || '—'}</div></div>
-                ))}
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {([['Nombre', cliente.nombre], ['Teléfonos', cliente.telefonos], ['Correo', cliente.correo], ['Dirección', cliente.direccion], ['Número de cliente', cliente.numero], ['RFC', cliente.rfc]] as [string, string][]).map(([l, v]) => (
+                    <div key={l}><div className={labelCls}>{l}</div><div className={valueBox}>{v || '—'}</div></div>
+                  ))}
+                </div>
+                <div>
+                  <div className={cn('text-sm font-semibold mb-2', isHey ? 'text-white' : 'text-gray-800')}>Contactar al cliente</div>
+                  <ContactoAcciones telefonos={cliente.telefonos} correos={cliente.correo} />
+                </div>
               </div>
             )}
 

@@ -5,13 +5,13 @@
  */
 
 import { useState } from 'react'
-import { Phone, Mail, MapPin, Plus, Send, MessageCircle } from 'lucide-react'
+import { Phone, Mail, MapPin, Plus } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 import { getCiclo360 } from '@/data/ciclo-seed'
+import { ContactoAcciones } from './ContactoAcciones'
 
 type TipoContacto = 'Teléfono' | 'Correo' | 'Dirección'
-type Canal = 'Correo' | 'WhatsApp' | 'Llamada'
 
 export function InfoClienteView({ rfc }: { rfc: string }) {
   const { theme } = useUIStore()
@@ -21,10 +21,6 @@ export function InfoClienteView({ rfc }: { rfc: string }) {
   const [nuevos, setNuevos] = useState<{ tipo: TipoContacto; valor: string }[]>([])
   const [tipo, setTipo] = useState<TipoContacto>('Teléfono')
   const [valor, setValor] = useState('')
-
-  const [canal, setCanal] = useState<Canal>('Correo')
-  const [mensaje, setMensaje] = useState('')
-  const [enviado, setEnviado] = useState<string | null>(null)
 
   if (!data) return <div className={cn('p-6 text-sm', isHey ? 'text-gray-400' : 'text-gray-500')}>Sin información.</div>
   const { persona, numerosCliente } = data
@@ -56,12 +52,10 @@ export function InfoClienteView({ rfc }: { rfc: string }) {
     setNuevos((p) => [...p, { tipo, valor: valor.trim() }])
     setValor('')
   }
-  function enviar() {
-    if (!mensaje.trim()) return
-    setEnviado(`✅ ${canal} enviado al cliente: "${mensaje.trim()}"`)
-    setMensaje('')
-    setTimeout(() => setEnviado(null), 4000)
-  }
+
+  // Teléfonos y correos disponibles (base + agregados) para las acciones de contacto
+  const telefonosAll = [persona.telefonos, ...nuevos.filter((n) => n.tipo === 'Teléfono').map((n) => n.valor)].filter(Boolean).join(', ')
+  const correosAll = [persona.correo, ...nuevos.filter((n) => n.tipo === 'Correo').map((n) => n.valor)].filter(Boolean).join(', ')
 
   return (
     <div className="space-y-4">
@@ -116,30 +110,10 @@ export function InfoClienteView({ rfc }: { rfc: string }) {
         )}
       </section>
 
-      {/* Enviar comunicación */}
+      {/* Contactar al cliente */}
       <section className={cardCls}>
-        <h3 className={cn('font-semibold text-sm mb-3', isHey ? 'text-white' : 'text-gray-800')}>Enviar comunicación</h3>
-        <div className="flex gap-2 mb-2">
-          {(['Correo', 'WhatsApp', 'Llamada'] as Canal[]).map((c) => {
-            const Icon = c === 'Correo' ? Mail : c === 'WhatsApp' ? MessageCircle : Phone
-            return (
-              <button key={c} onClick={() => setCanal(c)}
-                className={cn('flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg border',
-                  canal === c ? (isHey ? 'border-cyan-500/50 bg-cyan-500/10 text-cyan-300' : 'border-orange-300 bg-orange-50 text-orange-600')
-                    : (isHey ? 'border-white/10 text-gray-300 hover:bg-white/5' : 'border-orange-200 text-gray-600 hover:bg-orange-50'))}>
-                <Icon className="w-4 h-4" />{c}
-              </button>
-            )
-          })}
-        </div>
-        <textarea value={mensaje} onChange={(e) => setMensaje(e.target.value)} rows={3}
-          placeholder={canal === 'Llamada' ? 'Notas de la llamada…' : `Mensaje por ${canal}…`} className={cn(inputCls, 'w-full')} />
-        <div className="flex items-center justify-between mt-2">
-          <span className={cn('text-sm', enviado ? 'text-emerald-500' : subtle)}>{enviado || `Canal seleccionado: ${canal}`}</span>
-          <button onClick={enviar} disabled={!mensaje.trim()} className={cn(btnPrimary, !mensaje.trim() && 'opacity-50')}>
-            <Send className="w-4 h-4 inline -mt-0.5 mr-1" />{canal === 'Llamada' ? 'Registrar' : 'Enviar'}
-          </button>
-        </div>
+        <h3 className={cn('font-semibold text-sm mb-3', isHey ? 'text-white' : 'text-gray-800')}>Contactar al cliente</h3>
+        <ContactoAcciones telefonos={telefonosAll} correos={correosAll} />
       </section>
     </div>
   )
