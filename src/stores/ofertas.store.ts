@@ -168,7 +168,7 @@ export const useOfertasStore = create<OfertasState>((set, get) => ({
     const next = offers.map((o) => {
       const oid = o.raw['ID de la oferta'] || ''
       if (!idset.has(oid)) return o
-      const raw = { ...o.raw, 'ID del promotor': idPromotor }
+      const raw: Record<string, string> = { ...o.raw, 'ID del promotor': idPromotor }
       if (nombre) raw['Ejecutivo'] = nombre
       return { ...o, raw, ejecutivo: nombre || o.ejecutivo }
     })

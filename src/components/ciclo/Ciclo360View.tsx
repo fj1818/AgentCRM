@@ -427,16 +427,19 @@ export function Ciclo360View({ rfc }: { rfc: string }) {
             <table className="w-full">
               <thead><tr>{['Producto', 'Monto', 'Etapa', 'Fecha', ''].map((h, i) => <th key={i} className={thCls}>{h}</th>)}</tr></thead>
               <tbody>
-                {ofertas.map((o) => (
-                  <tr key={o.idOferta} className={cn('border-t cursor-pointer', isHey ? 'border-white/5 hover:bg-white/5' : 'border-orange-100 hover:bg-orange-50/50')}
-                    onClick={() => abrirOferta(o.idOferta)}>
+                {ofertas.map((o, i) => {
+                  const ofertaId = o.raw['ID de la oferta'] || `offer-${i}`
+                  return (
+                  <tr key={ofertaId} className={cn('border-t cursor-pointer', isHey ? 'border-white/5 hover:bg-white/5' : 'border-orange-100 hover:bg-orange-50/50')}
+                    onClick={() => abrirOferta(ofertaId)}>
                     <td className={tdCls}>{o.producto} <span className={subtle}>({o.familia})</span></td>
                     <td className={tdCls}>{money(o.monto)}</td>
                     <td className="px-2 py-2"><Pill c={o.tipoOferta === 'Cliente' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}>{o.etapa}</Pill></td>
                     <td className={tdCls}>{o.fechaCierre}</td>
                     <td className="px-2 py-2 text-right"><ExternalLink className={cn('w-4 h-4 inline', isHey ? 'text-cyan-400' : 'text-orange-500')} /></td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           )}

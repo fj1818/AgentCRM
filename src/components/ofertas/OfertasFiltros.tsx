@@ -40,7 +40,6 @@ export function OfertasFiltros({ offers, onApply }: Props) {
   })
 
   const selVals = (k: FKey) => Object.keys(selected[k])
-  const isActive = (k: FKey) => selVals(k).length > 0
   const upstreamKeys = (k: FKey) => { const i = order.indexOf(k); return i === -1 ? order.slice() : order.slice(0, i) }
   const rowsBy = (keys: FKey[]) => offers.filter((o) => keys.every((k) => selected[k][o[k]]))
   const optionsFor = (k: FKey) => distinct(rowsBy(upstreamKeys(k)).map((o) => o[k]))
