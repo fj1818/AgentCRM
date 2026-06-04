@@ -18,6 +18,7 @@ CRM conversacional bancario. Chat → SQL local (sql.js) → presentación. Ver 
 - [[tecnico/Componentes]] — Componentes React por dominio
 - [[tecnico/Ofertas-Modulo]] — Módulo Ofertas (réplica DiseñoNuevoCRM)
 - [[tecnico/Ciclo-de-Vida-ERD]] — Modelo de datos 360° (ERD + tablas)
+- [[tecnico/Procesos-Contratacion]] — Módulo de procesos (flash cards)
 - [[tecnico/Tipos]] — Interfaces TypeScript
 - [[tecnico/Configuracion]] — app/api/tables config
 

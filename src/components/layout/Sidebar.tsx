@@ -11,6 +11,7 @@ import {
   RefreshCw,
   CheckSquare,
   Calculator,
+  FileSignature,
 } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
@@ -21,6 +22,7 @@ const navItems = [
   { icon: CheckSquare, label: 'Tareas', path: 'tareas' },
   { icon: Briefcase, label: 'Ofertas', path: 'ofertas' },
   { icon: RefreshCw, label: 'Ciclo de vida', path: 'ciclo' },
+  { icon: FileSignature, label: 'Procesos de contratación', path: 'procesos' },
   { icon: Calculator, label: 'Cotizador', path: 'cotizador' },
 ]
 

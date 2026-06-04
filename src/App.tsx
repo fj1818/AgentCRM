@@ -6,6 +6,7 @@ import { AppLayout } from '@/components/layout'
 import { ChatContainer } from '@/components/chat'
 import { OfertasContainer } from '@/components/ofertas'
 import { CicloVidaContainer } from '@/components/ciclo'
+import { ProcesosContainer } from '@/components/procesos'
 import { CotizadorContainer } from '@/components/cotizador'
 import { TareasContainer } from '@/components/tareas'
 import { useNavStore } from '@/stores/nav.store'
@@ -19,6 +20,7 @@ function App() {
       {currentView === 'chat' && <ChatContainer />}
       {currentView === 'ofertas' && <OfertasContainer />}
       {currentView === 'ciclo' && <CicloVidaContainer />}
+      {currentView === 'procesos' && <ProcesosContainer />}
       {currentView === 'cotizador' && <CotizadorContainer />}
       {currentView === 'tareas' && <TareasContainer />}
     </AppLayout>

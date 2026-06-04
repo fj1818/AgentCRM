@@ -64,10 +64,14 @@ const DET_TITLES: Record<DetKey, string> = {
   cliente: 'Información del cliente', ciclo: 'Ciclo de vida', oferta: 'Información de la oferta', notas: 'Notas',
 }
 
-export function OfertaDetalle({ offer, onClose }: { offer: Offer; onClose: () => void }) {
+export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onClose: () => void }) {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
-  const { catalogs, clientsByRfc, comments, users, promoterNames, updateOffer, addComment } = useOfertasStore()
+  const { offers, catalogs, clientsByRfc, comments, users, promoterNames, updateOffer, addComment } = useOfertasStore()
+
+  // Oferta VIVA del store: refleja cambios del agente/edición al instante.
+  const idActual = offerProp.raw['ID de la oferta'] || ''
+  const offer = offers.find((o) => (o.raw['ID de la oferta'] || '') === idActual) || offerProp
 
   const [sec, setSec] = useState<DetKey>('cliente')
   const [form, setForm] = useState<Record<string, string>>({})
