@@ -134,7 +134,7 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
     else setSaveMsg({ text: res.error || 'Error al guardar.', ok: false })
   }
 
-  const cliente = clientsByRfc[raw['RFC'] || ''] || { nombre: '', telefonos: '', correo: '', direccion: '', numero: '', rfc: raw['RFC'] || '' }
+  const cliente = clientsByRfc[raw['RFC'] || ''] || { nombre: '', telefonos: '', correo: '', direccion: '', numero: '', rfc: raw['RFC'] || '', pais: '', giro: '' }
   const notas = useMemo(() => {
     const oid = raw['ID de la oferta'] || ''
     const parse = (s: string) => { const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(s || ''); return m ? new Date(+m[3]!, +m[2]! - 1, +m[1]!).getTime() : 0 }
