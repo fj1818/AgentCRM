@@ -242,25 +242,18 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
           <div className="flex-1 overflow-y-auto p-5">
             {sec === 'cliente' && (
               <div className="space-y-4">
-                {/* En Hey Tech se omiten los datos sensibles del cliente y se muestran País/Giro. */}
                 <div className="grid grid-cols-2 gap-4">
                   {(heyLayout
-                    ? [['Nombre', cliente.nombre], ['RFC', cliente.rfc], ['País', cliente.pais || ''], ['Giro', cliente.giro || '']] as [string, string][]
+                    ? [['Nombre', cliente.nombre], ['RFC', cliente.rfc], ['País', cliente.pais || ''], ['Giro', cliente.giro || ''], ['Teléfonos', cliente.telefonos], ['Correo', cliente.correo], ['Dirección', cliente.direccion], ['Número de cliente', cliente.numero]] as [string, string][]
                     : [['Nombre', cliente.nombre], ['Teléfonos', cliente.telefonos], ['Correo', cliente.correo], ['Dirección', cliente.direccion], ['Número de cliente', cliente.numero], ['RFC', cliente.rfc]] as [string, string][]
                   ).map(([l, v]) => (
                     <div key={l}><div className={labelCls}>{l}</div><div className={valueBox}>{v || '—'}</div></div>
                   ))}
                 </div>
-                {heyLayout ? (
-                  <div className={cn('text-xs italic', isHey ? 'text-gray-500' : 'text-gray-400')}>
-                    Los datos de contacto sensibles están restringidos para el perfil Hey Tech.
-                  </div>
-                ) : (
-                  <div>
-                    <div className={cn('text-sm font-semibold mb-2', 'text-gray-800')}>Contactar al cliente</div>
-                    <ContactoAcciones telefonos={cliente.telefonos} correos={cliente.correo} />
-                  </div>
-                )}
+                <div>
+                  <div className={cn('text-sm font-semibold mb-2', isHey ? 'text-white' : 'text-gray-800')}>Contactar al {esProspecto ? 'prospecto' : 'cliente'}</div>
+                  <ContactoAcciones telefonos={cliente.telefonos} correos={cliente.correo} />
+                </div>
               </div>
             )}
 
