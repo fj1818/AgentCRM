@@ -9,6 +9,7 @@ import {
   buildOffers, buildClients, buildUsers, buildComments, buildCatalogs,
   type Offer, type Client, type User, type Comment, type Catalogs,
 } from '@/data/ofertas-seed'
+import { heyTechOffer, heyTechClient } from '@/data/ofertas-seed/heytech'
 
 const CLOSE_RESULT: Record<string, string> = { Timbrado: 'Ganado', Descartado: 'Perdido' }
 
@@ -47,13 +48,14 @@ function buildPromoterNames(offers: Offer[], users: User[]): Record<string, stri
   return m
 }
 
-const seedOffers = buildOffers()
+const seedOffers = [heyTechOffer, ...buildOffers()]
 const seedUsers = buildUsers()
+const seedClients = { ...buildClients(), [heyTechClient.rfc]: heyTechClient }
 
 export const useOfertasStore = create<OfertasState>((set, get) => ({
   offers: seedOffers,
   comments: buildComments(),
-  clientsByRfc: buildClients(),
+  clientsByRfc: seedClients,
   users: seedUsers,
   catalogs: buildCatalogs(),
   promoterNames: buildPromoterNames(seedOffers, seedUsers),

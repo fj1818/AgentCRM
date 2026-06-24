@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= include('Styles') ?>
+  </head>
+  <body>
+    <div class="app" id="app">
+      <!-- Sidebar -->
+      <aside class="sidebar">
+        <div class="brand">CRM</div>
+        <nav id="nav">
+          <button class="nav-btn" data-view="chat"><span>💬</span> Chat</button>
+          <button class="nav-btn" data-view="tareas"><span>✓</span> Tareas</button>
+          <button class="nav-btn active" data-view="ofertas"><span>💼</span> Ofertas</button>
+          <button class="nav-btn" data-view="ciclo"><span>🔄</span> Ciclo de vida</button>
+          <button class="nav-btn" data-view="procesos"><span>📝</span> Procesos de contratación</button>
+          <button class="nav-btn" data-view="cotizador"><span>🧮</span> Cotizador</button>
+        </nav>
+      </aside>
+
+      <!-- Contenido -->
+      <main class="content" id="content">
+        <div class="loading">Cargando…</div>
+      </main>
+    </div>
+
+    <!-- Overlay de detalle -->
+    <div class="overlay" id="overlay">
+      <div class="overlay-card" id="overlayCard"></div>
+    </div>
+
+    <!-- Modal genérico (reasignar, wizards) -->
+    <div class="overlay" id="modal">
+      <div class="modal-card" id="modalCard"></div>
+    </div>
+
+    <?!= include('App') ?>
+  </body>
+</html>

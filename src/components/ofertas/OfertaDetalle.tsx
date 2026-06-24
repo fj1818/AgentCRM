@@ -5,13 +5,15 @@
  */
 
 import { useMemo, useState, type ReactNode } from 'react'
-import { X, User, RefreshCw, Package, StickyNote } from 'lucide-react'
+import { X, User, RefreshCw, Package, StickyNote, CheckSquare } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { useOfertasStore } from '@/stores/ofertas.store'
 import { cn } from '@/utils'
 import type { Offer } from '@/data/ofertas-seed'
+import { heyCatalogs } from '@/data/ofertas-seed/heytech'
 import { money, dmyToYmd, ymdToDmy } from './ofertasFormat'
 import { OfertaAgentePanel } from './OfertaAgentePanel'
+import { TareasOfertaPanel } from './TareasOfertaPanel'
 import { Ciclo360View } from '@/components/ciclo/Ciclo360View'
 import { ContactoAcciones } from '@/components/ciclo/ContactoAcciones'
 
@@ -19,8 +21,12 @@ type Src = 'campaigns' | 'families' | 'products' | 'promoters' | 'origins' | 'st
 interface FieldSpec {
   label: string; tipo: string; col?: string; editable?: boolean
   edit?: 'date' | 'num' | 'money' | 'text' | 'textarea' | 'html' | 'select'; src?: Src; hide?: boolean
+  /** Campo de naturaleza bancaria: oculto para el perfil Hey Tech. */
+  bank?: boolean
+  /** Etiqueta alterna con la nomenclatura de Hey Tech. */
+  heyLabel?: string
 }
-interface SectionSpec { title: string; hidden?: boolean; fields: FieldSpec[] }
+interface SectionSpec { title: string; heyTitle?: string; hidden?: boolean; fields: FieldSpec[] }
 
 const OFFER_ALIAS: Record<string, string> = { 'Tipo de Oferta': 'Tipo de oferta' }
 
@@ -31,44 +37,47 @@ const OFFER_SECTIONS: SectionSpec[] = [
     { label: 'Fecha de descarte', tipo: 'FECHA' },
     { label: 'Fecha de vencimiento', tipo: 'FECHA', editable: true, edit: 'date', col: 'Fecha de vencimiento' },
     { label: 'Campaña', tipo: 'PICKLIST', editable: true, edit: 'select', src: 'campaigns', col: 'ID de la campaña' },
-    { label: 'Familia de producto', tipo: 'PICKLIST', editable: true, edit: 'select', src: 'families', col: 'ID de la familia de producto' },
-    { label: 'Producto', tipo: 'PICKLIST', editable: true, edit: 'select', src: 'products', col: 'Id del producto' },
+    { label: 'Familia de producto', heyLabel: 'Producto', tipo: 'PICKLIST', editable: true, edit: 'select', src: 'families', col: 'ID de la familia de producto' },
+    { label: 'Producto', heyLabel: 'Plan', tipo: 'PICKLIST', editable: true, edit: 'select', src: 'products', col: 'Id del producto' },
     { label: 'Folio', tipo: 'TEXTO_255', editable: true, edit: 'text', col: 'Folio' },
-    { label: 'Número de línea', tipo: 'TEXTO_255', editable: true, edit: 'text', col: 'Número de línea' },
+    { label: 'Número de línea', tipo: 'TEXTO_255', editable: true, edit: 'text', col: 'Número de línea', bank: true },
   ]},
   { title: 'Gestión', fields: [
     { label: 'Etapa', tipo: 'PICKLIST', editable: true, edit: 'select', src: 'stages', col: 'Etapa' },
-    { label: 'SubEtapa', tipo: 'PICKLIST', editable: true, edit: 'select', src: 'substages', col: 'SubEtapa' },
+    { label: 'SubEtapa', heyLabel: 'Estatus', tipo: 'PICKLIST', editable: true, edit: 'select', src: 'substages', col: 'SubEtapa' },
     { label: 'Tipo de Oferta', tipo: 'PICKLIST' },
-    { label: 'Origen de la oferta', tipo: 'PICKLIST', editable: true, edit: 'select', src: 'origins', col: 'Origen de la oferta' },
-    { label: 'Promotor o ejecutivo', tipo: 'TEXTO_255', editable: true, edit: 'select', src: 'promoters', col: 'ID del promotor' },
+    { label: 'Origen de la oferta', heyLabel: 'Fuente', tipo: 'PICKLIST', editable: true, edit: 'select', src: 'origins', col: 'Origen de la oferta' },
+    { label: 'Promotor o ejecutivo', heyLabel: 'Responsable', tipo: 'TEXTO_255', editable: true, edit: 'select', src: 'promoters', col: 'ID del promotor' },
     { label: 'Promotores de apoyo', tipo: 'TEXTO_255', hide: true },
     { label: 'Motivo de descarte', tipo: 'TEXTO_255', editable: true, edit: 'textarea', col: 'Motivo de descarte' },
   ]},
   { title: 'Condiciones de la oferta', fields: [
     { label: 'Monto de la oferta', tipo: 'MONEDA', editable: true, edit: 'money', col: 'Monto de la oferta' },
-    { label: 'Monto fijo de la oferta', tipo: 'MONEDA', editable: true, edit: 'money', col: 'Monto fijo de la oferta' },
-    { label: 'Monto revolvente de la oferta', tipo: 'MONEDA', editable: true, edit: 'money', col: 'Monto revolvente de la oferta' },
-    { label: 'Tasa inicial de la oferta', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'Tasa inicial de la oferta' },
-    { label: 'CAT inicial de la oferta', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'CAT inicial de la oferta' },
+    { label: 'Monto fijo de la oferta', tipo: 'MONEDA', editable: true, edit: 'money', col: 'Monto fijo de la oferta', bank: true },
+    { label: 'Monto revolvente de la oferta', tipo: 'MONEDA', editable: true, edit: 'money', col: 'Monto revolvente de la oferta', bank: true },
+    { label: 'Tasa inicial de la oferta', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'Tasa inicial de la oferta', bank: true },
+    { label: 'CAT inicial de la oferta', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'CAT inicial de la oferta', bank: true },
     { label: 'Plazo de la oferta', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'Plazo de la oferta' },
-    { label: 'Periodo', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'Periodo' },
+    { label: 'Periodo', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'Periodo', bank: true },
   ]},
   { title: 'Condiciones de contratación', hidden: true, fields: [] },
-  { title: 'Descripción de la oferta', fields: [
-    { label: 'Descripción de la oferta', tipo: 'TEXTO_HTML', col: 'Descripción de la oferta' },
+  { title: 'Descripción de la oferta', heyTitle: 'Descripción de la oportunidad', fields: [
+    { label: 'Descripción de la oferta', heyLabel: 'Descripción de la oportunidad', tipo: 'TEXTO_HTML', col: 'Descripción de la oferta' },
   ]},
 ]
 
-type DetKey = 'cliente' | 'ciclo' | 'oferta' | 'notas'
+type DetKey = 'cliente' | 'ciclo' | 'oferta' | 'tareas' | 'notas'
 const DET_TITLES: Record<DetKey, string> = {
-  cliente: 'Información del cliente', ciclo: 'Ciclo de vida', oferta: 'Información de la oferta', notas: 'Notas',
+  cliente: 'Información del cliente', ciclo: 'Ciclo de vida', oferta: 'Información de la oferta', tareas: 'Tareas', notas: 'Notas',
 }
 
 export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onClose: () => void }) {
   const { theme } = useUIStore()
   const isHey = theme === 'hey'
-  const { offers, catalogs, clientsByRfc, comments, users, promoterNames, updateOffer, addComment } = useOfertasStore()
+  const store = useOfertasStore()
+  const { offers, clientsByRfc, comments, users, promoterNames, updateOffer, addComment } = store
+  // En perfil Hey Tech se usan los catálogos propios (Producto/Plan/Etapa/Estatus/Fuente).
+  const catalogs = isHey ? heyCatalogs : store.catalogs
 
   // Oferta VIVA del store: refleja cambios del agente/edición al instante.
   const idActual = offerProp.raw['ID de la oferta'] || ''
@@ -134,8 +143,9 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
 
   const navItems: { key: DetKey; icon: typeof User; label: string }[] = [
     { key: 'cliente', icon: User, label: 'Info del cliente' },
-    { key: 'ciclo', icon: RefreshCw, label: 'Ciclo de vida' },
-    { key: 'oferta', icon: Package, label: 'Info de la oferta' },
+    ...(isHey ? [] : [{ key: 'ciclo' as DetKey, icon: RefreshCw, label: 'Ciclo de vida' }]),
+    { key: 'oferta', icon: Package, label: isHey ? 'Info de la oportunidad' : 'Info de la oferta' },
+    { key: 'tareas', icon: CheckSquare, label: 'Tareas' },
     { key: 'notas', icon: StickyNote, label: 'Notas' },
   ]
 
@@ -173,7 +183,7 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
     }
     return (
       <div key={f.label} className={wide ? 'col-span-2' : ''}>
-        <div className={labelCls}>{f.label}</div>
+        <div className={labelCls}>{isHey && f.heyLabel ? f.heyLabel : f.label}</div>
         {inner}
       </div>
     )
@@ -212,28 +222,47 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
           <div className="flex-1 overflow-y-auto p-5">
             {sec === 'cliente' && (
               <div className="space-y-4">
+                {/* En Hey Tech se omiten los datos sensibles del cliente y se muestran País/Giro. */}
                 <div className="grid grid-cols-2 gap-4">
-                  {([['Nombre', cliente.nombre], ['Teléfonos', cliente.telefonos], ['Correo', cliente.correo], ['Dirección', cliente.direccion], ['Número de cliente', cliente.numero], ['RFC', cliente.rfc]] as [string, string][]).map(([l, v]) => (
+                  {(isHey
+                    ? [['Nombre', cliente.nombre], ['Número de cliente', cliente.numero], ['País', cliente.pais || ''], ['Giro', cliente.giro || '']] as [string, string][]
+                    : [['Nombre', cliente.nombre], ['Teléfonos', cliente.telefonos], ['Correo', cliente.correo], ['Dirección', cliente.direccion], ['Número de cliente', cliente.numero], ['RFC', cliente.rfc]] as [string, string][]
+                  ).map(([l, v]) => (
                     <div key={l}><div className={labelCls}>{l}</div><div className={valueBox}>{v || '—'}</div></div>
                   ))}
                 </div>
-                <div>
-                  <div className={cn('text-sm font-semibold mb-2', isHey ? 'text-white' : 'text-gray-800')}>Contactar al cliente</div>
-                  <ContactoAcciones telefonos={cliente.telefonos} correos={cliente.correo} />
-                </div>
+                {isHey ? (
+                  <div className={cn('text-xs italic', isHey ? 'text-gray-500' : 'text-gray-400')}>
+                    Los datos de contacto sensibles están restringidos para el perfil Hey Tech.
+                  </div>
+                ) : (
+                  <div>
+                    <div className={cn('text-sm font-semibold mb-2', 'text-gray-800')}>Contactar al cliente</div>
+                    <ContactoAcciones telefonos={cliente.telefonos} correos={cliente.correo} />
+                  </div>
+                )}
               </div>
             )}
 
             {sec === 'ciclo' && <Ciclo360View rfc={raw['RFC'] || ''} />}
 
+            {sec === 'tareas' && (
+              <TareasOfertaPanel
+                idOferta={raw['ID de la oferta'] || ''}
+                rfc={raw['RFC'] || ''}
+                responsableDefault={offer.ejecutivo || ''}
+                isHey={isHey}
+              />
+            )}
+
             {sec === 'oferta' && (
               <div className="space-y-6">
                 {OFFER_SECTIONS.filter((s) => !s.hidden).map((s) => {
-                  const fs = s.fields.filter((f) => !f.hide)
+                  const fs = s.fields.filter((f) => !f.hide && !(isHey && f.bank))
                   if (!fs.length) return null
                   return (
                     <div key={s.title}>
-                      <h3 className={cn('text-xs font-semibold uppercase tracking-wider mb-3', isHey ? 'text-cyan-400' : 'text-orange-500')}>{s.title}</h3>
+                      <h3 className={cn('text-xs font-semibold uppercase tracking-wider mb-3', isHey ? 'text-cyan-400' : 'text-orange-500')}>{isHey && s.heyTitle ? s.heyTitle : s.title}</h3>
                       <div className="grid grid-cols-2 gap-4">{fs.map(fieldCell)}</div>
                     </div>
                   )

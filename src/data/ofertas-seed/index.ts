@@ -65,6 +65,7 @@ export interface Offer {
 export interface Client {
   numero: string; nombre: string; rfc: string
   telefonos: string; correo: string; direccion: string; tipoPersona: string
+  pais?: string; giro?: string
 }
 export interface User { idUsuario: string; numero: string; idPromotor: string; nombre: string }
 export interface Comment { id: string; rfc: string; idOferta: string; idUsuario: string; comentario: string; fecha: string }

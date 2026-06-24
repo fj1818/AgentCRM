@@ -12,6 +12,8 @@ import {
   CheckSquare,
   Calculator,
   FileSignature,
+  Building2,
+  Cpu,
 } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
@@ -32,7 +34,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ currentView, onNavigate }: SidebarProps) {
-  const { sidebarState, toggleSidebar, theme } = useUIStore()
+  const { sidebarState, toggleSidebar, theme, toggleTheme } = useUIStore()
   const isCollapsed = sidebarState === 'collapsed'
   const isHey = theme === 'hey'
 
@@ -109,6 +111,26 @@ export function Sidebar({ currentView, onNavigate }: SidebarProps) {
           </button>
         ))}
       </nav>
+
+      {/* Selector de equipo / tema */}
+      <div className={cn('px-3 py-4 border-t', isHey ? 'border-white/10' : 'border-orange-100')}>
+        <button
+          onClick={toggleTheme}
+          className={cn(
+            'flex items-center gap-3 px-4 py-2.5 rounded-xl w-full text-left transition-all duration-200',
+            isHey
+              ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/10 text-cyan-300 border border-cyan-500/30 hover:from-cyan-500/30'
+              : 'bg-gradient-to-r from-orange-100 to-orange-50 text-orange-600 border border-orange-200 hover:from-orange-200',
+            isCollapsed && 'justify-center px-2'
+          )}
+          title={isCollapsed ? (isHey ? 'Hey Tech' : 'Banregio') : undefined}
+        >
+          {isHey ? <Cpu className="w-5 h-5 flex-shrink-0" /> : <Building2 className="w-5 h-5 flex-shrink-0" />}
+          {!isCollapsed && (
+            <span className="text-sm font-medium leading-tight">{isHey ? 'Hey Tech' : 'Banregio'}</span>
+          )}
+        </button>
+      </div>
 
     </aside>
   )
