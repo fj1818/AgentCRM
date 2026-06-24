@@ -1,7 +1,7 @@
 ---
 tags: [tecnico, heytech, ofertas, tareas]
 created: 2026-06-24
-updated: 2026-06-24
+updated: 2026-06-24T18:00
 ---
 
 # Hey Tech — Adaptación del CRM
@@ -23,7 +23,7 @@ Se activa con el **tema `hey`** (selector "Banregio ↔ Hey Tech" en el pie del 
 | `components/ofertas/TareasOfertaPanel.tsx` | **Nuevo.** Sección de Tareas dentro del detalle (listado, alta, detalle/edición, cierre). |
 | `components/tareas/TareasOfertaLista.tsx` | **Nuevo.** Listado global: "Mis tareas" y "Tareas que asigné" (filtros + salto a la oferta). |
 | `components/tareas/TareasContainer.tsx` | Acordeones "Mis tareas" y "Tareas que asigné" sobre la agenda. |
-| `components/ofertas/OfertaDetalle.tsx` | Pestaña **Tareas**; campos `heyOnly` (ID, RFC, Prioridad, Monto/Plazo de contratación, Última modificación); oculta campos bancarios y enmascara datos sensibles del cliente; nomenclatura y catálogos propios. |
+| `components/ofertas/OfertaDetalle.tsx` | Pestaña **Tareas**; campos `heyOnly`; oculta campos bancarios; muestra todos los datos del cliente/prospecto; título "Info del prospecto" cuando `Tipo de Oferta` es Prospecto; nomenclatura y catálogos propios. |
 | `components/layout/Sidebar.tsx` | Selector de equipo/tema (Banregio ↔ Hey Tech). |
 
 ## Layout de la oferta en modo Hey Tech
@@ -31,7 +31,8 @@ Se activa con el **tema `hey`** (selector "Banregio ↔ Hey Tech" en el pie del 
 - **Catálogos propios** (`heyCatalogs`): Producto (familia), Plan, Etapa, Estatus (subetapa) y Fuente (origen).
 - **Nomenclatura**: Familia de producto→**Producto**, Producto→**Plan**, SubEtapa→**Estatus**, Origen→**Fuente**, Oferta→**Oportunidad**.
 - **Campos ocultos** (`bank: true`): Tasa/CAT inicial y de contratación, Montos fijo/revolvente, Monto del timbrado, Número de afiliación, Número de línea, Periodo.
-- **Información del cliente/prospecto**: solo Nombre, **RFC**, **País** y **Giro**. Se ocultan Teléfonos, Correo, Dirección, Número de cliente y las acciones de contacto (datos sensibles restringidos).
+- **Información del cliente/prospecto**: Nombre, RFC, País, Giro, Teléfonos, Correo, Dirección, Número de cliente y botones de contacto. Todos los campos visibles (sin restricciones).
+- **Título dinámico**: "Info del prospecto" cuando `Tipo de Oferta` contiene "Prospecto"; "Info del cliente" en cualquier otro caso.
 - **Condiciones de la oferta** (Hey): solo **Monto de la oferta** (el resto se oculta como `bank`).
 - **Estilos siguen el tema** (`isHey`), el **layout sigue la oferta** (`heyLayout = isHey || isHeyTechOffer`).
 - Se omite la pestaña **Ciclo de vida** (fuera de alcance del MVP Hey Tech).
