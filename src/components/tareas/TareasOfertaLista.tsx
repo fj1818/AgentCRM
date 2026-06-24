@@ -41,7 +41,7 @@ export function TareasOfertaLista({ modo }: { modo: 'mias' | 'asignadas' }) {
     [base, fEstatus, fTipo],
   )
 
-  const selectCls = cn('px-3 py-1.5 text-sm rounded-lg border', isHey ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-orange-200 text-gray-800')
+  const selectCls = cn('px-3 py-1.5 text-sm rounded-lg border [&>option]:text-gray-900', isHey ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-orange-200 text-gray-800')
   const thCls = cn('px-3 py-2 text-left text-xs font-medium uppercase tracking-wider', isHey ? 'text-gray-400' : 'text-gray-500')
   const tdCls = cn('px-3 py-2 text-sm', isHey ? 'text-gray-300' : 'text-gray-700')
 

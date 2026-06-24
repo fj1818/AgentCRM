@@ -90,10 +90,11 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
   const idActual = offerProp.raw['ID de la oferta'] || ''
   const offer = offers.find((o) => (o.raw['ID de la oferta'] || '') === idActual) || offerProp
 
-  // El layout Hey Tech depende de la oferta (campos/catálogos), no solo del tema.
-  const isHey = theme === 'hey' || isHeyTechOffer(offer.raw)
+  // Estilos: siguen el TEMA (colores). Layout: sigue la OFERTA (campos/catálogos).
+  const isHey = theme === 'hey'
+  const heyLayout = isHey || isHeyTechOffer(offer.raw)
   // En perfil Hey Tech se usan los catálogos propios (Producto/Plan/Etapa/Estatus/Fuente).
-  const catalogs = isHey ? heyCatalogs : store.catalogs
+  const catalogs = heyLayout ? heyCatalogs : store.catalogs
 
   const [sec, setSec] = useState<DetKey>('cliente')
   const [form, setForm] = useState<Record<string, string>>({})
@@ -155,15 +156,15 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
 
   const navItems: { key: DetKey; icon: typeof User; label: string }[] = [
     { key: 'cliente', icon: User, label: 'Info del cliente' },
-    ...(isHey ? [] : [{ key: 'ciclo' as DetKey, icon: RefreshCw, label: 'Ciclo de vida' }]),
-    { key: 'oferta', icon: Package, label: isHey ? 'Info de la oportunidad' : 'Info de la oferta' },
+    ...(heyLayout ? [] : [{ key: 'ciclo' as DetKey, icon: RefreshCw, label: 'Ciclo de vida' }]),
+    { key: 'oferta', icon: Package, label: heyLayout ? 'Info de la oportunidad' : 'Info de la oferta' },
     { key: 'tareas', icon: CheckSquare, label: 'Tareas' },
     { key: 'notas', icon: StickyNote, label: 'Notas' },
   ]
 
   const labelCls = cn('text-[11px] uppercase tracking-wide mb-1', isHey ? 'text-gray-400' : 'text-gray-500')
   const valueBox = cn('px-3 py-2 text-sm rounded-lg border min-h-[38px]', isHey ? 'bg-white/5 border-white/10 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-700')
-  const inputCls = cn('w-full px-3 py-2 text-sm rounded-lg border', isHey ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-orange-200 text-gray-800')
+  const inputCls = cn('w-full px-3 py-2 text-sm rounded-lg border [&>option]:text-gray-900', isHey ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-orange-200 text-gray-800')
 
   function fieldCell(f: FieldSpec) {
     const col = f.col || OFFER_ALIAS[f.label] || f.label
@@ -202,7 +203,7 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
     }
     return (
       <div key={f.label} className={wide ? 'col-span-2' : ''}>
-        <div className={labelCls}>{isHey && f.heyLabel ? f.heyLabel : f.label}</div>
+        <div className={labelCls}>{heyLayout && f.heyLabel ? f.heyLabel : f.label}</div>
         {inner}
       </div>
     )
@@ -243,14 +244,14 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
               <div className="space-y-4">
                 {/* En Hey Tech se omiten los datos sensibles del cliente y se muestran País/Giro. */}
                 <div className="grid grid-cols-2 gap-4">
-                  {(isHey
+                  {(heyLayout
                     ? [['Nombre', cliente.nombre], ['Número de cliente', cliente.numero], ['País', cliente.pais || ''], ['Giro', cliente.giro || '']] as [string, string][]
                     : [['Nombre', cliente.nombre], ['Teléfonos', cliente.telefonos], ['Correo', cliente.correo], ['Dirección', cliente.direccion], ['Número de cliente', cliente.numero], ['RFC', cliente.rfc]] as [string, string][]
                   ).map(([l, v]) => (
                     <div key={l}><div className={labelCls}>{l}</div><div className={valueBox}>{v || '—'}</div></div>
                   ))}
                 </div>
-                {isHey ? (
+                {heyLayout ? (
                   <div className={cn('text-xs italic', isHey ? 'text-gray-500' : 'text-gray-400')}>
                     Los datos de contacto sensibles están restringidos para el perfil Hey Tech.
                   </div>
@@ -277,11 +278,11 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
             {sec === 'oferta' && (
               <div className="space-y-6">
                 {OFFER_SECTIONS.filter((s) => !s.hidden).map((s) => {
-                  const fs = s.fields.filter((f) => !f.hide && !(isHey && f.bank) && !(!isHey && f.heyOnly))
+                  const fs = s.fields.filter((f) => !f.hide && !(heyLayout && f.bank) && !(!heyLayout && f.heyOnly))
                   if (!fs.length) return null
                   return (
                     <div key={s.title}>
-                      <h3 className={cn('text-xs font-semibold uppercase tracking-wider mb-3', isHey ? 'text-cyan-400' : 'text-orange-500')}>{isHey && s.heyTitle ? s.heyTitle : s.title}</h3>
+                      <h3 className={cn('text-xs font-semibold uppercase tracking-wider mb-3', isHey ? 'text-cyan-400' : 'text-orange-500')}>{heyLayout && s.heyTitle ? s.heyTitle : s.title}</h3>
                       <div className="grid grid-cols-2 gap-4">{fs.map(fieldCell)}</div>
                     </div>
                   )

@@ -133,7 +133,7 @@ function NuevaTareaForm({ isHey, responsableDefault, onCancel, onSave }: {
   const [prioridad, setPrioridad] = useState<TareaPrioridad>('')
 
   const labelCls = cn('text-[11px] uppercase tracking-wide mb-1', isHey ? 'text-gray-400' : 'text-gray-500')
-  const inputCls = cn('w-full px-3 py-2 text-sm rounded-lg border', isHey ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-orange-200 text-gray-800')
+  const inputCls = cn('w-full px-3 py-2 text-sm rounded-lg border [&>option]:text-gray-900', isHey ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-orange-200 text-gray-800')
 
   return (
     <div className={cn('rounded-xl border p-4 space-y-3', isHey ? 'border-cyan-500/30 bg-white/5' : 'border-orange-300 bg-orange-50/50')}>
@@ -177,7 +177,7 @@ function EditarTareaForm({ tarea, isHey, onSave }: {
   const cierra = ESTATUS_CERRADOS.includes(estatus)
 
   const labelCls = cn('text-[11px] uppercase tracking-wide mb-1', isHey ? 'text-gray-400' : 'text-gray-500')
-  const inputCls = cn('w-full px-3 py-2 text-sm rounded-lg border', isHey ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-orange-200 text-gray-800')
+  const inputCls = cn('w-full px-3 py-2 text-sm rounded-lg border [&>option]:text-gray-900', isHey ? 'bg-white/5 border-white/10 text-white' : 'bg-white border-orange-200 text-gray-800')
 
   return (
     <div className="space-y-3">
