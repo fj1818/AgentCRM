@@ -157,7 +157,7 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
   const navItems: { key: DetKey; icon: typeof User; label: string }[] = [
     { key: 'cliente', icon: User, label: clienteLabel },
     ...(heyLayout ? [] : [{ key: 'ciclo' as DetKey, icon: RefreshCw, label: 'Ciclo de vida' }]),
-    { key: 'oferta', icon: Package, label: heyLayout ? 'Info de la oportunidad' : 'Info de la oferta' },
+    { key: 'oferta', icon: Package, label: 'Info de la oferta' },
     { key: 'tareas', icon: CheckSquare, label: 'Tareas' },
     { key: 'notas', icon: StickyNote, label: 'Notas' },
   ]
