@@ -23,6 +23,10 @@ interface FieldSpec {
   edit?: 'date' | 'num' | 'money' | 'text' | 'textarea' | 'html' | 'select'; src?: Src; hide?: boolean
   /** Campo de naturaleza bancaria: oculto para el perfil Hey Tech. */
   bank?: boolean
+  /** Campo que solo aplica al perfil Hey Tech. */
+  heyOnly?: boolean
+  /** Opciones estáticas para selects sin catálogo. */
+  options?: string[]
   /** Etiqueta alterna con la nomenclatura de Hey Tech. */
   heyLabel?: string
 }
@@ -32,7 +36,9 @@ const OFFER_ALIAS: Record<string, string> = { 'Tipo de Oferta': 'Tipo de oferta'
 
 const OFFER_SECTIONS: SectionSpec[] = [
   { title: 'Información administrativa', fields: [
+    { label: 'ID de la oportunidad', tipo: 'TEXTO_255', col: 'ID de la oferta', heyOnly: true },
     { label: 'Fecha de creación', tipo: 'FECHA' },
+    { label: 'Última modificación', tipo: 'FECHA', col: 'Última modificación', heyOnly: true },
     { label: 'Fecha de ganado', tipo: 'FECHA' },
     { label: 'Fecha de descarte', tipo: 'FECHA' },
     { label: 'Fecha de vencimiento', tipo: 'FECHA', editable: true, edit: 'date', col: 'Fecha de vencimiento' },
@@ -46,18 +52,22 @@ const OFFER_SECTIONS: SectionSpec[] = [
     { label: 'Etapa', tipo: 'PICKLIST', editable: true, edit: 'select', src: 'stages', col: 'Etapa' },
     { label: 'SubEtapa', heyLabel: 'Estatus', tipo: 'PICKLIST', editable: true, edit: 'select', src: 'substages', col: 'SubEtapa' },
     { label: 'Tipo de Oferta', tipo: 'PICKLIST' },
+    { label: 'Prioridad', tipo: 'PICKLIST', editable: true, edit: 'select', options: ['Alta', 'Media', 'Baja'], col: 'Prioridad', heyOnly: true },
     { label: 'Origen de la oferta', heyLabel: 'Fuente', tipo: 'PICKLIST', editable: true, edit: 'select', src: 'origins', col: 'Origen de la oferta' },
     { label: 'Promotor o ejecutivo', heyLabel: 'Responsable', tipo: 'TEXTO_255', editable: true, edit: 'select', src: 'promoters', col: 'ID del promotor' },
+    { label: 'RFC', tipo: 'TEXTO_255', col: 'RFC', heyOnly: true },
     { label: 'Promotores de apoyo', tipo: 'TEXTO_255', hide: true },
     { label: 'Motivo de descarte', tipo: 'TEXTO_255', editable: true, edit: 'textarea', col: 'Motivo de descarte' },
   ]},
   { title: 'Condiciones de la oferta', fields: [
     { label: 'Monto de la oferta', tipo: 'MONEDA', editable: true, edit: 'money', col: 'Monto de la oferta' },
+    { label: 'Monto de la contratación', tipo: 'MONEDA', editable: true, edit: 'money', col: 'Monto de la contratación', heyOnly: true },
     { label: 'Monto fijo de la oferta', tipo: 'MONEDA', editable: true, edit: 'money', col: 'Monto fijo de la oferta', bank: true },
     { label: 'Monto revolvente de la oferta', tipo: 'MONEDA', editable: true, edit: 'money', col: 'Monto revolvente de la oferta', bank: true },
     { label: 'Tasa inicial de la oferta', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'Tasa inicial de la oferta', bank: true },
     { label: 'CAT inicial de la oferta', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'CAT inicial de la oferta', bank: true },
     { label: 'Plazo de la oferta', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'Plazo de la oferta' },
+    { label: 'Plazo de la contratación', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'Plazo de la contratación', heyOnly: true },
     { label: 'Periodo', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'Periodo', bank: true },
   ]},
   { title: 'Condiciones de contratación', hidden: true, fields: [] },
@@ -171,6 +181,13 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
       inner = <input type="text" className={inputCls} value={cur} onChange={(e) => setVal(col, e.target.value)} />
     } else if (f.edit === 'textarea') {
       inner = <textarea rows={3} className={inputCls} placeholder="Mínimo 20 caracteres al descartar…" value={cur} onChange={(e) => setVal(col, e.target.value)} />
+    } else if (f.edit === 'select' && f.options) {
+      inner = (
+        <select className={inputCls} value={cur} onChange={(e) => setVal(col, e.target.value)}>
+          <option value="">— sin asignar —</option>
+          {f.options.map((o) => (<option key={o} value={o}>{o}</option>))}
+        </select>
+      )
     } else if (f.edit === 'select' && f.src) {
       inner = (
         <select className={inputCls} value={cur} onChange={(e) => setVal(col, e.target.value)}>
@@ -258,7 +275,7 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
             {sec === 'oferta' && (
               <div className="space-y-6">
                 {OFFER_SECTIONS.filter((s) => !s.hidden).map((s) => {
-                  const fs = s.fields.filter((f) => !f.hide && !(isHey && f.bank))
+                  const fs = s.fields.filter((f) => !f.hide && !(isHey && f.bank) && !(!isHey && f.heyOnly))
                   if (!fs.length) return null
                   return (
                     <div key={s.title}>

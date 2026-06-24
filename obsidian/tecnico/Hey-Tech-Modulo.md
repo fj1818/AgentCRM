@@ -21,7 +21,9 @@ Se activa con el **tema `hey`** (selector "Banregio ↔ Hey Tech" en el pie del 
 | `stores/ofertas.store.ts` | Inyecta `heyTechOffer` y `heyTechClient` en el seed. |
 | `stores/tareasOferta.store.ts` | **Nuevo.** Store de Tareas vinculadas a la oferta. |
 | `components/ofertas/TareasOfertaPanel.tsx` | **Nuevo.** Sección de Tareas dentro del detalle (listado, alta, detalle/edición, cierre). |
-| `components/ofertas/OfertaDetalle.tsx` | Pestaña **Tareas**; oculta campos bancarios y enmascara datos sensibles del cliente en modo Hey; nomenclatura y catálogos propios. |
+| `components/tareas/TareasOfertaLista.tsx` | **Nuevo.** Listado global: "Mis tareas" y "Tareas que asigné" (filtros + salto a la oferta). |
+| `components/tareas/TareasContainer.tsx` | Acordeones "Mis tareas" y "Tareas que asigné" sobre la agenda. |
+| `components/ofertas/OfertaDetalle.tsx` | Pestaña **Tareas**; campos `heyOnly` (ID, RFC, Prioridad, Monto/Plazo de contratación, Última modificación); oculta campos bancarios y enmascara datos sensibles del cliente; nomenclatura y catálogos propios. |
 | `components/layout/Sidebar.tsx` | Selector de equipo/tema (Banregio ↔ Hey Tech). |
 
 ## Layout de la oferta en modo Hey Tech
@@ -43,3 +45,11 @@ Reglas:
 4. Una tarea cerrada (`Completada`/`Cancelada`) **no puede editarse**.
 
 Funcionalidades en `TareasOfertaPanel`: listado por oferta, alta (T-02), detalle/edición inline (T-03) y cierre con comentario (T-04). Ver [[negocio/Tareas]].
+
+### Listado global (T-01 / T-05)
+
+`TareasOfertaLista` con dos modos (vía selectores del store y `USUARIO_ACTUAL = 'Carlos Mendoza'`):
+- **Mis tareas**: `responsable === USUARIO_ACTUAL`.
+- **Tareas que asigné**: `asignadoPor === USUARIO_ACTUAL && responsable !== USUARIO_ACTUAL`.
+
+Filtros por estatus y tipo; cada fila salta a la oferta vinculada (`nav.store.abrirOferta`). El campo `asignadoPor` se fija a `USUARIO_ACTUAL` al crear una tarea.

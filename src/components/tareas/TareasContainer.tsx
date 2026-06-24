@@ -5,12 +5,13 @@
  */
 
 import { useState } from 'react'
-import { ChevronDown, ChevronRight, Calendar, Clock } from 'lucide-react'
+import { ChevronDown, ChevronRight, Calendar, Clock, ListChecks, UserPlus } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 import { AgendaCalendar } from './AgendaCalendar'
 import { CronogramaDiario } from './CronogramaDiario'
 import { AsistenteTareasPanel } from './AsistenteTareasPanel'
+import { TareasOfertaLista } from './TareasOfertaLista'
 
 function AccordionItem({ titulo, icono: Icono, children, defaultOpen = false }: {
   titulo: string; icono: React.ElementType; children: React.ReactNode; defaultOpen?: boolean
@@ -43,7 +44,13 @@ export function TareasContainer() {
       <div className="flex-1 overflow-y-auto p-6">
         <h1 className={cn('text-2xl font-bold mb-6', isHey ? 'text-white' : 'text-gray-800')}>Tareas y Agenda</h1>
         <div className="space-y-4">
-          <AccordionItem titulo="Mi Día" icono={Clock} defaultOpen={true}>
+          <AccordionItem titulo="Mis tareas" icono={ListChecks} defaultOpen={true}>
+            <TareasOfertaLista modo="mias" />
+          </AccordionItem>
+          <AccordionItem titulo="Tareas que asigné" icono={UserPlus} defaultOpen={false}>
+            <TareasOfertaLista modo="asignadas" />
+          </AccordionItem>
+          <AccordionItem titulo="Mi Día" icono={Clock} defaultOpen={false}>
             <CronogramaDiario fechaActual={fechaActual} onFechaChange={setFechaActual} />
           </AccordionItem>
           <AccordionItem titulo="Agenda Semanal" icono={Calendar} defaultOpen={false}>

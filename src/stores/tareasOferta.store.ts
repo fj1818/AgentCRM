@@ -20,6 +20,7 @@ export interface Tarea {
   idOferta: string
   rfc: string
   responsable: string
+  asignadoPor: string
   fechaVencimiento: string // dd/mm/yyyy
   descripcion: string
   prioridad: TareaPrioridad
@@ -28,6 +29,9 @@ export interface Tarea {
   fechaCreacion: string
   fechaCierre: string
 }
+
+/** Usuario activo de la demo (ejecutivo Hey Tech). */
+export const USUARIO_ACTUAL = 'Carlos Mendoza'
 
 export const TIPOS_TAREA = [
   'Llamada', 'Correo', 'Reunión', 'Demo Técnica', 'Envío de Propuesta', 'Seguimiento', 'Otro',
@@ -46,7 +50,7 @@ const seedTareas: Tarea[] = [
   {
     id: 'TSK000001', titulo: 'Enviar propuesta actualizada con ajuste de precio',
     tipo: 'Envío de Propuesta', idOferta: HEYTECH_OFFER_ID, rfc: 'FINTECHLATAM01',
-    responsable: 'Carlos Mendoza', fechaVencimiento: '25/06/2026',
+    responsable: USUARIO_ACTUAL, asignadoPor: USUARIO_ACTUAL, fechaVencimiento: '25/06/2026',
     descripcion: 'Incorporar el descuento por volumen acordado en la última sesión.',
     prioridad: 'Alta', estatus: 'Pendiente', comentarioCierre: '',
     fechaCreacion: '23/06/2026', fechaCierre: '',
@@ -54,17 +58,37 @@ const seedTareas: Tarea[] = [
   {
     id: 'TSK000002', titulo: 'Agendar sesión técnica con el equipo de integración',
     tipo: 'Reunión', idOferta: HEYTECH_OFFER_ID, rfc: 'FINTECHLATAM01',
-    responsable: 'Carlos Mendoza', fechaVencimiento: '20/06/2026',
+    responsable: USUARIO_ACTUAL, asignadoPor: USUARIO_ACTUAL, fechaVencimiento: '20/06/2026',
     descripcion: 'Validar requerimientos de la integración con WhatsApp Business API.',
     prioridad: 'Media', estatus: 'Completada',
     comentarioCierre: 'Sesión realizada. El cliente confirma uso de la API oficial.',
     fechaCreacion: '15/06/2026', fechaCierre: '19/06/2026',
+  },
+  {
+    id: 'TSK000003', titulo: 'Preparar demo técnica del Asistente Virtual de Texto',
+    tipo: 'Demo Técnica', idOferta: HEYTECH_OFFER_ID, rfc: 'FINTECHLATAM01',
+    responsable: 'Laura Gómez', asignadoPor: USUARIO_ACTUAL, fechaVencimiento: '27/06/2026',
+    descripcion: 'Armar ambiente de demo con datos de prueba del cliente.',
+    prioridad: 'Alta', estatus: 'En Progreso', comentarioCierre: '',
+    fechaCreacion: '22/06/2026', fechaCierre: '',
+  },
+  {
+    id: 'TSK000004', titulo: 'Revisar borrador de NDA con legal',
+    tipo: 'Seguimiento', idOferta: HEYTECH_OFFER_ID, rfc: 'FINTECHLATAM01',
+    responsable: 'Diego Torres', asignadoPor: USUARIO_ACTUAL, fechaVencimiento: '24/06/2026',
+    descripcion: 'Confirmar cláusulas de confidencialidad para operación en Colombia.',
+    prioridad: 'Media', estatus: 'Pendiente', comentarioCierre: '',
+    fechaCreacion: '21/06/2026', fechaCierre: '',
   },
 ]
 
 interface TareasState {
   tareas: Tarea[]
   tareasByOferta: (idOferta: string) => Tarea[]
+  /** Tareas donde el usuario activo es el responsable. */
+  misTareas: () => Tarea[]
+  /** Tareas que el usuario activo asignó a otra persona. */
+  tareasAsignadas: () => Tarea[]
   addTarea: (p: { idOferta: string; rfc: string; titulo: string; tipo: string; responsable: string; fechaVencimiento: string; descripcion?: string; prioridad?: TareaPrioridad }) => { ok: boolean; error?: string }
   updateTarea: (id: string, changes: Partial<Tarea>) => { ok: boolean; error?: string }
 }
@@ -73,6 +97,8 @@ export const useTareasOfertaStore = create<TareasState>((set, get) => ({
   tareas: seedTareas,
 
   tareasByOferta: (idOferta) => get().tareas.filter((t) => t.idOferta === idOferta),
+  misTareas: () => get().tareas.filter((t) => t.responsable === USUARIO_ACTUAL),
+  tareasAsignadas: () => get().tareas.filter((t) => t.asignadoPor === USUARIO_ACTUAL && t.responsable !== USUARIO_ACTUAL),
 
   addTarea: (p) => {
     if (!p.idOferta) return { ok: false, error: 'La tarea debe estar vinculada a una oferta.' }
@@ -83,7 +109,7 @@ export const useTareasOfertaStore = create<TareasState>((set, get) => ({
     const nueva: Tarea = {
       id: 'TSK' + pad(tareas.length + 1, 6),
       titulo: p.titulo.trim(), tipo: p.tipo, idOferta: p.idOferta, rfc: p.rfc,
-      responsable: p.responsable.trim(), fechaVencimiento: p.fechaVencimiento,
+      responsable: p.responsable.trim(), asignadoPor: USUARIO_ACTUAL, fechaVencimiento: p.fechaVencimiento,
       descripcion: (p.descripcion || '').trim(), prioridad: p.prioridad || '',
       estatus: 'Pendiente', comentarioCierre: '', fechaCreacion: todayDmy(), fechaCierre: '',
     }
