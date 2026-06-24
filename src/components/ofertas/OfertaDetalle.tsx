@@ -74,7 +74,7 @@ const OFFER_SECTIONS: SectionSpec[] = [
 ]
 
 type DetKey = 'cliente' | 'ciclo' | 'oferta' | 'tareas' | 'notas'
-const DET_TITLES: Record<DetKey, string> = {
+const DET_TITLES_BASE: Record<DetKey, string> = {
   cliente: 'Información del cliente', ciclo: 'Ciclo de vida', oferta: 'Información de la oferta', tareas: 'Tareas', notas: 'Notas',
 }
 
@@ -151,8 +151,11 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
     return comments.filter((c) => c.idOferta === oid).sort((a, b) => parse(a.fecha) - parse(b.fecha))
   }, [comments, raw])
 
+  const esProspecto = (raw['Tipo de Oferta'] || offer.tipoOferta || '').toLowerCase().includes('prospecto')
+  const clienteLabel = esProspecto ? 'Info del prospecto' : 'Info del cliente'
+
   const navItems: { key: DetKey; icon: typeof User; label: string }[] = [
-    { key: 'cliente', icon: User, label: 'Info del cliente' },
+    { key: 'cliente', icon: User, label: clienteLabel },
     ...(heyLayout ? [] : [{ key: 'ciclo' as DetKey, icon: RefreshCw, label: 'Ciclo de vida' }]),
     { key: 'oferta', icon: Package, label: heyLayout ? 'Info de la oportunidad' : 'Info de la oferta' },
     { key: 'tareas', icon: CheckSquare, label: 'Tareas' },
@@ -212,7 +215,7 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
         {/* Header */}
         <div className={cn('flex items-center justify-between px-5 py-3 border-b', isHey ? 'border-white/10 bg-[#1a1f2e]' : 'border-orange-100 bg-white')}>
           <div>
-            <h2 className={cn('text-lg font-bold', isHey ? 'text-white' : 'text-gray-900')}>{DET_TITLES[sec]}</h2>
+            <h2 className={cn('text-lg font-bold', isHey ? 'text-white' : 'text-gray-900')}>{sec === 'cliente' ? (esProspecto ? 'Información del prospecto' : 'Información del cliente') : DET_TITLES_BASE[sec]}</h2>
             <p className={cn('text-xs', isHey ? 'text-gray-400' : 'text-gray-500')}>{offer.producto} · {offer.ejecutivo} · {offer.tipoOferta}</p>
           </div>
           <button onClick={onClose} className={cn('p-2 rounded-lg', isHey ? 'hover:bg-white/10 text-gray-400' : 'hover:bg-orange-50 text-gray-500')}><X className="w-5 h-5" /></button>
