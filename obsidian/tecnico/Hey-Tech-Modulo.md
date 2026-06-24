@@ -31,7 +31,9 @@ Se activa con el **tema `hey`** (selector "Banregio ↔ Hey Tech" en el pie del 
 - **Catálogos propios** (`heyCatalogs`): Producto (familia), Plan, Etapa, Estatus (subetapa) y Fuente (origen).
 - **Nomenclatura**: Familia de producto→**Producto**, Producto→**Plan**, SubEtapa→**Estatus**, Origen→**Fuente**, Oferta→**Oportunidad**.
 - **Campos ocultos** (`bank: true`): Tasa/CAT inicial y de contratación, Montos fijo/revolvente, Monto del timbrado, Número de afiliación, Número de línea, Periodo.
-- **Información del cliente**: solo Nombre, Número, **País** y **Giro**. Se ocultan Teléfonos, Correo, Dirección, RFC y las acciones de contacto (datos sensibles restringidos).
+- **Información del cliente/prospecto**: solo Nombre, **RFC**, **País** y **Giro**. Se ocultan Teléfonos, Correo, Dirección, Número de cliente y las acciones de contacto (datos sensibles restringidos).
+- **Condiciones de la oferta** (Hey): solo **Monto de la oferta** (el resto se oculta como `bank`).
+- **Estilos siguen el tema** (`isHey`), el **layout sigue la oferta** (`heyLayout = isHey || isHeyTechOffer`).
 - Se omite la pestaña **Ciclo de vida** (fuera de alcance del MVP Hey Tech).
 
 ## Módulo de Tareas (vinculadas a la oferta)

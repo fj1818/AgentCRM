@@ -55,19 +55,16 @@ const OFFER_SECTIONS: SectionSpec[] = [
     { label: 'Prioridad', tipo: 'PICKLIST', editable: true, edit: 'select', options: ['Alta', 'Media', 'Baja'], col: 'Prioridad', heyOnly: true },
     { label: 'Origen de la oferta', heyLabel: 'Fuente', tipo: 'PICKLIST', editable: true, edit: 'select', src: 'origins', col: 'Origen de la oferta' },
     { label: 'Promotor o ejecutivo', heyLabel: 'Responsable', tipo: 'TEXTO_255', editable: true, edit: 'select', src: 'promoters', col: 'ID del promotor' },
-    { label: 'RFC', tipo: 'TEXTO_255', col: 'RFC', heyOnly: true },
     { label: 'Promotores de apoyo', tipo: 'TEXTO_255', hide: true },
     { label: 'Motivo de descarte', tipo: 'TEXTO_255', editable: true, edit: 'textarea', col: 'Motivo de descarte' },
   ]},
   { title: 'Condiciones de la oferta', fields: [
     { label: 'Monto de la oferta', tipo: 'MONEDA', editable: true, edit: 'money', col: 'Monto de la oferta' },
-    { label: 'Monto de la contratación', tipo: 'MONEDA', editable: true, edit: 'money', col: 'Monto de la contratación', heyOnly: true },
     { label: 'Monto fijo de la oferta', tipo: 'MONEDA', editable: true, edit: 'money', col: 'Monto fijo de la oferta', bank: true },
     { label: 'Monto revolvente de la oferta', tipo: 'MONEDA', editable: true, edit: 'money', col: 'Monto revolvente de la oferta', bank: true },
     { label: 'Tasa inicial de la oferta', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'Tasa inicial de la oferta', bank: true },
     { label: 'CAT inicial de la oferta', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'CAT inicial de la oferta', bank: true },
-    { label: 'Plazo de la oferta', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'Plazo de la oferta' },
-    { label: 'Plazo de la contratación', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'Plazo de la contratación', heyOnly: true },
+    { label: 'Plazo de la oferta', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'Plazo de la oferta', bank: true },
     { label: 'Periodo', tipo: 'NUMERICO', editable: true, edit: 'num', col: 'Periodo', bank: true },
   ]},
   { title: 'Condiciones de contratación', hidden: true, fields: [] },
@@ -228,12 +225,12 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
               <button
                 key={it.key}
                 onClick={() => setSec(it.key)}
-                className={cn('flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm',
+                className={cn('flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-left',
                   sec === it.key
                     ? isHey ? 'bg-cyan-500/20 text-cyan-300' : 'bg-orange-100 text-orange-600'
                     : isHey ? 'text-gray-300 hover:bg-white/5' : 'text-gray-600 hover:bg-orange-50')}
               >
-                <it.icon className="w-4 h-4" />{it.label}
+                <it.icon className="w-4 h-4 shrink-0" /><span className="leading-tight">{it.label}</span>
               </button>
             ))}
           </nav>
@@ -245,7 +242,7 @@ export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onC
                 {/* En Hey Tech se omiten los datos sensibles del cliente y se muestran País/Giro. */}
                 <div className="grid grid-cols-2 gap-4">
                   {(heyLayout
-                    ? [['Nombre', cliente.nombre], ['Número de cliente', cliente.numero], ['País', cliente.pais || ''], ['Giro', cliente.giro || '']] as [string, string][]
+                    ? [['Nombre', cliente.nombre], ['RFC', cliente.rfc], ['País', cliente.pais || ''], ['Giro', cliente.giro || '']] as [string, string][]
                     : [['Nombre', cliente.nombre], ['Teléfonos', cliente.telefonos], ['Correo', cliente.correo], ['Dirección', cliente.direccion], ['Número de cliente', cliente.numero], ['RFC', cliente.rfc]] as [string, string][]
                   ).map(([l, v]) => (
                     <div key={l}><div className={labelCls}>{l}</div><div className={valueBox}>{v || '—'}</div></div>
