@@ -44,14 +44,19 @@ export function TareasContainer() {
       <div className="flex-1 overflow-y-auto p-6">
         <h1 className={cn('text-2xl font-bold mb-6', isHey ? 'text-white' : 'text-gray-800')}>Tareas y Agenda</h1>
         <div className="space-y-4">
-          <AccordionItem titulo="Mis tareas" icono={ListChecks} defaultOpen={true}>
-            <TareasOfertaLista modo="mias" />
+          <AccordionItem titulo="Mi Día" icono={Clock} defaultOpen={true}>
+            <div className="space-y-5">
+              <div>
+                <div className={cn('flex items-center gap-2 mb-2 text-sm font-semibold', isHey ? 'text-white' : 'text-gray-800')}>
+                  <ListChecks className={cn('w-4 h-4', isHey ? 'text-cyan-400' : 'text-orange-500')} /> Mis tareas
+                </div>
+                <TareasOfertaLista modo="mias" />
+              </div>
+              <CronogramaDiario fechaActual={fechaActual} onFechaChange={setFechaActual} />
+            </div>
           </AccordionItem>
           <AccordionItem titulo="Tareas que asigné" icono={UserPlus} defaultOpen={false}>
             <TareasOfertaLista modo="asignadas" />
-          </AccordionItem>
-          <AccordionItem titulo="Mi Día" icono={Clock} defaultOpen={false}>
-            <CronogramaDiario fechaActual={fechaActual} onFechaChange={setFechaActual} />
           </AccordionItem>
           <AccordionItem titulo="Agenda Semanal" icono={Calendar} defaultOpen={false}>
             <AgendaCalendar />

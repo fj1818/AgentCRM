@@ -10,7 +10,7 @@ import { useUIStore } from '@/stores'
 import { useOfertasStore } from '@/stores/ofertas.store'
 import { cn } from '@/utils'
 import type { Offer } from '@/data/ofertas-seed'
-import { heyCatalogs } from '@/data/ofertas-seed/heytech'
+import { heyCatalogs, isHeyTechOffer } from '@/data/ofertas-seed/heytech'
 import { money, dmyToYmd, ymdToDmy } from './ofertasFormat'
 import { OfertaAgentePanel } from './OfertaAgentePanel'
 import { TareasOfertaPanel } from './TareasOfertaPanel'
@@ -83,15 +83,17 @@ const DET_TITLES: Record<DetKey, string> = {
 
 export function OfertaDetalle({ offer: offerProp, onClose }: { offer: Offer; onClose: () => void }) {
   const { theme } = useUIStore()
-  const isHey = theme === 'hey'
   const store = useOfertasStore()
   const { offers, clientsByRfc, comments, users, promoterNames, updateOffer, addComment } = store
-  // En perfil Hey Tech se usan los catálogos propios (Producto/Plan/Etapa/Estatus/Fuente).
-  const catalogs = isHey ? heyCatalogs : store.catalogs
 
   // Oferta VIVA del store: refleja cambios del agente/edición al instante.
   const idActual = offerProp.raw['ID de la oferta'] || ''
   const offer = offers.find((o) => (o.raw['ID de la oferta'] || '') === idActual) || offerProp
+
+  // El layout Hey Tech depende de la oferta (campos/catálogos), no solo del tema.
+  const isHey = theme === 'hey' || isHeyTechOffer(offer.raw)
+  // En perfil Hey Tech se usan los catálogos propios (Producto/Plan/Etapa/Estatus/Fuente).
+  const catalogs = isHey ? heyCatalogs : store.catalogs
 
   const [sec, setSec] = useState<DetKey>('cliente')
   const [form, setForm] = useState<Record<string, string>>({})

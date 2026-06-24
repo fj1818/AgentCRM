@@ -69,6 +69,13 @@ function buildHeyCatalogs(): Catalogs {
 
 export const heyCatalogs: Catalogs = buildHeyCatalogs()
 
+/** Una oferta es Hey Tech si su ID o su familia usan los prefijos del seed Hey Tech. */
+export function isHeyTechOffer(raw: Record<string, string>): boolean {
+  const id = raw['ID de la oferta'] || ''
+  const fam = raw['ID de la familia de producto'] || ''
+  return id.startsWith('HEY') || fam.startsWith('HFAM')
+}
+
 // ── Cliente y oferta de ejemplo (Fintech Latam) ──────────────────────────────
 export const HEYTECH_OFFER_ID = 'HEY000001'
 const HEYTECH_RFC = 'FINTECHLATAM01'
