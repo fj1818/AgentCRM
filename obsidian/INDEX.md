@@ -1,15 +1,16 @@
 ---
 tags: [index]
 created: 2026-06-02
-updated: 2026-06-02
+updated: 2026-08-12
 ---
 
 # AgentCRM — Vault de Documentación
 
-CRM conversacional bancario. Chat → SQL local (sql.js) → presentación. Ver [[tecnico/Arquitectura]].
+CRM conversacional bancario. La demo actual es un **CRM agéntico**: todo se hace conversando y el agente devuelve componentes interactivos dentro del chat. Ver [[tecnico/Agente-CRM-Chat]] y [[tecnico/Arquitectura]].
 
 ## Técnico
 - [[tecnico/Arquitectura]] — Visión general y diagrama dual-agent
+- [[tecnico/Agente-CRM-Chat]] — **Demo actual**: CRM agéntico con UI generativa en el chat
 - [[tecnico/Chat]] — Sistema de chat y modos
 - [[tecnico/Base-de-Datos-SQL]] — SQLite en navegador (sql.js)
 - [[tecnico/Servicios]] — IA, procedimientos, prospectos, SQL, PDF

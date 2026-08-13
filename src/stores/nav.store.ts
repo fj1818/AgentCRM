@@ -15,7 +15,7 @@ interface NavState {
 }
 
 export const useNavStore = create<NavState>((set) => ({
-  view: 'chat',
+  view: 'agente',
   ofertaPendiente: null,
   setView: (view) => set({ view }),
   abrirOferta: (idOferta) => set({ view: 'ofertas', ofertaPendiente: idOferta }),

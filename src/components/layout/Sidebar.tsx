@@ -14,13 +14,15 @@ import {
   FileSignature,
   Building2,
   Cpu,
+  Sparkles,
 } from 'lucide-react'
 import { useUIStore } from '@/stores'
 import { cn } from '@/utils'
 
 // Opciones de navegación principal
 const navItems = [
-  { icon: MessageSquare, label: 'Chat', path: 'chat' },
+  { icon: Sparkles, label: 'Agente CRM', path: 'agente' },
+  { icon: MessageSquare, label: 'Chat de datos', path: 'chat' },
   { icon: CheckSquare, label: 'Tareas', path: 'tareas' },
   { icon: Briefcase, label: 'Ofertas', path: 'ofertas' },
   { icon: RefreshCw, label: 'Ciclo de vida', path: 'ciclo' },

@@ -3,6 +3,7 @@
  */
 
 import { AppLayout } from '@/components/layout'
+import { AgenteContainer } from '@/components/agente'
 import { ChatContainer } from '@/components/chat'
 import { OfertasContainer } from '@/components/ofertas'
 import { CicloVidaContainer } from '@/components/ciclo'
@@ -17,6 +18,7 @@ function App() {
 
   return (
     <AppLayout currentView={currentView} onNavigate={setView}>
+      {currentView === 'agente' && <AgenteContainer />}
       {currentView === 'chat' && <ChatContainer />}
       {currentView === 'ofertas' && <OfertasContainer />}
       {currentView === 'ciclo' && <CicloVidaContainer />}
